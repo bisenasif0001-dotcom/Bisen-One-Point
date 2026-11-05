@@ -1,0 +1,44 @@
+[
+  {
+    "controlsOutsideViewport": 0,
+    "editorWidth": 284,
+    "mobileBarVisible": true,
+    "overflow": false,
+    "width": 320
+  },
+  {
+    "controlsOutsideViewport": 0,
+    "editorWidth": 346,
+    "mobileBarVisible": true,
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "controlsOutsideViewport": 0,
+    "editorWidth": 674,
+    "mobileBarVisible": true,
+    "overflow": false,
+    "width": 768
+  },
+  {
+    "controlsOutsideViewport": 0,
+    "editorWidth": 539,
+    "mobileBarVisible": false,
+    "overflow": false,
+    "width": 1024
+  },
+  {
+    "controlsOutsideViewport": 0,
+    "editorWidth": 671,
+    "mobileBarVisible": false,
+    "overflow": false,
+    "width": 1440
+  },
+  {
+    "controlsOutsideViewport": 0,
+    "editorWidth": 671,
+    "mobileBarVisible": false,
+    "overflow": false,
+    "width": 1920
+  }
+]

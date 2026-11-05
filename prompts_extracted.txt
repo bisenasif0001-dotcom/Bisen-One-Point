@@ -1,0 +1,808 @@
+MASTER DESIGN RULE — KEEP THIS ACTIVE FOR EVERY STEP
+For every redesign and new section created from this point onward, follow this same visual system unless explicitly instructed otherwise.
+The website must feel like a premium international lifestyle, photography, interior and gifting brand.
+Overall feeling:
+Modern
+Minimal
+Editorial
+Warm
+Sophisticated
+Premium
+Highly visual
+Calm rather than flashy
+Easy for first-time customers to understand
+Think in the direction of:premium interior brands + high-end photography studios + modern niche fragrance brands + clean D2C ecommerce.
+Do NOT create:
+cheap marketplace styling
+excessive gold
+glowing borders
+glassmorphism everywhere
+shiny gradients
+unnecessary badges
+tiny crowded cards
+large amounts of text
+overly rounded playful UI
+fake luxury ornamentation
+excessive icons
+visually noisy backgrounds
+GLOBAL COLOUR LANGUAGE
+Primary background:Warm ivory / soft stone#F5F3EE or similar
+Cards:#FFFFFF
+Primary text:#181817
+Secondary text:#706E68
+Muted borders:#DDD9D0
+Primary dark:#20201E
+Main accent:Muted bronze / warm taupearound #9B7A50
+Fragrance-specific dark accent:Deep olive / warm brown may be used selectively.
+Gold/bronze must be restrained.The product photography should provide most of the colour.
+TYPOGRAPHY
+Large editorial headings:Cormorant Garamond, DM Serif Display, or another sophisticated editorial serif.
+UI/body:Manrope, DM Sans or similar clean modern sans serif.
+Use large type with generous spacing.Avoid decorative royal typography.
+BUTTONS
+Primary:Charcoal backgroundWarm white textMinimal radiusClean, substantial padding
+Secondary:Transparent1px subtle borderCharcoal text
+Avoid gradients and glow effects.
+IMAGERY
+Images should feel:
+premium
+authentic
+photographic
+editorial
+naturally lit
+Prefer actual product/process photography.Avoid obvious stock-photo appearance wherever possible.
+SECTION SPACING
+Use generous vertical spacing.Each section should feel like an individual editorial chapter.
+Desktop content max-width should remain consistent.Mobile layouts must be intentionally redesigned rather than simply scaled down.
+Do not remove or break existing:
+routing
+cart
+checkout
+product logic
+frame customizer
+uploaded photo handling
+pricing logic
+Where real business information is unknown, use clearly replaceable placeholders instead of inventing claims.
+PROMPT 01 — REPOSITION THE BRAND
+Update the website brand architecture before making additional visual sections.
+The current brand is too narrowly positioned as only a framing studio, while the business now includes:
+Custom Photo Frames
+Framed Photo Prints
+Photo Printing
+Birthday Cards
+Greeting Cards and Invitations
+Wall Art
+Islamic Art
+Gallery Walls
+Itra / Attar / Perfume Oils
+Personalised Gifts
+Reposition AL-NOOR as a premium personalised print, framing and gifting studio.
+Preferred parent positioning:
+AL-NOOR
+Supporting descriptor:PRINT • FRAME • GIFT
+Alternative internal brand divisions may include:
+AL-NOOR Print & Frame StudioAL-NOOR Cards & GiftsAL-NOOR Itra House
+Do not make these three separate visual brands.
+They must share:
+typography
+button system
+spacing
+layout principles
+overall premium design system
+Only photography and subtle accent colours may vary by division.
+Remove any framing-only brand statements that prevent other product categories from feeling natural.
+The brand should communicate:
+Thoughtfully printed.Beautifully framed.Personally gifted.
+PROMPT 02 — REDESIGN HEADER AND NAVIGATION
+Redesign the desktop and mobile website header.
+The current navigation is too focused on frames.
+Create a premium navigation architecture.
+Desktop navigation:
+CREATE
+PRINTS & FRAMES
+CARDS & GIFTS
+WALL ART
+ITRA
+ABOUT
+Right side:SearchWishlist if supportedCart
+Primary CTA:UPLOAD PHOTO
+Header should feel extremely clean and spacious.
+Do not use:
+large gold borders
+gradients
+oversized announcement elements
+unnecessary labels
+Use a subtle sticky header after scrolling.
+Mobile:LogoUpload Photo CTACartMenu icon
+Mobile menu should use large clean touch targets.
+Under PRINTS & FRAMES include:
+Upload & Frame My Photo
+Photo Prints
+Ready-Made Frames
+Framed Prints
+Gallery Walls
+Frame Finishes
+Size Guide
+Under CARDS & GIFTS:
+Birthday Cards
+Anniversary Cards
+Wedding Invitations
+Greeting Cards
+Personalised Gifts
+Under WALL ART:
+Islamic Wall Art
+Family & Wedding
+Typography Art
+Gallery Sets
+Under ITRA:
+All Itra
+Men's
+Women's
+Unisex
+Discovery Sets
+Gift Sets
+Build navigation architecture first.Do not redesign the full homepage in this step.
+PROMPT 03 — BUILD PREMIUM MEGA MENUS
+Create elegant premium mega menus for the main desktop navigation categories.
+Do not make them look like ecommerce dropdown lists.
+Mega menus should feel editorial.
+Example structure for PRINTS & FRAMES:
+CREATEUpload & Frame A PhotoPrint My Photos
+SHOPReady-Made FramesFramed PrintsGallery Walls
+EXPLOREFrame FinishesSize GuideHow It Works
+Use one large supporting lifestyle image on the right side.
+Cards or links should be simple text-based navigation with generous spacing.
+Use no more than one promotional visual per mega menu.
+Create similar but context-specific mega menus for:
+Cards & Gifts
+Wall Art
+Itra
+Mobile should use accordions rather than desktop mega menus.
+PROMPT 04 — REDESIGN HOMEPAGE HERO
+Redesign only the homepage hero.
+This must become the strongest premium visual moment of the website.
+Use one exceptional lifestyle photograph showing beautifully framed photography in a modern warm interior.
+Heading:
+Photos Belong On Walls.Not Just On Phones.
+Supporting text:
+Upload your favourite photograph. We print, frame and deliver it ready to hang.
+Primary CTA:FRAME MY PHOTO
+Secondary CTA:PRINT PHOTOS
+Add a subtle tertiary text link:Create A Card →
+Add a small trust line:
+6-Colour Photo Printing • Handmade Frames • Secure Packaging • Pan-India Delivery
+Do not place Itra inside the hero.
+The hero must focus on the strongest core service.
+Desktop:80–90vh cinematic composition.
+Mobile:Carefully crop the image.Keep heading and primary CTA immediately understandable.
+Avoid:
+badges
+floating cards
+multiple gradients
+gold glow
+visual noise
+Premium feel must come from:photography + composition + typography + whitespace.
+PROMPT 05 — CREATE THE MAIN PRODUCT GATEWAY
+Replace the current frame-only category section with a new premium six-category service gateway.
+Heading:
+What Would You Like To Create?
+Create these 6 large image-driven tiles:
+CUSTOM PHOTO FRAMESUpload your photo and create a frame.
+FRAMED PRINTSReady-made art and professionally framed photography.
+PHOTO PRINTSPremium colour photo printing.
+CARDS & INVITATIONSBirthday, anniversary, wedding and personalised cards.
+WALL ARTIslamic art, family art and gallery wall collections.
+ITRA & FRAGRANCEPremium attars, perfume oils and fragrance gift sets.
+Desktop:3 columns x 2 rows.
+Cards should be large and image-led.
+Typography should be minimal.
+Use only:Category titleOne short supporting sentenceSmall arrow
+No price badges.No heavy borders.
+Tablet:2 columns.
+Mobile:Large swipeable cards or vertically stacked cards with strong imagery.
+Each category must visually feel premium while remaining part of the same brand.
+PROMPT 06 — CREATE THE UNIVERSAL “CREATE” EXPERIENCE
+Create a premium central homepage section called:
+CREATE SOMETHING PERSONAL
+Show three primary creation paths:
+FRAME A PHOTO
+PRINT PHOTOS
+CREATE A CARD
+Each option should use a large visual panel.
+When selected, it should lead into the relevant customisation workflow.
+Design this section more like a modern creative tool rather than a standard ecommerce category.
+Supporting copy:
+Your photo. Your size. Your style.We’ll take care of the rest.
+Avoid showing too many options here.
+The goal is to make starting a personalised order extremely easy.
+PROMPT 07 — REDESIGN CUSTOM FRAME BUILDER
+Redesign the existing custom frame experience into a highly polished five-step wizard.
+Steps:
+01 PHOTO
+02 SIZE
+03 FRAME
+04 PREVIEW
+05 ORDER
+Desktop:Large live preview on left.Controls on right.
+Do not show all controls simultaneously.
+Only expose the controls required for the active step.
+STEP 1:Upload Your Photo
+STEP 2:Choose Your Size
+STEP 3:Choose Your Frame
+STEP 4:Review Your Frame
+STEP 5:Confirm Price & Add To Cart
+Show a subtle progress indicator.
+Selected frame should instantly update preview.
+Final summary example:
+Classic BlackA3Premium Photo PrintReady To Hang
+₹XXX
+ADD TO CART
+Include:BackContinue
+Mobile:One step at a time.Large preview.Sticky primary CTA where useful.
+The tool should feel comparable to a premium product configurator, not a technical settings panel.
+PROMPT 08 — ADD PHOTO QUALITY CHECKER
+Improve the upload stage of the frame customizer and photo print workflows.
+After image upload show a simple customer-friendly quality assessment.
+Example:
+PRINT QUALITY
+Excellent
+Recommended up to A3
+or:
+Good
+Recommended maximum size: A4
+or:
+Low Resolution
+Smaller sizes recommended for best results.
+Also show simple status for:
+Image ResolutionCrop Safety
+If reliable face/crop detection is supported, show:
+Faces Inside Safe Area
+If not supported yet, create the interface in a way that allows this feature to be added later.
+Do not overwhelm customers with DPI numbers.
+An optional:Why? linkmay explain technical details.
+Design this as a subtle premium diagnostic panel.
+PROMPT 09 — REDESIGN FRAME FINISH SELECTION
+Replace simple colour circles/buttons with premium physical frame swatches.
+Create options such as:
+Classic BlackPure WhiteNatural WoodWalnutChampagneTextured Black
+Use actual macro photographs of frame mouldings wherever possible.
+Each option should show:
+Macro textureFrame nameOptional price difference
+On selection:update live preview instantly.
+Add:VIEW FRAME DETAILS
+Frame details may include:
+Moulding widthDepthMaterialFront glazingBackingHanging orientation
+Use only factually accurate materials.
+Do not invent:European oakAmerican walnut24K goldmuseum-grade materialsUV percentagesarchival specifications
+unless verified.
+The selection interface must feel tactile and material-driven.
+PROMPT 10 — CREATE DEDICATED PHOTO PRINT SERVICE
+Create a dedicated premium Photo Prints page.
+This should NOT look like a normal product catalogue.
+It should feel like a fast professional printing service.
+Hero:
+PRINT THE PHOTOSYOU KEEP SCROLLING PAST.
+Supporting text:
+Upload your favourite photographs and turn them into beautifully printed physical memories.
+Primary CTA:UPLOAD PHOTOS
+Build a simple order flow:
+Upload Photos
+Choose Size
+Choose Finish
+Choose Quantity
+Review
+Order
+Possible sizes should only include sizes actually supported by the business.
+Examples:4×65×76×88×10A5A4A3
+Paper options should only appear if actually stocked.
+For example:GlossLustreMatte
+Quantity presets:15102550
+Show live pricing.
+Allow multiple image upload.
+Make the experience extremely fast on mobile.
+PROMPT 11 — CREATE BIRTHDAY CARD CUSTOMIZER
+Create a dedicated premium personalised Birthday Card builder.
+Heading:
+CREATE A CARDTHEY’LL KEEP.
+Flow:
+01 DESIGN
+02 PHOTO
+03 NAME & MESSAGE
+04 SIZE
+05 QUANTITY
+06 REVIEW
+Design categories:
+MinimalKidsElegantFloralPhoto CardIslamicFun
+Allow:photo uploadrecipient namecustom greetingmessage text
+Show real-time card preview.
+Offer size options based on actual production capability.
+For example:A65×7A5
+Quantity:15102550
+Show price dynamically.
+Primary CTA:PRINT MY CARDS
+The interface should feel like a simplified premium Canva-style editor rather than a form.
+Keep editing controls extremely easy for non-designers.
+PROMPT 12 — EXPAND INTO CARDS & INVITATIONS
+Build a premium Cards & Invitations landing page around the birthday card customizer.
+Categories:
+Birthday CardsAnniversary CardsWedding InvitationsBaby AnnouncementsThank You CardsEid GreetingsCongratulationsMemorial / Condolence Cards
+Use a clean editorial grid.
+Each category should use carefully selected real-world card mockups.
+Do not add colourful UI chrome.
+The card designs may be colourful, while the surrounding website interface remains ivory, white and charcoal.
+Add section:
+START WITH A TEMPLATE
+and:
+CREATE FROM YOUR PHOTO
+Keep the system visually sophisticated and easy to browse.
+PROMPT 13 — REDESIGN BEST SELLERS AS TABBED DISCOVERY
+Replace any long frame-only best seller section with a tabbed premium product section.
+Heading:
+OUR MOST LOVED
+Tabs:
+FRAMES
+PHOTO PRINTS
+CARDS
+WALL ART
+ITRA
+Show only 4 products at a time on desktop.
+Product cards must be minimal.
+Image should occupy approximately 75–80% of the card.
+Information:Product nameStarting priceVery short descriptor
+Avoid:multiple badgesstar clutterlarge coloured buttonsheavy shadows
+Desktop hover:subtle image change or Quick View.
+Mobile:clean horizontal swipe carousel.
+All product photography should feel consistent within each category.
+PROMPT 14 — CREATE SHOP BY OCCASION
+Replace the existing Frame Your Story section with a new cross-category section:
+SHOP BY OCCASION
+This section is strategically important because it connects Frames, Cards, Wall Art and Itra.
+Create premium image tiles for:
+BirthdayWeddingAnniversaryNew BabyFor ParentsEid & Islamic Gifts
+Each occasion should open a curated collection containing relevant products.
+Example:
+BIRTHDAY
+Personalised FrameBirthday CardPhoto PrintsItra Gift
+WEDDING
+Wedding FrameGallery WallWedding CardItra Gift Set
+ANNIVERSARY
+Couple FramePersonalised CardFragrance Gift
+The visual design must feel emotional and editorial.
+Use photography of moments rather than generic products wherever possible.
+PROMPT 15 — CREATE OCCASION LANDING PAGES
+Create reusable premium occasion landing page templates.
+Example page:
+BIRTHDAY
+Hero heading:
+MAKE THEIR BIRTHDAYPERSONAL.
+Show curated groups:
+Frame A Favourite Photo
+Create A Birthday Card
+Print Shared Memories
+Add A Fragrance Gift
+Create A Gift Bundle
+Use similar templates for:WeddingAnniversaryNew BabyParentsEid
+This architecture should allow multiple product types to feel naturally related.
+PROMPT 16 — CREATE GIFT BUNDLES
+Create a premium Gift Sets section.
+Goal:Increase average order value while making products from different categories feel logically connected.
+Examples:
+THE BIRTHDAY MEMORY BOX
+Personalised Photo FramePersonalised Birthday CardItra MiniGift Packaging
+THE ANNIVERSARY SET
+Couple FramePersonalised Message CardItra Pair
+EID GIFT SET
+Islamic Wall ArtGreeting CardItra
+FAMILY MEMORY SET
+Gallery Frame SetPrinted PhotosMessage Card
+Use elegant packaging imagery.
+Allow gift bundle products to have one clear total price.
+Avoid making the section feel discount-driven.
+Focus on convenience, thoughtfulness and presentation.
+PROMPT 17 — CREATE SMART CROSS-SELLING
+Improve cart and product recommendations.
+Do not use generic:
+You May Also Like
+Instead use contextual recommendations.
+If customer adds a custom frame:
+COMPLETE THE GIFT
+Add A Personalised Card
+Add Gift Packaging
+Add An Itra Mini
+If customer creates a birthday card:
+MAKE IT MORE PERSONAL
+Add A Framed Photo
+Add Photo Prints
+Add A Fragrance Gift
+If user purchases Itra:
+ADD A PERSONAL TOUCH
+Add A Greeting Card
+Use small elegant product cards.
+Do not interrupt checkout aggressively.
+Cross-selling should feel helpful rather than pushy.
+PROMPT 18 — REDESIGN ITRA HOMEPAGE TEASER
+Do not show a large perfume ecommerce grid on the homepage.
+Create one premium editorial fragrance section.
+Use a slightly darker visual mood than the framing sections.
+Colour direction:
+Deep oliveWarm sandCreamDark brownSubtle amber
+Heading:
+A DIFFERENT KINDOF MEMORY.
+Subheading:
+Discover the AL-NOOR Itra Collection.
+Supporting copy:
+Traditional fragrance oils selected for personal wear, gifting and everyday rituals.
+Primary CTA:EXPLORE ITRA
+Use one exceptional hero bottle image or a beautifully composed gift-set image.
+Do not use:black-and-gold Arabian template stylingornamental bordersglowing gold text
+The section should feel like a modern niche fragrance brand.
+PROMPT 19 — BUILD PREMIUM ITRA SHOP
+Create a dedicated Itra shop page.
+Categories:
+All ItraMenWomenUnisexDiscovery SetsGift Sets
+Each product card should show:
+Large bottle imageNameShort fragrance familySizePrice
+Example fragrance descriptors:
+Woody • Amber • Musk
+Floral • Soft Musk
+Fresh • Citrus • Woods
+Do not overload cards with long note pyramids.
+Product details page may show:
+Top NotesHeart NotesBase NotesCharacterBest ForSizeHow To Apply
+Add:ADD TO BAG
+and optional:ADD SAMPLE / DISCOVERY SIZE
+Visual language:modern niche fragrance boutique.
+Maintain the same AL-NOOR typography and interface as the rest of the website.
+PROMPT 20 — BUILD SIZE VISUALIZER
+Create a premium section:
+FIND YOUR PERFECT SIZE
+Use one elegant realistic interior scene.
+Show a frame on the wall.
+Controls:
+A5A4A312×18other supported sizes
+When the selected size changes:the visual frame size should update proportionally.
+Optional context selectors:
+Above SofaAbove BedDesk / Shelf
+Keep visual controls simple.
+Do not display a technical size chart by default.
+Add:VIEW FULL SIZE GUIDE
+The purpose is to eliminate customer uncertainty.
+PROMPT 21 — SIMPLIFY GALLERY WALLS
+Keep gallery walls as a premium high-value offering.
+Homepage section:
+BUILD A GALLERY WALL
+Show:
+3 Frames5 Frames7 Frames9 Frames
+Use one beautiful room image with real-looking arrangements.
+Cards should show:layout namenumber of framesstarting price
+CTA:BUILD THIS WALL
+Move complex gallery customisation to a dedicated page.
+Do not overload the homepage with the full gallery builder.
+PROMPT 22 — MERGE PRINTING & CRAFTSMANSHIP SECTIONS
+Remove duplicate printing/process/craftsmanship storytelling.
+Create one cohesive premium process section.
+Heading:
+FROM YOUR PHONETO YOUR WALL.
+Show 6 visual steps:
+01 UPLOAD
+02 PHOTO CHECK
+03 PROFESSIONAL PRINT
+04 FRAME
+05 QUALITY CHECK
+06 PACK & DELIVER
+Use real process photography wherever possible.
+Include the Epson printing process naturally under step 03.
+Do not make the printer a giant technical advertisement.
+Copy can mention:
+Professional 6-Colour Epson Photo Printing
+Do not use:pigmentmuseum-grade100-year archival
+unless factually verified.
+Show:printingcuttingjoiningmountinginspectionpackaging
+The section should look like a premium workshop documentary.
+PROMPT 23 — REDESIGN PACKAGING SECTION
+Create a premium trust section:
+PACKED TO ARRIVEPERFECTLY.
+Show packaging layers visually.
+Frame / Product
+Corner Protection
+Protective Wrap
+Outer Carton
+For cards:Protective sleeve / envelope packaging.
+For Itra:Bottle protection + presentation box.
+Use either real photography or clean exploded visuals.
+Supporting copy should remain factual.
+Avoid absolute claims such as:zero breakage
+unless guaranteed.
+If acrylic glazing is actually used, describe it accurately.
+PROMPT 24 — REDESIGN FRAME PRODUCT PAGE
+Redesign custom frame / framed print product pages.
+Desktop:
+LEFTLarge product gallery
+RIGHTProduct titlePriceShort descriptionSize selectorFrame finishUpload PhotoPreviewAdd To Cart
+Important controls should appear above the fold.
+Below create clean accordion sections:
+MaterialsDimensionsPrintWhat Is IncludedShippingPackagingCareSize GuideReviews
+Mobile:Large image first.Purchase controls below.Sticky bottom:
+₹XXXADD TO CART
+or:
+₹XXXCUSTOMIZE
+Remove excessive badges and long descriptive paragraphs.
+Product page should make purchasing feel effortless.
+PROMPT 25 — REDESIGN CARD PRODUCT PAGE
+Create a premium product page for personalised cards.
+LEFT:Large live card preview.
+RIGHT:Design namePriceCard sizeQuantityPersonalisation status
+Primary CTA:PERSONALISE THIS CARD
+After personalisation:
+ADD TO CART
+Below:PaperPrintingEnvelopeDeliveryFAQ
+Use the same core design system as frames.
+Allow card photography to add colour while the interface stays minimal.
+PROMPT 26 — REDESIGN ITRA PRODUCT PAGE
+Create a premium fragrance product page.
+Desktop:
+LEFTLarge editorial bottle photographyProduct gallery
+RIGHTFragrance nameShort personality statementPriceSize selectorQuantityADD TO BAG
+Fragrance overview:
+Character:Warm • Woody • Intimate
+Notes:TopHeartBase
+Add:When To WearHow To ApplyGifting
+Keep text elegant and concise.
+Avoid cliché gold Arabic ornaments.
+Use premium niche-perfume visual language.
+PROMPT 27 — REBUILD CUSTOMER REVIEWS
+Replace generic testimonial cards with:
+LOVED IN REAL HOMES
+For frames:real customer wall images
+For cards:real printed card images
+For Itra:real product/gift images if available
+Each item may contain:
+ImageShort testimonialStar ratingVerified PurchaseCustomer city
+Avoid long testimonials.
+Desktop:Editorial masonry layout.
+Mobile:Swipeable testimonial cards.
+If real content is unavailable, use clearly marked placeholders rather than fake customer claims.
+PROMPT 28 — REAL PHOTOGRAPHY SYSTEM
+Create and enforce a consistent image system throughout the website.
+For FRAMES:
+Clean front
+Lifestyle wall
+45-degree angle
+Corner macro
+Frame depth
+Back and hanging hardware
+Packaging
+For PHOTO PRINTS:
+Flat print
+Print held in hand
+Paper texture close-up
+Print stack
+Epson printing process
+For CARDS:
+Front
+Open card
+Back
+Envelope
+Hand-held scale
+Personalised example
+For ITRA:
+Bottle front
+Bottle angle
+Box
+Hand scale
+Notes/lifestyle
+Gift presentation
+Avoid mixing random visual styles.
+Gradually replace Unsplash and generic stock imagery with real AL-NOOR product photography.
+PROMPT 29 — REDESIGN SEARCH EXPERIENCE
+Improve website search to support the expanded product catalogue.
+Search placeholder:
+Search frames, photo prints, cards, wall art or fragrances...
+Group results into:
+PRODUCTS
+SERVICES
+COLLECTIONS
+OCCASIONS
+Example:
+Products:Classic Black FrameRose Itra
+Services:Print PhotosFrame My Photo
+Collections:Birthday GiftsIslamic Wall Art
+Use a clean command-palette style overlay or premium search drawer.
+Show product thumbnails where useful.
+Mobile search must be easy to use one-handed.
+PROMPT 30 — REDESIGN CART
+Create a premium cart experience.
+Each cart item should clearly show:
+ImageProductPersonalisation summarySizeFrame / FinishQuantityPrice
+For custom products include:
+View Customisation
+For cards:Recipient / design summary
+For frames:Photo thumbnailFrameSize
+For Itra:Fragrance size
+Add contextual:
+COMPLETE THE GIFT
+recommendations.
+Do not overwhelm cart with more than 2–3 relevant recommendations.
+Order summary should remain visible on desktop.
+Mobile:sticky checkout CTA.
+PROMPT 31 — CLEAN CHECKOUT EXPERIENCE
+Redesign checkout for maximum clarity.
+Goal:remove distraction.
+Use a simplified header.
+Steps:
+ContactDeliveryPaymentReview
+Show:clear order summaryshippingpersonalisation summaryfinal total
+For personalised products, show small previews so the customer knows the correct design/photo is being ordered.
+Avoid cross-selling inside the final payment step.
+Checkout should feel secure, clean and extremely straightforward.
+PROMPT 32 — PREMIUM FOOTER
+Redesign the footer.
+Brand statement:
+Personalised photo printing, framing, cards, wall art and curated fragrance gifts by AL-NOOR.
+Columns:
+PRINT & FRAMEFrame My PhotoPhoto PrintsFramed PrintsGallery Walls
+CARDS & GIFTSBirthday CardsWeddingAnniversaryGift Sets
+ITRAAll ItraDiscovery SetsGift Sets
+HELPSize GuideShippingFAQsContact
+COMPANYAboutPrivacyTermsReturns
+Use either:
+warm ivory background
+or:
+charcoal background + warm white text.
+Avoid an oversized complicated footer.
+Mobile:use clean accordion groups.
+PROMPT 33 — REMOVE OLD ROYAL DESIGN REMNANTS
+Perform a visual cleanup pass.
+Identify any remaining components from the old dark green / black / gold / royal style.
+Replace:
+gold gradient text
+glowing gold borders
+heavy black-green backgrounds
+excessive ornamentation
+royal visual language
+inconsistent buttons
+heavy box shadows
+glass cards
+with the current warm modern premium system.
+Especially check:frame showcaseframe mouldingsIslamic artItragallery wallsprice estimatorproduct pages
+Every section must now feel like it belongs to one website.
+PROMPT 34 — REMOVE / RELOCATE DUPLICATE HOMEPAGE FEATURES
+Reduce homepage length.
+Do not keep every existing module as a full homepage section.
+Move secondary tools to deeper pages.
+Homepage should approximately contain:
+01 Hero
+02 Main Category Gateway
+03 Create Something Personal
+04 Our Most Loved
+05 Shop By Occasion
+06 Custom Framing / Size Experience
+07 Gallery Walls
+08 Itra Editorial Teaser
+09 Made In Our Studio
+10 Customer Homes
+11 Final CTA
+12 Footer
+Relocate:full Price Estimatorfull Frame Moulding librarydetailed Size Guidecomplex Gallery Builderlong process explanations
+to relevant internal pages.
+The homepage should feel curated, not exhaustive.
+PROMPT 35 — CREATE FINAL HOMEPAGE CTA
+Create a strong emotional closing section before footer.
+Use a large premium image or very clean ivory background.
+Heading:
+READY TO MAKESOMETHING PERSONAL?
+Buttons:
+FRAME A PHOTO
+PRINT PHOTOS
+CREATE A CARD
+Small secondary link:
+Explore Gifts →
+Keep the section large and spacious.
+Do not add more selling information after this except footer.
+PROMPT 36 — MOBILE-FIRST PREMIUM POLISH
+Perform a complete mobile-only UX review.
+Do not simply shrink desktop.
+Verify:
+NavbarMega menu replacementHero cropCategory gatewayCustom frame wizardPhoto uploadPhoto print orderingCard customizerFrame swatchesBest sellersOccasion collectionsItraCartCheckout
+Rules:
+No horizontal overflow
+No tiny text
+No crowded controls
+No hover-dependent actions
+No three-column layouts on small screens
+Use horizontal swipe where helpful
+Use sticky purchase controls where helpful
+Maintain large touch targets
+Keep important CTAs within natural thumb reach
+WhatsApp floating control must never cover:Add To CartCheckoutCustomizer controls
+PROMPT 37 — FACTUAL PRODUCT COPY AUDIT
+Audit every technical and product claim.
+Remove or correct unsupported wording such as:
+12-colour pigment printing
+museum-grade
+100+ year archival
+European white oak
+American black walnut
+24K gold foil
+99% UV protection
+acid-free archival backing
+or similar claims
+unless verified for the actual product.
+The business currently uses an Epson L18050.
+Use accurate wording such as:
+Professional 6-Colour Epson Photo Printing
+Use actual paper type, weight, frame material and glazing specifications provided by the business.
+Premium branding must come from authenticity and presentation, not exaggerated specifications.
+Where specification is unknown, use neutral placeholder text and clearly mark it for replacement.
+PROMPT 38 — REPLACE DEMO CONTENT
+Audit the entire project for:
+dummy phone numbersplaceholder addressesfake social linkssample reviewsdemo productsplaceholder emailsstock contact detailsdemo cart itemstemporary pricingtest images
+Create one structured file/configuration containing all business contact details so these values are maintained centrally.
+Do not invent missing information.
+Mark unresolved data clearly.
+PROMPT 39 — CREATE A REUSABLE DESIGN SYSTEM
+Refactor repeated visual components into reusable UI components.
+Create consistent versions of:
+PrimaryButton
+SecondaryButton
+SectionHeader
+CategoryCard
+ProductCard
+ServiceCard
+UploadArea
+Tabs
+FrameSwatch
+SizeSelector
+PriceDisplay
+TrustStrip
+ProductGallery
+Accordion
+QuantitySelector
+ReviewCard
+NavigationLink
+SpacingSection
+Ensure typography, spacing, borders and responsive behaviour are defined consistently.
+Reduce unnecessary duplicated inline styles.
+Do not alter business logic during this refactor.
+PROMPT 40 — FINAL PREMIUM DESIGN AUDIT
+Perform a final full-site design and user experience audit.
+Do not perform another arbitrary redesign.
+Only identify and repair inconsistencies.
+Review:
+Brand consistency
+Typography
+Colour usage
+Whitespace
+Section rhythm
+Product imagery
+Buttons
+Cards
+Navigation
+Mobile layout
+Tablet layout
+Custom frame experience
+Photo print ordering
+Card personalization
+Itra shopping
+Cart
+Checkout
+Loading states
+Empty states
+Error states
+Photo upload states
+Search
+Product specifications
+Reviews
+Packaging information
+Demo content
+Broken links
+Accessibility
+Text contrast
+Performance
+The finished website should feel like:
+A premium modern personalised print, frame and gifting brand.
+Not:a generic ecommerce template.
+Not:a traditional photo studio website.
+Not:a black-and-gold luxury theme.
+Final desired impression:
+Beautiful photography.Exceptional restraint.Clear product hierarchy.Easy personalisation.Strong trust.Premium physical products.Thoughtful gifting.

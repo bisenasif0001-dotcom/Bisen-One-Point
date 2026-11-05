@@ -1,0 +1,86 @@
+[
+  {
+    "overflow": false,
+    "path": "/custom-framing",
+    "position": "static",
+    "top": "138px",
+    "width": 360
+  },
+  {
+    "overflow": false,
+    "path": "/photo-prints",
+    "position": "relative",
+    "top": "0px",
+    "width": 360
+  },
+  {
+    "overflow": false,
+    "path": "/birthday-cards",
+    "position": "static",
+    "top": "auto",
+    "width": 360
+  },
+  {
+    "overflow": false,
+    "path": "/gallery-walls",
+    "position": "static",
+    "top": "auto",
+    "width": 360
+  },
+  {
+    "overflow": false,
+    "path": "/custom-framing",
+    "position": "static",
+    "top": "138px",
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/photo-prints",
+    "position": "relative",
+    "top": "0px",
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/birthday-cards",
+    "position": "sticky",
+    "top": "138px",
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/gallery-walls",
+    "position": "sticky",
+    "top": "138px",
+    "width": 768
+  },
+  {
+    "overflow": false,
+    "path": "/custom-framing",
+    "position": "sticky",
+    "top": "105px",
+    "width": 1440
+  },
+  {
+    "overflow": false,
+    "path": "/photo-prints",
+    "position": "sticky",
+    "top": "105px",
+    "width": 1440
+  },
+  {
+    "overflow": false,
+    "path": "/birthday-cards",
+    "position": "sticky",
+    "top": "105px",
+    "width": 1440
+  },
+  {
+    "overflow": false,
+    "path": "/gallery-walls",
+    "position": "sticky",
+    "top": "105px",
+    "width": 1440
+  }
+]

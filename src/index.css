@@ -1,0 +1,543 @@
+/* ==========================================================================
+   AL-NOOR STUDIO - Minimal, Modern, Editorial Design System
+   ========================================================================== */
+
+:root {
+  /* Warm Ivory / Off-white Background System */
+  --bg-main: #F5F3EE;
+  --bg-surface: #FFFFFF;
+  --bg-surface-elevated: #EDEAE3;
+  --bg-surface-subtle: #F9F8F5;
+  --bg-dark: #20201E;
+  --bg-dark-surface: #282825;
+
+  /* Typography Palette (WCAG AA High Contrast) */
+  --text-primary: #171717;
+  --text-secondary: #5E5C57;
+  --text-muted: #84817A;
+  --text-light: #F5F3EE;
+  --text-accent: #9B7A50;
+
+  /* Muted Bronze / Warm Taupe Accent (Used sparingly, 5-10%) */
+  --accent-bronze: #9B7A50;
+  --accent-bronze-dark: #7F633E;
+  --accent-bronze-light: #C4AA87;
+  --accent-bronze-subtle: rgba(155, 122, 80, 0.08);
+
+  /* Clean Neutral Hairline Borders */
+  --border-color: #E6E2D8;
+  --border-subtle: #EFECE6;
+  --border-dark: #333330;
+  --border-active: #171717;
+
+  /* Extremely Soft, Natural Shadows */
+  --shadow-sm: 0 1px 3px rgba(23, 23, 23, 0.04);
+  --shadow-card: 0 4px 20px -2px rgba(23, 23, 23, 0.04);
+  --shadow-elevated: 0 14px 34px -4px rgba(23, 23, 23, 0.07);
+  --shadow-luxe: var(--shadow-elevated);
+
+  /* Typography */
+  --font-serif: 'Cormorant Garamond', Garamond, 'Times New Roman', serif;
+  --font-sans: 'Manrope', 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-royal: var(--font-serif);
+  --font-royal-decorative: var(--font-serif);
+  --font-arabic: 'Amiri', serif;
+
+  /* Architectural Radius */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-full: 9999px;
+
+  /* Transition */
+  --transition-fast: 0.15s ease;
+  --transition-base: 0.25s ease;
+}
+
+/* Light / Default Theme Clean Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: var(--font-sans);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+  overflow-x: clip;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+  overflow-x: clip;
+  line-height: 1.6;
+  font-family: var(--font-sans);
+  background-color: var(--bg-main);
+  color: var(--text-primary);
+}
+
+/* Subtle, Quiet Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-main);
+}
+::-webkit-scrollbar-thumb {
+  background: #D8D4CA;
+  border-radius: var(--radius-xs);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #B8B3A8;
+}
+
+/* Typography Classes */
+h1, h2, h3, h4, .font-serif {
+  font-family: var(--font-serif);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.font-royal-decor, .font-royal {
+  font-family: var(--font-serif);
+  letter-spacing: -0.01em;
+}
+
+.font-sans {
+  font-family: var(--font-sans);
+}
+
+.font-arabic {
+  font-family: var(--font-arabic);
+  direction: rtl;
+}
+
+/* Subtle Bronze Text Accent (Replaces Loud Gold Gradients) */
+.gold-gradient-text {
+  color: var(--accent-bronze);
+  font-style: italic;
+  font-weight: 500;
+  display: inline-block;
+}
+
+/* Clean, Understated Cards (Replaces heavy glassmorphism and glow) */
+.glass-panel {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.glass-card-hover {
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+}
+.glass-card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-elevated);
+  border-color: #D3CEBF;
+}
+
+/* ==========================================================================
+   REUSABLE UI COMPONENTS
+   ========================================================================== */
+
+/* 1. Primary Button (Charcoal Background + Clean Light Text) */
+.btn-primary, .btn-gold {
+  background: var(--text-primary);
+  color: var(--text-light);
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
+  padding: 0.72rem 1.4rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--text-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+  box-shadow: none;
+}
+.btn-primary:hover, .btn-gold:hover {
+  background: #2D2D2A;
+  border-color: #2D2D2A;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+/* 2. Secondary Button (Transparent + Subtle Neutral Border) */
+.btn-secondary, .btn-outline {
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-weight: 500;
+  font-size: 0.88rem;
+  padding: 0.72rem 1.4rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+.btn-secondary:hover, .btn-outline:hover {
+  background: #EFECE6;
+  border-color: #D6D1C6;
+  color: var(--text-primary);
+}
+
+/* 3. Understated WhatsApp Button */
+.btn-whatsapp {
+  background: #171717;
+  color: #FFFFFF;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 0.86rem;
+  padding: 0.7rem 1.35rem;
+  border-radius: var(--radius-md);
+  border: 1px solid #171717;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+.btn-whatsapp:hover {
+  background: #2D2D2A;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
+
+/* 4. Section Heading (Editorial Typography + Generous Spacing) */
+.section-heading {
+  text-align: center;
+  max-width: 680px;
+  margin: 0 auto 3.5rem auto;
+}
+.section-heading-eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent-bronze);
+  margin-bottom: 0.6rem;
+}
+.section-heading-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  font-weight: 500;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 0.85rem;
+}
+.section-heading-desc {
+  font-size: 0.96rem;
+  color: var(--text-secondary);
+  line-height: 1.65;
+}
+
+/* 5. Minimal Editorial Badges (Understated, non-glow) */
+.badge-gold, .badge-emerald {
+  background: #EFECE6;
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-transform: uppercase;
+}
+
+/* 6. Product Card Component */
+.product-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform var(--transition-base), box-shadow var(--transition-base), border-color var(--transition-base);
+  display: flex;
+  flex-direction: column;
+}
+.product-card:hover {
+  transform: translateY(-3px);
+  border-color: #D3CEBF;
+  box-shadow: var(--shadow-elevated);
+}
+
+/* 7. Image Panel */
+.image-panel {
+  background: #EDEAE3;
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+}
+
+/* 8. Size Selector Item */
+.size-selector-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  border-radius: var(--radius-md);
+  padding: 0.65rem 0.5rem;
+  cursor: pointer;
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+.size-selector-btn.active, .size-selector-btn:hover {
+  border-color: var(--text-primary);
+  background: #F4F1EA;
+}
+
+/* 9. Frame Swatch */
+.frame-swatch-item {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 0.65rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all var(--transition-fast);
+}
+.frame-swatch-item:hover, .frame-swatch-item.active {
+  border-color: var(--text-primary);
+  background: #F4F1EA;
+}
+
+/* 10. Price Block */
+.price-block {
+  font-family: var(--font-sans);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+/* 11. Trust Item */
+.trust-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+.trust-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  background: #EFECE6;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* Layout Container */
+.container-custom {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+/* Page Hero Banner (Editorial & Calm) */
+.page-hero-banner {
+  padding: 4.5rem 0 3.5rem 0;
+  text-align: center;
+  position: relative;
+  border-bottom: 1px solid var(--border-color);
+  background: #F9F8F5;
+}
+
+/* Frame Border Emulators (Clean & Realistic, without neon glows) */
+.customizer-frame-wrapper {
+  position: relative;
+  transition: all 0.3s ease;
+  box-sizing: border-box;
+}
+
+.border-gold-victorian, .hero-frame-gold-victorian {
+  border: 16px solid #BCA16B;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
+}
+.border-gold-baroque {
+  border: 14px solid #CDB580;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.2);
+}
+.border-gold-champagne {
+  border: 10px solid #D8C396;
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.16);
+}
+.border-matte-black, .hero-frame-obsidian {
+  border: 14px solid #1C1C1E;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+}
+.border-textured-black {
+  border: 15px solid #242426;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.32);
+}
+.border-pearl-white {
+  border: 14px solid #FFFFFF;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
+}
+.border-gunmetal-silver {
+  border: 12px solid #8A8E94;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.18);
+}
+.border-teak-wood, .hero-frame-teak {
+  border: 15px solid #845731;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+}
+.border-rustic-walnut {
+  border: 16px solid #4D3324;
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.24);
+}
+.border-dark-mahogany {
+  border: 15px solid #582424;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.22);
+}
+.border-acrylic-float {
+  border: 3px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.25);
+}
+.border-shadow-box {
+  border: 18px solid #202022;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+.border-velvet-gold {
+  border: 16px solid #BCA16B;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* REAL STUDIO FRAME BORDERS */
+.border-regal-aurelia {
+  border: 15px solid #C2A782;
+  box-shadow: 0 16px 36px rgba(194, 167, 130, 0.35), inset 0 0 0 2px #E8C175;
+}
+.border-regal-noir {
+  border: 15px solid #1C1C1E;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.32), inset 0 0 0 2px #333333;
+}
+.border-regal-heritage {
+  border: 16px solid #5C3A21;
+  box-shadow: 0 16px 36px rgba(92, 58, 33, 0.35), inset 0 0 0 2px #D4AF37;
+}
+.border-emberstone {
+  border: 16px solid #3A2D23;
+  box-shadow: 0 18px 40px rgba(58, 45, 35, 0.4), inset 0 0 0 2px #B8860B;
+}
+.border-regal-onyx {
+  border: 15px solid #111111;
+  box-shadow: 0 16px 38px rgba(0, 0, 0, 0.45), inset 0 0 0 2px #D0D5DD;
+}
+.border-regal-windsor {
+  border: 16px solid #4A1E18;
+  box-shadow: 0 18px 40px rgba(74, 30, 24, 0.38), inset 0 0 0 2px #DAA520;
+}
+.border-regal-blue {
+  border: 16px solid #FFFFFF;
+  box-shadow: 0 16px 36px rgba(30, 58, 95, 0.3), inset 0 0 0 3px #1E3A5F;
+}
+
+/* Modals Backdrop (Subtle charcoal veil) */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(23, 23, 23, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+}
+
+/* Grid utilities */
+.grid-responsive-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 2rem;
+}
+
+@media (max-width: 768px) {
+  /* Prevent horizontal overflow */
+  html, body {
+    overflow-x: clip !important;
+    width: 100%;
+    position: relative;
+  }
+
+  .container-custom {
+    padding: 0 1rem !important;
+  }
+
+  /* Tap targets: minimum comfortable touch sizing */
+  button, a, input, select {
+    min-height: 42px;
+  }
+
+  /* Ensure tap target feedback without flash */
+  button, a {
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0.05);
+    touch-action: manipulation;
+  }
+
+  /* Typography safety on small screens */
+  h1 {
+    font-size: clamp(2rem, 6.5vw, 2.5rem) !important;
+    line-height: 1.18 !important;
+  }
+  h2 {
+    font-size: clamp(1.8rem, 5.5vw, 2.2rem) !important;
+    line-height: 1.2 !important;
+  }
+
+  .grid-responsive-cards {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  /* Modal backdrop on mobile */
+  .modal-backdrop {
+    padding: 0.75rem !important;
+  }
+
+  /* Consistent section vertical rhythm on mobile */
+  section {
+    padding: 3.5rem 0 !important;
+  }
+
+  /* Prompt 36: Ensure sections with sticky action bars leave space for thumb controls */
+  .customizer-main-section,
+  .photo-prints-builder-section,
+  .card-builder-main-section {
+    padding-bottom: 96px !important;
+  }
+}
+
+/* Keyboard users can bypass the repeated shop navigation. */
+.skip-to-content { position: fixed; top: 12px; left: 12px; z-index: 3000; transform: translateY(-150%); padding: 12px 18px; border-radius: 6px; background: #294738; color: #fff; text-decoration: none; }
+.skip-to-content:focus { transform: translateY(0); outline: 2px solid #b68b52; outline-offset: 3px; }

@@ -1,0 +1,62 @@
+[
+  {
+    "Check": "validateAddToBag",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateBirthdayCards",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateCustomFrameStudio",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateDuaCatalogue",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateDuaPosterOrder",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateFrameCatalogue",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateFramePreviews",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateGalleryWalls",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateHomepage",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateIslamicArt",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validateOrderTracking",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validatePhotoPrints",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validatePrelaunch",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validatePrintingServices",
+    "ExitCode": 0
+  },
+  {
+    "Check": "validatePvcCards",
+    "ExitCode": 0
+  }
+]

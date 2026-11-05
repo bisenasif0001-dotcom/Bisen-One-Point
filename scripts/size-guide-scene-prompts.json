@@ -1,0 +1,20 @@
+{
+  "generator": "built-in image_gen",
+  "scenes": [
+    {
+      "id": "living",
+      "prompt": "Use case: photorealistic-natural. Asset: a clean interior background for an interactive photo-frame size visualizer, landscape 3:2 composition. Photograph a refined, understated living room straight on, camera level and parallel to the back wall, no perspective skew or wide-angle distortion. Warm ivory limewash wall fills the upper 64% of the image. A low, elegant oatmeal linen three-seat sofa sits centered, its full outer width occupying about 70% of image width, top of the back at 68% of image height, feet visible near the bottom. Muted olive and cream cushions, warm pale oak flooring. A small ceramic vessel and a slim floor lamp may sit near the far edges, entirely outside the central 65% wall area. Gentle daylight from the left, realistic understated shadows, calm premium interior photography, tactile natural materials. The central upper wall from 25% to 75% image width and 8% to 61% image height must be completely empty and evenly lit to receive a dynamically rendered real frame. The room is unoccupied. No wall art, no frames, no hanging outlines, no mirrors, no shelves, no moulding rectangles, no posters, no borders, no text or logos. Deliver one full-bleed room photograph only.",
+      "asset": "public/rooms/size-guide/living-v2.webp"
+    },
+    {
+      "id": "bedroom",
+      "prompt": "Use case: photorealistic-natural. Asset: clean bedroom background for an interactive photo-frame size visualizer, landscape 3:2 composition. Straight-on, level camera parallel to a warm soft greige plaster back wall, architectural verticals straight, realistic premium interior photography. A low upholstered sand-coloured bed headboard is centered and spans about 67% of the image width, its top at 67% image height. Cream linen bedding with one muted taupe throw extends toward the foreground and bottom edge. Tiny balanced oak bedside tables and subdued sculptural bedside lamps near the far left and right edges. The upper 62% of the image is an uncluttered softly lit wall. Keep the central area spanning 24%–76% image width and 6%–61% image height absolutely empty and consistent in light, intended for a real photo frame to be composited by a website. Natural morning light from the left, no dramatic cast shadows in that central area, understated quiet premium styling. Unoccupied. No artwork, no frames, no outlines, no mirrors, no wall shelves, no rectangular wall mouldings, no text, no logos, no border. Deliver a single full-bleed room photograph.",
+      "asset": "public/rooms/size-guide/bedroom-v2.webp"
+    },
+    {
+      "id": "console",
+      "prompt": "Use case: photorealistic-natural. Asset: a premium console / study corner background for an interactive photo-frame preview, landscape 3:2 composition. Level camera directly facing a pale warm stone plaster wall, camera square to the wall, straight verticals and minimal perspective. A beautifully crafted slim walnut console desk is centered and occupies about 62% of image width, its top horizontal surface at 72% of image height, graceful slim legs visible below. Pale oak floor and a small woven rug at bottom edge. One very small sculptural ceramic vase or low book stack may sit only at a far outer edge of the desk; keep the central 75% of the desk surface completely bare. A tasteful leafy plant can be at the extreme far right, outside the center wall. Soft natural left-side daylight, warm neutral palette with walnut contrast, realistic texture, elegant boutique interior photography. Entire center upper wall from 23% to 77% image width and 5% to 67% height must be absolutely empty to place a user-selectable real frame on it. No chair or furniture blocking the center. Unoccupied. No frame, no artwork, no poster, no built-in white rectangle, no mirror, no wall decoration, no outlines or borders, no text, no watermark. One full-bleed photograph, not a collage.",
+      "asset": "public/rooms/size-guide/console-v2.webp"
+    }
+  ]
+}
