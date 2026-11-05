@@ -1,7 +1,7 @@
 export const DEFAULT_BUSINESS_RULES = {
   shipping: { pickupEnabled: true, pvcStarting: 69, printsStarting: 79, freeThreshold: 999, freePincodes: [], freeTypes: ['pvc_card', 'photo_prints'], freeMaxCharge: 0 },
   production: { dispatchMinDays: 2, dispatchMaxDays: 4 },
-  refunds: { initiateBusinessDays: 3, damagePreferredHours: 48 },
+  refunds: { initiateBusinessDays: 3, damagePreferredHours: 48, postProductionNote: 'Cancellation after production starts is assessed against the actual production cost and applicable cancellation rules. The studio explains the costs and any refund before confirming the outcome.' },
   retention: { workingDaysAfterDelivery: 30, backupDays: 30 },
   grievance: { name: 'M. Talib Khan', designation: 'Grievance Officer' },
   coupons: [

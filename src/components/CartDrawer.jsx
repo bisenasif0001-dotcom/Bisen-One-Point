@@ -1,3 +1,5 @@
+import { useBusinessRules } from './BusinessRulesProvider';
+import { couponCalculation } from '../data/businessRules';
 import SmartCrossSell from './SmartCrossSell';
 import OrderItemPreview from './OrderItemPreview';
 import React, { useState } from 'react';
@@ -30,18 +32,18 @@ export default function CartDrawer({
   onRemoveItem,
   onProceedCheckout,
   discountCode,
-  discountPercent = 0,
   onApplyDiscount
 }) {
+  const { rules } = useBusinessRules();
   const [couponInput, setCouponInput] = useState('');
   const [couponError, setCouponError] = useState('');
   const [activeCustomisationItem, setActiveCustomisationItem] = useState(null);
 
   // Totals calculations
   const subtotal = cartItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-  const discountAmount = Math.round((subtotal * discountPercent) / 100);
-  const shippingFee = subtotal >= 999 || subtotal === 0 ? 0 : 99;
-  const finalTotal = Math.max(0, subtotal - discountAmount + shippingFee);
+  const coupon = couponCalculation({rules,code:discountCode,subtotal,items:cartItems.map(item=>({...item,discounted:item.type==='birthday_card'&&Number(item.configuration?.cardCount)>1}))});
+  const discountAmount = coupon.error ? 0 : coupon.discountAmount;
+  const finalTotal = Math.max(0, subtotal - discountAmount);
   const totalItemCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
 
   if (!isOpen) return null;
@@ -50,15 +52,10 @@ export default function CartDrawer({
   const handleApplyCoupon = (e) => {
     e.preventDefault();
     const code = couponInput.trim().toUpperCase();
-    if (code === 'BARAKAH15') {
-      onApplyDiscount(code, 15);
-      setCouponError('');
-    } else if (code === 'WELCOME10') {
-      onApplyDiscount(code, 10);
-      setCouponError('');
-    } else {
-      setCouponError('Invalid coupon. Try BARAKAH15 or WELCOME10');
-    }
+    const preview=couponCalculation({rules,code,subtotal,items:cartItems.map(item=>({...item,discounted:item.type==='birthday_card'&&Number(item.configuration?.cardCount)>1}))});
+    if(preview.error){setCouponError(preview.error);return;}
+    onApplyDiscount(code,0);setCouponError('');
+
   };
 
 
@@ -187,40 +184,7 @@ export default function CartDrawer({
           </button>
         </div>
 
-        {/* 2. Free Delivery Threshold Banner */}
-        <div
-          style={{
-            padding: '0.7rem 1.5rem',
-            backgroundColor: subtotal >= 999 ? '#F0F7F2' : '#FFFFFF',
-            borderBottom: '1px solid #EDE8E1',
-            fontSize: '0.76rem',
-            flexShrink: 0
-          }}
-        >
-          {subtotal >= 999 ? (
-            <div style={{ color: '#1E6F3E', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Check size={14} strokeWidth={2.5} />
-              <span>You have unlocked <strong>Free Delivery</strong></span>
-            </div>
-          ) : (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: '#5C5A55', marginBottom: '5px' }}>
-                <span>Add <strong>₹{999 - subtotal}</strong> more for <strong>Free Delivery</strong></span>
-                <span style={{ fontWeight: 600, color: '#9B7A50' }}>{Math.round((subtotal / 999) * 100)}%</span>
-              </div>
-              <div style={{ height: '4px', backgroundColor: '#EAE6DD', borderRadius: '999px', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    height: '100%',
-                    width: `${Math.min(100, (subtotal / 999) * 100)}%`,
-                    backgroundColor: '#9B7A50',
-                    transition: 'width 0.3s ease'
-                  }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
+        <div style={{padding:'0.8rem 1.5rem',borderBottom:'1px solid #e4e9da',background:'#f6f8ef',fontSize:11,lineHeight:1.8,color:'#587149'}}>Free Lucknow studio pickup. Courier and protective packaging are quoted for your address before payment. <Link to="/shipping" onClick={onClose}>Delivery details</Link></div>
 
         {/* 3. Main Scrollable Items Container */}
         <div
@@ -571,7 +535,7 @@ export default function CartDrawer({
               <div style={{ position: 'relative', flex: 1 }}>
                 <input
                   type="text"
-                  placeholder="Coupon code (e.g. BARAKAH15)"
+                  placeholder="Coupon code"
                   value={couponInput}
                   onChange={(e) => setCouponInput(e.target.value)}
                   style={{
@@ -608,7 +572,7 @@ export default function CartDrawer({
             {discountCode && (
               <div style={{ fontSize: '0.74rem', color: '#1E6F3E', display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '0.75rem', backgroundColor: '#F0F7F2', padding: '0.35rem 0.65rem', borderRadius: '4px' }}>
                 <Tag size={13} />
-                <span>Coupon <strong>{discountCode}</strong> applied ({discountPercent}% savings)</span>
+                <span>Coupon <strong>{discountCode}</strong> · up to ₹{discountAmount} off items</span>
               </div>
             )}
             {couponError && (
@@ -626,7 +590,7 @@ export default function CartDrawer({
 
               {discountAmount > 0 && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: '#1E6F3E' }}>
-                  <span>Promo Discount ({discountPercent}%)</span>
+                  <span>Item discount</span>
                   <span>-₹{discountAmount}</span>
                 </div>
               )}
@@ -637,11 +601,7 @@ export default function CartDrawer({
                   Delivery
                 </span>
                 <span>
-                  {shippingFee === 0 ? (
-                    <strong style={{ color: '#1E6F3E' }}>FREE</strong>
-                  ) : (
-                    `₹${shippingFee}`
-                  )}
+                  Confirmed before payment
                 </span>
               </div>
 
@@ -657,7 +617,7 @@ export default function CartDrawer({
                   marginTop: '4px'
                 }}
               >
-                <span>Total Amount</span>
+                <span>Items after discount</span>
                 <span>₹{finalTotal}</span>
               </div>
             </div>

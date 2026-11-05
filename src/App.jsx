@@ -108,7 +108,7 @@ export default function App() {
   };
 
   const handleClearCart = () => {
-    setCartItems([]);
+    setCartItems([]); setDiscountCode(''); setDiscountPercent(0);
   };
 
   const handleProceedCheckout = (tab) => {

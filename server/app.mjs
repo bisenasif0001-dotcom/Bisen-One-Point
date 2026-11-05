@@ -48,7 +48,7 @@ export function createStudioService({directory=resolve('.studio-data'),productio
   function insertOrder(input,idempotency,requestHash){
     const reference=`ALN-${randomBytes(6).toString('hex').toUpperCase()}`,token=randomBytes(24).toString('hex'),date=now();
     const order={...input,reference,orderId:`#${reference}`,source:'server',placedAt:date,updatedAt:date,status:'received',statusLabel:'Order received',payment:defaultPayment(),publicNote:'',privateNotes:'',history:[{status:'received',title:'Order received',note:'Your request has reached the studio.',at:date}]};
-    order.artwork=initialArtwork(order); order.retention={...rules().retention};
+    order.artwork=initialArtwork(order); order.retention={...rules().retention}; order.refundPolicy={...rules().refunds};
     db.prepare('INSERT INTO orders(reference,access_hash,access_secret,idempotency,request_hash,data,created,updated) VALUES(?,?,?,?,?,?,?,?)').run(reference,hash(token),encrypt(token),idempotency||null,requestHash,JSON.stringify(order),date,date);
     audit(reference,'Order created','customer');return fullOrder(get(reference));
   }
@@ -140,7 +140,7 @@ export function createStudioService({directory=resolve('.studio-data'),productio
         if(fileRoute){const record=get(fileRoute[1]);if(!record)throw new ApiError(404,'Order not found.');
           if(method==='GET'&&fileRoute[2]){const data=originals.download(fileRoute[1],fileRoute[2]);res.writeHead(200,{'Content-Type':'application/octet-stream','Content-Disposition':`attachment; filename*=UTF-8''${encodeURIComponent(data.file.name)}`,'Content-Length':data.bytes.length,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'});res.end(data.bytes);return;}
           if(method==='GET')return json(res,200,{files:originals.list(fileRoute[1])});
-          if(method==='POST'){rate(req,'proof-upload',60);const bytes=await body(req,ORDER_FILE_RULES.maxFileBytes);const uploaded=originals.add(fileRoute[1],bytes,{name:decodeHeader(req,'x-file-name'),label:decodeHeader(req,'x-file-label'),kind:'proof'});return json(res,201,uploaded);}
+          if(method==='POST'){rate(req,'proof-upload',60);const bytes=await body(req,ORDER_FILE_RULES.maxFileBytes);const uploaded=originals.add(fileRoute[1],bytes,{name:decodeHeader(req,'x-file-name'),label:decodeHeader(req,'x-file-label'),sourceId:decodeHeader(req,'x-file-source'),kind:req.headers['x-file-kind']==='original'?'original':'proof'});return json(res,201,uploaded);}
         }
         const workflowRoute=path.match(/^\/api\/studio\/orders\/(ALN-[A-Z0-9-]+)\/(pricing|artwork|support|delete-files)$/);
         if(workflowRoute&&method==='POST'){
@@ -198,6 +198,7 @@ export function createStudioService({directory=resolve('.studio-data'),productio
             if(trackingUrl){let link;try{link=new URL(trackingUrl);}catch{throw new ApiError(400,'Enter a full HTTPS courier tracking link.');}if(link.protocol!=='https:'||link.username||link.password)throw new ApiError(400,'Use a full HTTPS courier link.');}
             const expectedDate=cleanText(data.delivery?.expectedDate,10);
             if(expectedDate&&(!/^\d{4}-\d{2}-\d{2}$/.test(expectedDate)||Number.isNaN(Date.parse(`${expectedDate}T12:00:00Z`))||new Date(`${expectedDate}T12:00:00Z`).toISOString().slice(0,10)!==expectedDate))throw new ApiError(400,'Choose a valid expected date.');
+            if(data.legalHold&& !cleanText(data.privateNotes))throw new ApiError(400,'Record the reason for the retention hold in the internal note.');
             if(data.legalHold!==undefined)order.legalHold=Boolean(data.legalHold);
             if(data.filesReviewed!==undefined)order.filesReviewed=Boolean(data.filesReviewed);
             if(order.commerceVersion>=2&&['design_approved','printing','ready','dispatched','delivered'].includes(data.status)){
@@ -235,8 +236,9 @@ export function createStudioService({directory=resolve('.studio-data'),productio
       }
       if(path==='/api/order-files/upload'&&method==='POST'){
         rate(req,'original-upload',60);const record=authenticatedOrder({reference:req.headers['x-order-reference'],token:req.headers['x-order-token']});
-        if(record.order.status==='cancelled')throw new ApiError(409,'This order is cancelled. Contact the studio before sharing more files.');
+        
         const kind=req.headers['x-file-kind']==='evidence'?'evidence':'original',caseId=cleanText(req.headers['x-case-id'],100);
+        if(record.order.status==='cancelled'&&kind==='original')throw new ApiError(409,'This order is cancelled. Contact the studio before sharing originals.');
         if(kind==='evidence'&&!record.order.requests?.some(request=>request.id===caseId))throw new ApiError(400,'Save the support request before attaching evidence.');
         const bytes=await body(req,ORDER_FILE_RULES.maxFileBytes),uploaded=originals.add(record.order.reference,bytes,{name:decodeHeader(req,'x-file-name'),label:decodeHeader(req,'x-file-label'),sourceId:decodeHeader(req,'x-file-source'),kind,caseId});
         return json(res,201,uploaded);

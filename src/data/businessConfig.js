@@ -12,7 +12,7 @@ const STUDIO_ADDRESS = 'Shop No. 31-32, Milan Tower, Kursi Road, Near 4 No Chaur
 export const BUSINESS_CONFIG = {
   brand: {
     name: 'AL-NOOR STUDIO',
-    legalName: 'Al-Noor Framing Studio & Itra House',
+    legalName: 'AL-NOOR Print & Frame Studio',
     tagline: 'Preserving Sacred Memories & Artisanal Fragrances',
     slogan: 'PRINT • FRAME • GIFT',
     description: 'Personalised photo printing, handcrafted custom framing, bespoke milestone cards, sacred calligraphy wall art, and curated artisanal fragrance gifts.'

@@ -17,6 +17,7 @@ export function validateBusinessRules(value) {
   rules.production.dispatchMaxDays = number(value.production, 'dispatchMaxDays', rules.production.dispatchMinDays, 180);
   rules.refunds.initiateBusinessDays = number(value.refunds, 'initiateBusinessDays', 1, 30);
   rules.refunds.damagePreferredHours = number(value.refunds, 'damagePreferredHours', 1, 168);
+  const cancellationNote=String(value.refunds.postProductionNote||'').trim();if(cancellationNote.length<20||cancellationNote.length>1000)throw new ApiError(400,'Describe the after-production cancellation rule using 20–1000 characters.');rules.refunds.postProductionNote=cancellationNote;
   rules.retention.workingDaysAfterDelivery = number(value.retention, 'workingDaysAfterDelivery', 1, 365);
   rules.retention.backupDays = number(value.retention, 'backupDays', 1, 90);
   for (const key of ['name', 'designation']) { const text = String(value.grievance?.[key] || '').trim(); if (!text || text.length > 120) throw new ApiError(400, 'Enter the grievance officer name and designation.'); rules.grievance[key] = text; }

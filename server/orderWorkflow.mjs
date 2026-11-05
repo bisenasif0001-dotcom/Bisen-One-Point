@@ -54,7 +54,10 @@ export function updateSupportRequest(order, data) {
   if (request.type === 'delete_files' && data.status === 'resolved' && !order.filesPurgedAt) throw new ApiError(409, 'Complete the approved file deletion before resolving this request.');
   if (data.status === 'refund_initiated' && (!request.approvedAt || !cleanText(data.refundReference, 150))) throw new ApiError(400, 'Approve the request first and enter the payment-provider refund reference.');
   if (data.status === 'approved') {
-    const amount = Number(data.refundAmount || 0);
+    const remedy = ['replacement','reprint','refund','deletion','other'].includes(data.remedy)?data.remedy:'refund';
+    const amount = remedy==='refund'?Number(data.refundAmount || 0):0;
+    if(amount>0&&!order.payment.isPaid&&!['part_refunded'].includes(order.payment.status))throw new ApiError(400,'Verify the received payment before approving a monetary refund.');
+    request.remedy=remedy;request.initiateWithinBusinessDays=order.refundPolicy?.initiateBusinessDays||3;
     if (!Number.isFinite(amount) || amount < 0 || amount > (order.grandTotal || 0)) throw new ApiError(400, 'Check the approved refund amount.');
     if (request.type === 'cancel' && !order.history.some(event => event.status === 'printing') && order.payment.isPaid && amount !== order.grandTotal) throw new ApiError(400, 'Before production starts, a paid cancellation requires a full refund.');
     request.refundAmount = amount; request.approvedAt = at;
