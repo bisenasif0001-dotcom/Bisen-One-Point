@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "sync-calligraphy": "node scripts/syncCalligraphy.js",
     "start": "node server/start.mjs",
-    "test:studio": "node --test server/tests/*.test.mjs"
+    "test:studio": "node --test server/tests/*.test.mjs",
+    "backup:studio": "node server/maintenanceCli.mjs backup",
+    "retention:studio": "node server/maintenanceCli.mjs retention"
   },
   "dependencies": {
     "canvas-confetti": "^1.9.4",
