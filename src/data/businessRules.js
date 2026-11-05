@@ -18,7 +18,7 @@ export function couponCalculation({ rules = DEFAULT_BUSINESS_RULES, code = '', i
   if (!coupon?.enabled) return fail('This coupon is unavailable.');
   if (coupon.expires && now > new Date(`${coupon.expires}T23:59:59+05:30`)) return fail('This coupon has expired.');
   if (subtotal < coupon.minSubtotal) return fail(`This coupon needs an item subtotal of at least ₹${coupon.minSubtotal}.`);
-  if (coupon.firstOrderOnly && hasPriorOrder) return fail('WELCOME10 is for your first order. A previous or active order exists for this mobile number.');
+  if (coupon.firstOrderOnly && hasPriorOrder) return fail(`${code} is for your first order. A previous or active order exists for this mobile number.`);
   if (coupon.perMobileLimit && uses >= coupon.perMobileLimit) return fail('This coupon’s limit has been reached for this mobile number.');
   const eligible = items.filter(item => coupon.eligibleTypes.includes(item.type) && !(coupon.excludeDiscounted && item.discounted));
   const eligibleTotal = eligible.reduce((sum, item) => sum + item.price * item.quantity, 0);

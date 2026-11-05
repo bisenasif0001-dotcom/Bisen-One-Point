@@ -11,12 +11,12 @@ import { calculateCheckout, cleanItems } from '../pricing.mjs';
 
 const contact={name:'Website QA',phone:'9000000000',email:'qa@example.test',address:'Test only — not a delivery',city:'Lucknow',state:'Uttar Pradesh',pincode:'226022',cardCvv:'never-store-this'};
 const frame={id:'qa-frame',type:'custom_frame',title:'Untrusted cheap title',frameId:'regal_aurelia',size:'A5',glass:'Shatterproof Crystal Acrylic',price:1,quantity:2};
-const payload={customer:contact,items:[frame],discountCode:'WELCOME10',discountPercent:99,grandTotal:1};
+const payload={customer:contact,items:[frame],discountCode:'WELCOME10',discountPercent:99,grandTotal:1,fulfillment:'pickup',designConfirmed:true};
 
 test('server computes prices; client totals and sensitive payment fields are ignored',()=>{
-  const result=calculateCheckout(payload);assert.equal(result.subtotal,998);assert.equal(result.discountAmount,100);assert.equal(result.shippingFee,99);assert.equal(result.grandTotal,997);assert.equal(result.items[0].price,499);assert.equal(result.items[0].title,'Regal Aurelia Photo Frame');assert.ok(!JSON.stringify(result).includes('never-store-this'));
+  const result=calculateCheckout(payload);assert.equal(result.subtotal,998);assert.equal(result.discountAmount,100);assert.equal(result.shippingFee,0);assert.equal(result.grandTotal,898);assert.equal(result.items[0].price,499);assert.equal(result.items[0].title,'Regal Aurelia Photo Frame');assert.ok(!JSON.stringify(result).includes('never-store-this'));
   assert.throws(()=>calculateCheckout({...payload,items:[{...frame,quantity:1.5}]}));
-  const unknown=calculateCheckout({...payload,items:[{id:'not-in-catalogue',title:'Custom wall art',type:'unknown',quantity:1,price:1}]});assert.equal(unknown.grandTotal,null);assert.equal(unknown.pricingConfirmed,false);
+  const unknown=calculateCheckout({...payload,discountCode:'',items:[{id:'not-in-catalogue',title:'Custom wall art',type:'unknown',quantity:1,price:1}]});assert.equal(unknown.grandTotal,null);assert.equal(unknown.pricingConfirmed,false);
   assert.equal(cleanItems([{...frame,image:'http://127.0.0.1:9999/private'}])[0].image,'');
 });
 
@@ -72,16 +72,16 @@ test('orders persist, studio access is protected, updates reach another customer
     const settings=await request('/studio/settings',{auth:true,method:'PUT',body:testConfig});assert.equal(settings.status,200);assert.ok(!JSON.stringify(settings.json).includes(testConfig.keySecret));
     assert.equal((await request('/public/config')).json.paymentMode,'test');
     const paymentAuth={reference:order.reference,token:order.trackingToken};
-    const paymentOrder=await request('/payments/order',{method:'POST',body:paymentAuth});assert.equal(paymentOrder.status,200);assert.equal(paymentOrder.json.amount,99700);
+    const paymentOrder=await request('/payments/order',{method:'POST',body:paymentAuth});assert.equal(paymentOrder.status,200);assert.equal(paymentOrder.json.amount,89800);
     const repeatedPayment=await request('/payments/order',{method:'POST',body:paymentAuth});assert.equal(repeatedPayment.json.razorpayOrderId,paymentOrder.json.razorpayOrderId);assert.equal(orderCount,1);
     const gatewayOrder=paymentOrder.json.razorpayOrderId;
     const callback={...paymentAuth,razorpay_order_id:gatewayOrder,razorpay_payment_id:'pay_qa1',razorpay_signature:'a'.repeat(64)};
-    payments.set('pay_qa1',{id:'pay_qa1',order_id:gatewayOrder,amount:99700,currency:'INR',status:'captured'});
+    payments.set('pay_qa1',{id:'pay_qa1',order_id:gatewayOrder,amount:89800,currency:'INR',status:'captured'});
     assert.equal((await request('/payments/verify',{method:'POST',body:callback})).status,400);
     callback.razorpay_signature=createHmac('sha256',testConfig.keySecret).update(`${gatewayOrder}|pay_qa1`).digest('hex');
     payments.get('pay_qa1').amount=1;
     assert.equal((await request('/payments/verify',{method:'POST',body:callback})).status,409);
-    payments.get('pay_qa1').amount=99700;
+    payments.get('pay_qa1').amount=89800;
     const verified=await request('/payments/verify',{method:'POST',body:callback});assert.equal(verified.status,200);assert.equal(verified.json.order.payment.status,'test_paid');assert.equal(verified.json.order.payment.isPaid,false);
     assert.equal((await request('/payments/order',{method:'POST',body:paymentAuth})).status,409);
     const event={event:'payment.captured',payload:{payment:{entity:payments.get('pay_qa1')}}},raw=JSON.stringify(event),signature=createHmac('sha256',testConfig.webhookSecret).update(raw).digest('hex');
@@ -95,7 +95,7 @@ test('orders persist, studio access is protected, updates reach another customer
     const liveConfig={...testConfig,mode:'live',keyId:'rzp_live_QALIVE12345',goLiveConfirmed:true};
     assert.equal((await request('/studio/settings',{auth:true,method:'PUT',body:{...liveConfig,goLiveConfirmed:false}})).status,400);
     assert.equal((await request('/studio/settings',{auth:true,method:'PUT',body:liveConfig})).status,200);
-    const agreed=await request(`/studio/orders/${quote.json.order.reference}`,{auth:true,method:'PATCH',body:{updatedAt:quote.json.order.updatedAt,status:'confirmed',grandTotal:500}});assert.equal(agreed.status,200);
+    const agreed=await request(`/studio/orders/${quote.json.order.reference}/pricing`,{auth:true,method:'POST',body:{updatedAt:quote.json.order.updatedAt,itemsSubtotal:500}});assert.equal(agreed.status,200);
     const quoteAuth={reference:quote.json.order.reference,token:quote.json.order.trackingToken};
     const liveAttempt=await request('/payments/order',{method:'POST',body:quoteAuth});assert.equal(liveAttempt.status,200);
     payments.set('pay_qaLive',{id:'pay_qaLive',order_id:liveAttempt.json.razorpayOrderId,amount:50000,currency:'INR',status:'authorized'});

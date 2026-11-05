@@ -6,7 +6,7 @@ import { access } from 'node:fs/promises';
 
 try{process.loadEnvFile();}catch(error){if(error.code!=='ENOENT')throw error;}
 await access(resolve('dist/index.html'));
-const api=createStudioService({directory:process.env.DATA_DIR||resolve('.studio-data'),production:true});
+const api=createStudioService({directory:process.env.DATA_DIR||resolve('.studio-data'),production:true,backupDirectory:process.env.BACKUP_DIR});
 const serve=createStaticHandler({publicOrigin:process.env.PUBLIC_ORIGIN,indexable:process.env.SITE_INDEXABLE==='true'});
 await api.maintenance.cleanup();
 const backupHours=Math.max(1,Number(process.env.BACKUP_INTERVAL_HOURS)||24);
@@ -20,5 +20,6 @@ const maintenanceTimer=setInterval(()=>{if(!api.maintenance.busy())api.maintenan
 maintenanceTimer.unref();
 const server=createServer((req,res)=>api.handler(req,res,()=>serve(req,res)));
 server.listen(Number(process.env.PORT)||3000,process.env.HOST||'127.0.0.1',()=>console.log(`AL-NOOR studio server ready on port ${Number(process.env.PORT)||3000}`));
-function close(){clearInterval(maintenanceTimer);server.close(()=>{api.close();process.exit(0);});}
+let stopping=false;
+function close(){if(stopping)return;stopping=true;clearInterval(maintenanceTimer);server.close(async()=>{await api.maintenance.idle();api.close();process.exit(0);});}
 process.on('SIGTERM',close);process.on('SIGINT',close);

@@ -120,7 +120,7 @@ export default function App() {
   const totalCartCount = cartItems.reduce((acc, it) => acc + it.quantity, 0);
 
   return (
-    <BrowserRouter><BusinessRulesProvider>
+    <BrowserRouter basename={import.meta.env.BASE_URL}><BusinessRulesProvider>
       <a className="skip-to-content" href="#main-content">Skip to content</a>
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         

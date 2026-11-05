@@ -19,6 +19,8 @@ export function createOriginalStorage(store, directory, { maxStorageBytes = 5 * 
   const location = id => { if (!/^[a-f0-9]{32}$/.test(id)) throw new ApiError(404, 'File not found.'); const path = resolve(root, `${id}.bin`); if (!path.startsWith(root + sep)) throw new ApiError(404, 'File not found.'); return path; };
   const list = reference => db.prepare('SELECT id,name,mime,bytes,label,source_id AS sourceId,kind,case_id AS caseId,created,purged_at AS purgedAt FROM order_files WHERE reference=? ORDER BY created').all(reference);
   function add(reference, bytes, { name, label = '', sourceId = '', kind = 'original', caseId = '' }) {
+    // Control characters and path separators must never reach a download filename.
+    // eslint-disable-next-line no-control-regex
     name = cleanText(name, 180).replace(/[\\/\x00-\x1f\x7f]/g, '_'); label = cleanText(label, 240); sourceId = cleanText(sourceId, 100);
     const mime = fileType(bytes), extensions = { 'image/jpeg': /\.jpe?g$/i, 'image/png': /\.png$/i, 'image/webp': /\.webp$/i, 'application/pdf': /\.pdf$/i };
     if (!bytes.length || bytes.length > ORDER_FILE_RULES.maxFileBytes) throw new ApiError(413, 'Choose a non-empty original file up to 20 MB.');

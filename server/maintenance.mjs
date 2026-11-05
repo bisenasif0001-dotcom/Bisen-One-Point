@@ -85,15 +85,29 @@ export function restoreDrill(snapshot, backupRoot) {
 }
 export function createMaintenance(store, originals, directory, { backupRoot = resolve(directory, 'backups') } = {}) {
   directory = resolve(directory); backupRoot = resolve(backupRoot); assertPrivate(backupRoot);
-  let busy = false;
+  let busy = false, pending = Promise.resolve();
   const list = () => existsSync(backupRoot) ? readdirSync(backupRoot).filter(id => idPattern.test(id) && existsSync(join(backupRoot, id, 'manifest.json'))).sort().reverse().map(id => { const data = JSON.parse(readFileSync(join(backupRoot, id, 'manifest.json'), 'utf8')); return { id, createdAt: data.createdAt, bytes: data.files.reduce((sum, file) => sum + file.bytes, 0), retentionDays:data.retentionDays||30, fileCount: data.files.filter(file => file.path.startsWith('originals/')).length }; }) : [];
   async function exclusive(fn) {
     if (busy) throw new Error('Maintenance is already running. Please wait.');
     const lock = join(directory, '.maintenance.lock');
     let fd;
-    try { fd = openSync(lock, 'wx', 0o600); } catch { throw new Error('Another maintenance process is running. Check the server before removing a stale maintenance lock.'); }
+    try { fd = openSync(lock, 'wx', 0o600); } catch (error) {
+      if (error.code !== 'EEXIST') throw error;
+      let owner;
+      try { owner = JSON.parse(readFileSync(lock, 'utf8')); } catch { /* Legacy / incomplete locks need an operator check. */ }
+      let alive = true;
+      if (Number.isSafeInteger(owner?.pid) && owner.pid > 0) {
+        try { process.kill(owner.pid, 0); } catch (cause) { if (cause.code === 'ESRCH') alive = false; }
+      }
+      if (alive) throw new Error('Another maintenance process is running. Check the server before removing a stale maintenance lock.');
+      unlinkSync(lock);
+      fd = openSync(lock, 'wx', 0o600);
+    }
+    writeFileSync(fd, JSON.stringify({ pid: process.pid, createdAt: new Date().toISOString() }));
     busy = true;
-    try { return await fn(); } finally { closeSync(fd); unlinkSync(lock); busy = false; }
+    let finish;
+    pending = new Promise(resolve => { finish = resolve; });
+    try { return await fn(); } finally { closeSync(fd); try { unlinkSync(lock); } finally { busy = false; finish(); } }
   }
   function redact(value) {
     if (typeof value === 'string' && /^(data:image|blob:)/.test(value)) return '';
@@ -102,6 +116,7 @@ export function createMaintenance(store, originals, directory, { backupRoot = re
     return value;
   }
   function removeOrderFiles(order, reason) {
+    if (['printing','ready','dispatched'].includes(order.status)) throw new Error('Resolve the active production/delivery stage before deleting working files.');
     if (order.legalHold) throw new Error('This order is on a retention hold. Review it before deleting files.');
     const removed = originals.purge(order.reference, reason), clean = redact(order);
     clean.filesPurgedAt = new Date().toISOString();
@@ -122,7 +137,7 @@ export function createMaintenance(store, originals, directory, { backupRoot = re
     }
     return { filesRemoved, backupsRemoved, checkedAt: now.toISOString() };
   }
-  return { list, busy: () => busy,
+  return { list, busy: () => busy, idle: () => pending,
     backup: () => exclusive(async () => { clean(); const result = await createBackup(directory, backupRoot); store.audit(null, 'Private backup created and verified', 'maintenance'); return result; }),
     verify: id => exclusive(() => { if (!idPattern.test(id)) throw new Error('Choose a valid backup.'); const result = restoreDrill(join(backupRoot, id), backupRoot); writeFileSync(join(backupRoot, 'last-restore-check.json'), JSON.stringify(result), { mode: 0o600 }); return result; }),
     cleanup: now => exclusive(() => clean(now)),

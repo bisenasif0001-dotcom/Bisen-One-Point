@@ -21,10 +21,10 @@ const defaultPayment=()=>({status:'unpaid',label:'Awaiting payment',method:'stud
 const allowedStatus=value=>STAGES.some(([id])=>id===value)||value==='cancelled';
 const loopback=address=>['::1','127.0.0.1','::ffff:127.0.0.1'].includes(address);
 
-export function createStudioService({directory=resolve('.studio-data'),production=process.env.NODE_ENV==='production',publicOrigin=process.env.PUBLIC_ORIGIN||'http://localhost:5173',bootstrapToken=process.env.STUDIO_BOOTSTRAP_TOKEN||'',fetcher=fetch}={}){
+export function createStudioService({directory=resolve('.studio-data'),production=process.env.NODE_ENV==='production',publicOrigin=process.env.PUBLIC_ORIGIN||'http://localhost:5173',bootstrapToken=process.env.STUDIO_BOOTSTRAP_TOKEN||'',backupDirectory,fetcher=fetch}={}){
   const store=openStore(directory),{db,encrypt,decrypt,get,save,audit,transaction}=store;
   const originals=createOriginalStorage(store,directory);
-  const maintenance=createMaintenance(store,originals,directory,{backupRoot:process.env.BACKUP_DIR||undefined});
+  const maintenance=createMaintenance(store,originals,directory,{backupRoot:backupDirectory});
   const rules=()=>readBusinessRules(db);
   const origin=new URL(publicOrigin).origin;
   if(production&&!origin.startsWith('https://'))throw new Error('PUBLIC_ORIGIN must be the live HTTPS website address.');

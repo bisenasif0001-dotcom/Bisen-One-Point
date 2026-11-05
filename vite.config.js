@@ -4,6 +4,7 @@ import studioApiPlugin from './server/vitePlugin.mjs'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: '/Bisen-One-Point/',
   plugins: [react(), studioApiPlugin()],
   server: { fs: { deny: ['.env', '.env.*', '**/.git/**', '**/.studio-data/**', '**/master.key', '**/*.sqlite*'] } },
 })
