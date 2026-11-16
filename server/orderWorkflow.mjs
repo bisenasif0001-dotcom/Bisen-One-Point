@@ -39,6 +39,8 @@ export function createSupportRequest(order, data) {
   const type = cleanText(data.type, 30), note = cleanText(data.note, 3000);
   if (!['cancel', 'damaged', 'wrong_item', 'print_quality', 'refund', 'delete_files', 'other'].includes(type) || note.length < 8) throw new ApiError(400, 'Choose a request type and describe the issue.');
   order.requests ||= [];
+  const existing = order.requests.find(item => item.type === type && item.note === note && !['resolved', 'declined'].includes(item.status));
+  if (existing) return existing;
   if (order.requests.filter(item => !['resolved', 'declined'].includes(item.status)).length >= 5) throw new ApiError(409, 'An open request is already with the studio. Add details to that conversation.');
   const at = new Date().toISOString();
   const request = { id: randomUUID(), type, note, status: 'open', createdAt: at, updatedAt: at, events: [{ status: 'open', note: 'Request received by the studio.', at }] };
@@ -51,14 +53,17 @@ export function updateSupportRequest(order, data) {
   if (!['acknowledged', 'under_review', 'approved', 'declined', 'refund_initiated', 'resolved'].includes(data.status)) throw new ApiError(400, 'Choose a valid request status.');
   const note = cleanText(data.note, 3000), at = new Date().toISOString();
   if (!note) throw new ApiError(400, 'Add a customer-visible explanation.');
+  if (request.refundInitiatedAt && !['refund_initiated', 'resolved'].includes(data.status)) throw new ApiError(409, 'A refund has already been initiated. Preserve that record and resolve the request after checking settlement.');
   if (request.type === 'delete_files' && data.status === 'resolved' && !order.filesPurgedAt) throw new ApiError(409, 'Complete the approved file deletion before resolving this request.');
-  if (data.status === 'refund_initiated' && (!request.approvedAt || !cleanText(data.refundReference, 150))) throw new ApiError(400, 'Approve the request first and enter the payment-provider refund reference.');
+  if (data.status === 'refund_initiated' && (!request.approvedAt || request.remedy !== 'refund' || !(request.refundAmount > 0) || !cleanText(data.refundReference, 150))) throw new ApiError(400, 'Approve a monetary refund first and enter the payment-provider refund reference.');
   if (data.status === 'approved') {
     const remedy = ['replacement','reprint','refund','deletion','other'].includes(data.remedy)?data.remedy:'refund';
     const amount = remedy==='refund'?Number(data.refundAmount || 0):0;
     if(amount>0&&!order.payment.isPaid&&!['part_refunded'].includes(order.payment.status))throw new ApiError(400,'Verify the received payment before approving a monetary refund.');
     request.remedy=remedy;request.initiateWithinBusinessDays=order.refundPolicy?.initiateBusinessDays||3;
     if (!Number.isFinite(amount) || amount < 0 || amount > (order.grandTotal || 0)) throw new ApiError(400, 'Check the approved refund amount.');
+    const otherRefunds = (order.requests || []).filter(item => item.id !== request.id && item.approvedAt && item.status !== 'declined').reduce((sum, item) => sum + (item.refundAmount || 0), 0);
+    if (amount + otherRefunds > (order.grandTotal || 0)) throw new ApiError(400, 'Approved refunds across this order cannot exceed the amount paid.');
     if (request.type === 'cancel' && !order.history.some(event => event.status === 'printing') && order.payment.isPaid && amount !== order.grandTotal) throw new ApiError(400, 'Before production starts, a paid cancellation requires a full refund.');
     request.refundAmount = amount; request.approvedAt = at;
     if (request.type === 'cancel') { order.status='cancelled'; order.statusLabel='Cancelled'; order.history.push({status:'cancelled',title:'Cancellation request approved',note,at}); }

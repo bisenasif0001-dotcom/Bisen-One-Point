@@ -239,7 +239,8 @@ export function createStudioService({directory=resolve('.studio-data'),productio
         
         const kind=req.headers['x-file-kind']==='evidence'?'evidence':'original',caseId=cleanText(req.headers['x-case-id'],100);
         if(record.order.status==='cancelled'&&kind==='original')throw new ApiError(409,'This order is cancelled. Contact the studio before sharing originals.');
-        if(kind==='evidence'&&!record.order.requests?.some(request=>request.id===caseId))throw new ApiError(400,'Save the support request before attaching evidence.');
+        if(kind==='original'&&['printing','ready','dispatched','delivered'].includes(record.order.status))throw new ApiError(409,'Production has started. Save a support request so the studio can review this file change.');
+        if(kind==='evidence'&&!record.order.requests?.some(request=>request.id===caseId&&!['resolved','declined'].includes(request.status)))throw new ApiError(400,'Use an open support request before attaching evidence.');
         const bytes=await body(req,ORDER_FILE_RULES.maxFileBytes),uploaded=originals.add(record.order.reference,bytes,{name:decodeHeader(req,'x-file-name'),label:decodeHeader(req,'x-file-label'),sourceId:decodeHeader(req,'x-file-source'),kind,caseId});
         return json(res,201,uploaded);
       }

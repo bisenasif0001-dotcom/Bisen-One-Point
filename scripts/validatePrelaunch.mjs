@@ -36,8 +36,16 @@ try {
     if (!product.prices['3ml']) assert.ok(!html.includes('Add 3ml Discovery Sample'), product.id);
   }
   assert.ok(render('does-not-exist').includes('404 • Page Not Found'));
+  const { default: PolicyPage, POLICY_LINKS } = await server.ssrLoadModule('/src/pages/PolicyPage.jsx');
+  for (const [label, path] of POLICY_LINKS) {
+    const html = renderToStaticMarkup(React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(PolicyPage)));
+    assert.equal((html.match(/<h1(?:\s|>)/g) || []).length, 1, label);
+    assert.ok(html.includes('M. Talib Khan') && html.includes('avarto@outlook.com'), path);
+    assert.ok(html.includes(`href="${path}" aria-current="page"`), path);
+    assert.ok(!html.includes('BARAKAH15') && !html.includes('No refund under any circumstances'), path);
+  }
   const report = { checkedAt: new Date().toISOString(), passed: { routeAndSearchLinks: links.length, authoritativeItraPrices: prices, invalidCartRecovery: true, unknownProductProtection: true }, openLaunchFindings: [
-    'Privacy, Terms, Returns and Shipping footer links still lead to Contact. Merchant policy decisions are required.',
+    'Policy routes, business settings, private uploads and local backup/restore checks are implemented. Hosting, off-site copies and live operational checks remain pending.',
     'Final domain/hosting and real Razorpay test/live webhook confirmation remain pending.',
     'Merchant approval of legacy cards, Itra, gift bundles, materials, delivery promises and stock is required.'
   ] };

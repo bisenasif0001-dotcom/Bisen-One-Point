@@ -20,14 +20,14 @@ async function saveDownload(response, name) {
 export default function OrderFilesPanel({ order, studio = false, onUpdated, evidenceFor = '' }) {
   const [data, setData] = useState(null), [selected, setSelected] = useState([]), [error, setError] = useState(''), [message, setMessage] = useState(''), [busy, setBusy] = useState(false), [progress, setProgress] = useState('');
   const [kind, setKind] = useState('proof'), [proofIds, setProofIds] = useState([]), [note, setNote] = useState(''), [confirmed, setConfirmed] = useState(false);
-  const controller = useRef(null), input = useRef(null);
+  const controller = useRef(null), input = useRef(null), mounted = useRef(true);
   const credentials = { reference: order.reference, token: order.trackingToken };
   const load = async () => {
     const result = studio ? await studioRequest(`/studio/orders/${order.reference}/files`) : await studioRequest('/order-files/list', { method: 'POST', body: credentials });
     setData(result); return result;
   };
   useEffect(() => { let active = true; const request = studio ? studioRequest(`/studio/orders/${order.reference}/files`) : studioRequest('/order-files/list', { method: 'POST', body: credentials }); request.then(result => { if (active) setData(result); }).catch(cause => { if (active) setError(cause.message); }); return () => { active = false; }; }, [order.reference, order.trackingToken, order.updatedAt, studio]);
-  useEffect(() => () => controller.current?.abort(), []);
+  useEffect(() => { mounted.current = true; return () => { mounted.current = false; controller.current?.abort(); }; }, []);
   const refresh = async () => { await load(); if (studio) { const result = await studioRequest(`/studio/orders/${order.reference}`); onUpdated?.(result.order); } };
   const pick = files => {
     const refs = data?.expectedOriginals || [];
@@ -47,7 +47,7 @@ export default function OrderFilesPanel({ order, studio = false, onUpdated, evid
       }
       setSelected([]); if (input.current) input.current.value = ''; setMessage('Files received. The studio will check them before production.');
     } catch (cause) { if (cause.name !== 'AbortError') setError(cause.message); }
-    finally { setBusy(false); setProgress(''); await refresh().catch(cause => setError(cause.message)); }
+    finally { if (mounted.current) { setBusy(false); setProgress(''); await refresh().catch(cause => { if (mounted.current) setError(cause.message); }); } }
   };
   const uploadSaved = async () => {
     try { const originals = await readPrintOriginals((data?.expectedOriginals || []).map(ref => ref.id)); if (!originals.length) throw new Error('No saved originals were found on this device. Choose the original files again below.'); await upload(originals.map(item => ({ file: item.file, sourceId: item.id }))); }
@@ -63,7 +63,8 @@ export default function OrderFilesPanel({ order, studio = false, onUpdated, evid
     {!evidenceFor && <p>Original bytes are preserved. Uploading does not automatically crop, compress, stretch or enhance your file. <Link to="/original-files">File guide</Link></p>}
     {data?.filesPurgedAt && <p className="ow-notice">Working files were removed under the retention policy. Order and approval records remain available.</p>}
     <ul className="ow-files">{files.map(file => <li key={file.id}><FileText size={17} /><div><strong>{file.name}</strong><small>{file.label || file.kind} · {size(file.bytes)}{file.purgedAt ? ' · Working file removed' : ''}</small></div>{!file.purgedAt && (studio || file.kind === 'proof') && <button type="button" className="ow-icon" aria-label={`Download ${file.name}`} onClick={() => download(file)}><Download size={17} /></button>}{studio && file.kind === 'proof' && !file.purgedAt && <label className="ow-check"><input type="checkbox" aria-label={`Include ${file.name} in proof version`} checked={proofIds.includes(file.id)} onChange={event => setProofIds(ids => event.target.checked ? [...ids, file.id] : ids.filter(id => id !== file.id))} /><span>Proof</span></label>}</li>)}</ul>
-    {(order.status !== 'cancelled' || evidenceFor) && <div className="ow-upload">
+    {!evidenceFor && ['printing','ready','dispatched','delivered'].includes(order.status) && !studio && <p className="ow-notice">Production has started. For a photo change or concern, save a support request below so the studio can review it.</p>}
+    {(evidenceFor || (studio ? order.status !== 'cancelled' : !['printing','ready','dispatched','delivered','cancelled'].includes(order.status))) && <div className="ow-upload">
       {studio && <label className="ow-field">File purpose<select value={kind} onChange={event => setKind(event.target.value)}><option value="proof">Artwork proof for customer approval</option><option value="original">Original received from customer</option></select></label>}
       {!studio && !evidenceFor && (data?.expectedOriginals?.length > 0) && <button type="button" className="ow-secondary" disabled={busy} onClick={uploadSaved}><Upload size={15} /> Upload saved originals from this device</button>}
       <label className="ow-file-picker"><Upload size={19} /><span>Choose {studio && kind === 'proof' ? 'artwork proofs' : evidenceFor ? 'evidence photos' : 'original files'}<small>JPG, PNG, WebP or PDF · 20 MB each · 50 files / 250 MB per order</small></span><input ref={input} type="file" multiple accept={ORDER_FILE_RULES.accept} disabled={busy} onChange={event => pick(event.target.files)} /></label>
