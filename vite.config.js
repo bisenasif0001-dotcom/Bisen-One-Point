@@ -2,8 +2,8 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import studioApiPlugin from './server/vitePlugin.mjs'
 
-const publicDirs = ['cards', 'custom-frames', 'dua-posters', 'frames', 'hero', 'islamic-calligraphy', 'rooms', 'studio-previews', 'icons.svg', 'favicon.svg'];
-const assetPathRegex = new RegExp(`(['"\`])\\/(${publicDirs.map(d => d.replace('.', '\\.')).join('|')})([\\/'"\`])`, 'g');
+const dirRegex = /(['"`])\/(cards|custom-frames|dua-posters|frames|hero|islamic-calligraphy|rooms|studio-previews)\//g;
+const fileRegex = /(['"`])\/(favicon\.svg|icons\.svg)(['"`])/g;
 
 function publicAssetBasePlugin(base) {
   const normalizedBase = base.endsWith('/') ? base : base + '/';
@@ -12,12 +12,23 @@ function publicAssetBasePlugin(base) {
     enforce: 'pre',
     transform(code, id) {
       if (!id.includes('node_modules') && /\.(jsx?|tsx?)$/.test(id)) {
-        if (assetPathRegex.test(code)) {
-          assetPathRegex.lastIndex = 0;
-          return {
-            code: code.replace(assetPathRegex, (match, p1, p2, p3) => p1 + normalizedBase + p2 + (p3 === '/' ? '/' : p3)),
-            map: null
-          };
+        let transformed = code;
+        let modified = false;
+
+        if (dirRegex.test(transformed)) {
+          dirRegex.lastIndex = 0;
+          transformed = transformed.replace(dirRegex, `$1${normalizedBase}$2/`);
+          modified = true;
+        }
+
+        if (fileRegex.test(transformed)) {
+          fileRegex.lastIndex = 0;
+          transformed = transformed.replace(fileRegex, `$1${normalizedBase}$2$3`);
+          modified = true;
+        }
+
+        if (modified) {
+          return { code: transformed, map: null };
         }
       }
       return null;
