@@ -1,0 +1,65 @@
+{
+  "checkedAt": "2026-11-05T15:51:33.006452+00:00",
+  "results": [
+    {
+      "script": "validateAddToBag.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateBirthdayCards.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateCustomFrameStudio.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateDuaCatalogue.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateDuaPosterOrder.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateFrameCatalogue.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateFramePreviews.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateGalleryWalls.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateHomepage.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateIslamicArt.mjs",
+      "passed": true
+    },
+    {
+      "script": "validateOrderTracking.mjs",
+      "passed": true
+    },
+    {
+      "script": "validatePhotoPrints.mjs",
+      "passed": true
+    },
+    {
+      "script": "validatePrelaunch.mjs",
+      "passed": false
+    },
+    {
+      "script": "validatePrintingServices.mjs",
+      "passed": true
+    },
+    {
+      "script": "validatePvcCards.mjs",
+      "passed": true
+    }
+  ]
+}

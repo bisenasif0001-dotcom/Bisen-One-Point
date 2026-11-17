@@ -66,7 +66,7 @@ export default function StudioHero() {
       ref={root}
       className={`studio-hero-carousel studio-hero-carousel--${slides[activeSlide].id}`}
       aria-roledescription="carousel"
-      aria-label="Discover Al-Noor print and frame studio"
+      aria-label="Discover BISEN print and frame studio"
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       onFocusCapture={event => { if (!event.target.closest('[data-slideshow-play]')) setPlaying(false); }}
@@ -178,7 +178,7 @@ function PrintingSlide() {
           <div className="print-design-hero__products">
             <span className="print-design-hero__visual-kicker">A LITTLE INK. ENDLESS POSSIBILITIES.</span>
             <div className="print-design-hero__poster" aria-label="Custom poster design sample">
-              <span>AL-NOOR / CREATIVE STUDIO</span>
+              <span>BISEN / CREATIVE STUDIO</span>
               <span className="print-design-hero__poster-orbit" aria-hidden="true" />
               <strong>Make<br /><em>it yours.</em></strong>
               <small>YOUR VISION. IN PRINT.</small>
@@ -187,7 +187,7 @@ function PrintingSlide() {
               <FramedPosterPreview poster={weddingPhotos[1]} frame={frame} fit="cover" panY={10} />
             </div>
             <div className="print-design-hero__pvc" aria-label="PVC membership card design sample">
-              <span>AL-NOOR <small>MEMBERS CLUB</small></span>
+              <span>BISEN <small>MEMBERS CLUB</small></span>
               <Sparkles size={29} strokeWidth={1} />
               <strong>Something<br /><em>uniquely yours.</em></strong>
               <div><span>DESIGNED TO BELONG.</span><span>001</span></div>

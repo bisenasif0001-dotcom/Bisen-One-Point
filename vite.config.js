@@ -3,7 +3,7 @@ import { defineConfig } from 'vite'
 import studioApiPlugin from './server/vitePlugin.mjs'
 
 const dirRegex = /(['"`])\/(cards|custom-frames|dua-posters|frames|hero|islamic-calligraphy|rooms|studio-previews)\//g;
-const fileRegex = /(['"`])\/(favicon\.svg|icons\.svg)(['"`])/g;
+const fileRegex = /(['"`])\/(favicon\.svg|favicon\.png|logo\.png|icons\.svg)(['"`])/g;
 
 function publicAssetBasePlugin(base) {
   const normalizedBase = base.endsWith('/') ? base : base + '/';

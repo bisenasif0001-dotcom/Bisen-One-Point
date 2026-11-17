@@ -1,12 +1,13 @@
 import StudioBusinessSettings from '../components/StudioBusinessSettings';
-import StudioOrderWorkflow from '../components/StudioOrderWorkflow';
+import { QuoteEditor, StudioArtwork } from '../components/StudioOrderWorkflow';
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Check, Copy, CreditCard, ExternalLink, LockKeyhole, LogOut, Package, Plus, RefreshCw, Search, Settings2, ShieldCheck, Truck, X } from 'lucide-react';
-import { studioRequest, trackingPath } from '../utils/studioApi';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Clock3, Copy, CreditCard, ExternalLink, FolderOpen, Link2, LockKeyhole, LogOut, MapPin, Package, Plus, RefreshCw, Search, Settings2, ShieldCheck, SlidersHorizontal, Truck, UserRound, X } from 'lucide-react';
+import { studioRequest, trackingUrl } from '../utils/studioApi';
 import { birthdayOrderDetails } from '../utils/birthdayCards';
 import { galleryOrderDetails } from '../utils/galleryWalls';
 import './StudioPanelPage.css';
+import './StudioOrderEditor.css';
 
 const STUDIO_STATUSES=[['received','Order received'],['confirmed','Order confirmed'],['design_approved','Design approved'],['printing','Printing & making'],['ready','Ready for collection / dispatch'],['dispatched','Dispatched'],['delivered','Delivered / collected'],['cancelled','Cancelled']];
 const money=value=>value===null||value===undefined?'Quote pending':`₹${Number(value).toLocaleString('en-IN',{maximumFractionDigits:2})}`;
@@ -38,15 +39,291 @@ function NewStudioOrder({onCreated,onCancel}){
   return <section className="sp-card sp-new-order"><div className="sp-section-heading"><div><span className="sp-kicker">WHATSAPP, WALK-IN OR CUSTOM REQUEST</span><h2>Add an order to the desk.</h2><p>A tracking reference is created when you save. You can confirm the final quote later.</p></div><button className="sp-icon-button" aria-label="Close new order" onClick={onCancel}><X size={19}/></button></div><form onSubmit={submit}><div className="sp-form-grid"><Field id="sp-new-name" label="Customer name"><input id="sp-new-name" required maxLength={100} value={form.name} onChange={event=>update('name',event.target.value)}/></Field><Field id="sp-new-phone" label="Customer mobile"><input id="sp-new-phone" required inputMode="tel" maxLength={18} value={form.phone} onChange={event=>update('phone',event.target.value)}/></Field><Field id="sp-new-email" label="Email" optional><input id="sp-new-email" type="email" value={form.email} onChange={event=>update('email',event.target.value)}/></Field><Field id="sp-new-title" label="Product / order description"><input id="sp-new-title" required maxLength={180} placeholder="e.g. School student PVC cards, front + back" value={form.title} onChange={event=>update('title',event.target.value)}/></Field><Field id="sp-new-qty" label="Quantity"><input id="sp-new-qty" required type="number" min={1} max={100000} step={1} value={form.quantity} onChange={event=>update('quantity',event.target.value)}/></Field><Field id="sp-new-total" label="Final total including delivery (₹)" optional><input id="sp-new-total" type="number" min={1} step="0.01" value={form.grandTotal} onChange={event=>update('grandTotal',event.target.value)} placeholder="Leave blank until quoted"/></Field></div><Field id="sp-new-notes" label="Order requirements" optional><textarea id="sp-new-notes" rows={3} maxLength={2000} value={form.notes} onChange={event=>update('notes',event.target.value)}/></Field><label className="sp-check"><input type="checkbox" checked={form.requireArtwork} onChange={event=>update('requireArtwork',event.target.checked)}/><span>Require customer artwork proof approval before production</span></label><ErrorBox error={error}/><button className="sp-primary" disabled={busy}>{busy?'Saving…':'Save order & create tracking reference'}<ArrowRight size={16}/></button></form></section>;
 }
 
-export function StudioOrderEditor({order,onSaved,onBack}){
-  const [form,setForm]=useState({status:order.status,publicNote:order.publicNote||'',privateNotes:order.privateNotes||'',delivery:{courier:'',awb:'',trackingUrl:'',expectedDate:'',...order.delivery},grandTotal:order.grandTotal??'',recordOfflinePayment:false,paymentReference:'',filesReviewed:Boolean(order.filesReviewed),legalHold:Boolean(order.legalHold)}),[error,setError]=useState(''),[busy,setBusy]=useState(false),[copied,setCopied]=useState(false),[saved,setSaved]=useState(false);
-  useEffect(()=>{setForm({status:order.status,publicNote:order.publicNote||'',privateNotes:order.privateNotes||'',delivery:{courier:'',awb:'',trackingUrl:'',expectedDate:'',...order.delivery},grandTotal:order.grandTotal??'',recordOfflinePayment:false,paymentReference:'',filesReviewed:Boolean(order.filesReviewed),legalHold:Boolean(order.legalHold)});},[order.updatedAt]);
-  const link=typeof window!=='undefined'?`${window.location.origin}${trackingPath(order)}`:trackingPath(order);
-  const update=(key,value)=>{setForm(current=>({...current,[key]:value}));setSaved(false);};
-  const submit=async event=>{event.preventDefault();setBusy(true);setError('');try{const result=await studioRequest(`/studio/orders/${order.reference}`,{method:'PATCH',body:{...form,updatedAt:order.updatedAt}});onSaved(result.order);setForm(current=>({...current,recordOfflinePayment:false,paymentReference:'',grandTotal:result.order.grandTotal??''}));setSaved(true);}catch(cause){setError(cause.message);}finally{setBusy(false);}};
-  const copy=async()=>{try{await navigator.clipboard.writeText(link);setCopied(true);}catch{setError('Select and copy the tracking link shown below.');}};
-  const details=item=>item.type==='birthday_card'?birthdayOrderDetails(item):item.type==='gallery_wall'?galleryOrderDetails(item):[item.specialInstructions,item.personalisation?.specifications].filter(Boolean).join('\n');
-  return <section className="sp-order-editor"><button className="sp-text-link" onClick={onBack}><ArrowLeft size={14}/> Back to orders</button><div className="sp-order-heading"><div><span className="sp-kicker">{date(order.placedAt)}</span><h2>{order.orderId}</h2><p>{order.customer.name} · {order.customer.phone}</p></div><span className={`sp-badge ${order.payment.isPaid?'is-paid':''}`}>{order.payment.label}</span></div><div className="sp-order-grid"><div><section className="sp-card"><h3>Customer & order details</h3><p>{[order.customer.address,order.customer.apartment,order.customer.city,order.customer.state,order.customer.pincode].filter(Boolean).join(', ')||'Collection / delivery details to be confirmed.'}</p>{order.customer.email&&<p>{order.customer.email}</p>}<div className="sp-items">{order.items.map((item,index)=><article key={index}>{item.image&&<img src={item.image} alt="Customer item preview"/>}<div><h4>{item.title}</h4><p>{[item.size,item.finish,item.orientation,item.glass].filter(Boolean).join(' · ')}</p><span>Qty {item.quantity} · {money(item.price===null?null:item.price*item.quantity)}</span>{details(item)&&<details><summary>Personalisation & requirements</summary><pre>{details(item)}</pre></details>}</div></article>)}</div><div className="sp-amount"><span>Final order amount</span><strong>{money(order.grandTotal)}</strong></div><small>Artwork previews are for reference. Confirm the original print files with the customer.</small></section><StudioOrderWorkflow order={order} onUpdated={onSaved}/><section className="sp-card sp-share"><h3>Customer tracking link</h3><p>Share this private link with the customer. They can also search using the order reference and their checkout mobile number.</p><code>{link}</code><div><button className="sp-secondary" onClick={copy}><Copy size={14}/>{copied?'Copied':'Copy tracking link'}</button><a className="sp-secondary" href={trackingPath(order)} target="_blank" rel="noopener noreferrer">Open customer view <ExternalLink size={14}/></a></div></section><section className="sp-card"><h3>Order timeline</h3><ol className="sp-history">{[...order.history].reverse().map((event,index)=><li key={`${event.at}-${index}`}><span/><div><strong>{event.title}</strong><small>{date(event.at)}</small>{event.note&&<p>{event.note}</p>}</div></li>)}</ol></section></div><form className="sp-card sp-update-form" onSubmit={submit}><span className="sp-kicker">KEEP THE CUSTOMER IN THE LOOP</span><h3>Update this order.</h3><Field id="sp-status" label="Order status"><select id="sp-status" value={form.status} onChange={event=>update('status',event.target.value)}>{STUDIO_STATUSES.map(([id,label])=><option key={id} value={id}>{label}</option>)}</select></Field><Field id="sp-public-note" label="Customer-visible update" optional><textarea id="sp-public-note" rows={3} maxLength={2000} value={form.publicNote} placeholder="e.g. Your design is approved. Printing starts tomorrow." onChange={event=>update('publicNote',event.target.value)}/></Field><Field id="sp-expected" label="Expected collection / delivery date" optional><input id="sp-expected" type="date" value={form.delivery.expectedDate} onChange={event=>update('delivery',{...form.delivery,expectedDate:event.target.value})}/></Field><div className="sp-form-grid"><Field id="sp-courier" label="Courier" optional><input id="sp-courier" value={form.delivery.courier} maxLength={100} onChange={event=>update('delivery',{...form.delivery,courier:event.target.value})}/></Field><Field id="sp-awb" label="AWB / consignment number" optional><input id="sp-awb" value={form.delivery.awb} maxLength={100} onChange={event=>update('delivery',{...form.delivery,awb:event.target.value})}/></Field></div><Field id="sp-courier-link" label="Courier tracking link" optional><input id="sp-courier-link" type="url" placeholder="https://…" value={form.delivery.trackingUrl} onChange={event=>update('delivery',{...form.delivery,trackingUrl:event.target.value})}/></Field><Field id="sp-final-total" label="Final amount including delivery (₹)"><input id="sp-final-total" type="number" min={1} step="0.01" value={form.grandTotal} disabled={order.commerceVersion>=2||order.payment.method==='razorpay'||order.payment.isPaid} onChange={event=>update('grandTotal',event.target.value)}/><small>Online payment uses this confirmed total. An amount is locked once Razorpay checkout starts.</small></Field>{!order.payment.isPaid&&order.payment.method!=='razorpay'&&<><label className="sp-check"><input type="checkbox" checked={form.recordOfflinePayment} onChange={event=>update('recordOfflinePayment',event.target.checked)}/><span>Record payment received outside the website</span></label>{form.recordOfflinePayment&&<Field id="sp-offline-ref" label="Receipt / UPI / cash reference"><input id="sp-offline-ref" required maxLength={200} value={form.paymentReference} onChange={event=>update('paymentReference',event.target.value)}/></Field>}</>}<label className="sp-check"><input type="checkbox" checked={form.filesReviewed} onChange={event=>update('filesReviewed',event.target.checked)}/><span>I reviewed the received originals and matched them to the approved artwork</span></label><label className="sp-check"><input type="checkbox" checked={form.legalHold} onChange={event=>update('legalHold',event.target.checked)}/><span>Pause working-file deletion for an unresolved issue / legal retention (record the reason below)</span></label><Field id="sp-private-note" label="Internal studio note" optional><textarea id="sp-private-note" rows={3} maxLength={5000} value={form.privateNotes} onChange={event=>update('privateNotes',event.target.value)}/><small>Only your studio sees this note.</small></Field>{form.status==='cancelled'&&<p className="sp-note">Cancelling the order does not issue a payment refund. Manage refunds in Razorpay Dashboard.</p>}<ErrorBox error={error}/>{saved&&<p className="sp-success" role="status"><Check size={15}/> Customer tracking updated.</p>}<button className="sp-primary" disabled={busy}>{busy?'Saving update…':'Save customer update'}<Check size={16}/></button></form></div></section>;
+const ORDER_TABS = [
+  ['details', 'Order details', Package],
+  ['quote', 'Quote', CreditCard],
+  ['artwork', 'Artwork & files', FolderOpen],
+  ['timeline', 'Timeline', Clock3],
+];
+
+function OrderDetails({ order }) {
+  const { customer } = order;
+  const address = [customer.address, customer.apartment, customer.city, customer.state, customer.pincode].filter(Boolean).join(', ');
+  const delivery = order.delivery.method === 'pickup' ? 'Studio pickup' : address || 'Delivery details pending';
+
+  const requirements = item => {
+    if (item.type === 'birthday_card') return birthdayOrderDetails(item);
+    if (item.type === 'gallery_wall') return galleryOrderDetails(item);
+    return [item.specialInstructions, item.personalisation?.specifications].filter(Boolean).join('\n');
+  };
+
+  return <section className="sp-editor-card">
+    <h2>Customer & order details</h2>
+    <dl className="sp-customer-details">
+      <div>
+        <dt><UserRound size={15} /> Contact</dt>
+        <dd>{customer.name}</dd>
+        <dd><a href={'tel:' + customer.phone}>{customer.phone}</a></dd>
+        {customer.email && <dd><a href={'mailto:' + customer.email}>{customer.email}</a></dd>}
+      </div>
+      <div>
+        <dt><MapPin size={15} /> Delivery</dt>
+        <dd>{delivery}</dd>
+      </div>
+    </dl>
+    <h3 className="sp-items-title">Order items <span>{order.items.length}</span></h3>
+    <ul className="sp-editor-items">
+      {order.items.map((item, index) => {
+        const specs = [item.size, item.finish, item.orientation, item.glass].filter(Boolean).join(' · ');
+        const notes = requirements(item);
+        return <li key={index}>
+          <span className="sp-item-preview">{item.image ? <img src={item.image} alt="" /> : <Package size={21} />}</span>
+          <div>
+            <h4>{item.title}</h4>
+            {specs && <p>{specs}</p>}
+            <p>Qty {item.quantity}</p>
+            {notes && <details className="sp-item-requirements">
+              <summary>Personalisation & requirements</summary>
+              <pre>{notes}</pre>
+            </details>}
+          </div>
+          <strong>{money(item.price === null ? null : item.price * item.quantity)}</strong>
+        </li>;
+      })}
+    </ul>
+    {order.items.some(item => item.image) && <p className="sp-editor-help">Check the original files before printing.</p>}
+  </section>;
+}
+
+function TrackingCard({ order }) {
+  const [feedback, setFeedback] = useState('');
+  const url = trackingUrl(order);
+  const linkDetails = useRef(null);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setFeedback('Tracking link copied.');
+    } catch {
+      linkDetails.current.open = true;
+      setFeedback('Select the link below to copy it.');
+    }
+  };
+
+  return <section className="sp-editor-card sp-tracking-card">
+    <h2><Link2 size={21} /> Customer tracking</h2>
+    <p>Share the private link or give the customer their order reference to use with their mobile number.</p>
+    <div className="sp-editor-actions">
+      <button className="sp-secondary" type="button" onClick={copy}><Copy size={15} /> Copy tracking link</button>
+      <a className="sp-secondary" href={url} target="_blank" rel="noopener noreferrer">Open customer view <ExternalLink size={14} /></a>
+    </div>
+    {feedback && <p className="sp-editor-feedback" role="status">{feedback}</p>}
+    <details ref={linkDetails}>
+      <summary>Show private URL</summary>
+      <code>{url}</code>
+    </details>
+  </section>;
+}
+
+function orderUpdateFields(order) {
+  return {
+    status: order.status,
+    publicNote: order.publicNote || '',
+    privateNotes: order.privateNotes || '',
+    delivery: { courier: '', awb: '', trackingUrl: '', expectedDate: '', ...order.delivery },
+    grandTotal: order.grandTotal ?? '',
+    recordOfflinePayment: false,
+    paymentReference: '',
+    filesReviewed: Boolean(order.filesReviewed),
+    legalHold: Boolean(order.legalHold),
+  };
+}
+
+function OrderUpdateForm({ order, onSaved }) {
+  const [draft, setDraft] = useState({});
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const defaults = orderUpdateFields(order);
+  const form = { ...defaults, ...draft, delivery: { ...defaults.delivery, ...draft.delivery } };
+
+  const update = (key, value) => {
+    setDraft(current => ({ ...current, [key]: value }));
+    setSaved(false);
+  };
+
+  const updateDelivery = (key, value) => {
+    setDraft(current => ({ ...current, delivery: { ...current.delivery, [key]: value } }));
+    setSaved(false);
+  };
+
+  const submit = async event => {
+    event.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      const result = await studioRequest('/studio/orders/' + order.reference, {
+        method: 'PATCH',
+        body: { ...form, updatedAt: order.updatedAt },
+      });
+      onSaved(result.order);
+      setDraft({});
+      setSaved(true);
+    } catch (cause) {
+      setError(cause.message);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return <form
+    className="sp-editor-card sp-order-update"
+    aria-labelledby="sp-update-heading"
+    onSubmit={submit}
+    onInvalidCapture={event => {
+      const group = event.target.closest('details');
+      if (group) group.open = true;
+    }}
+  >
+    <h2 id="sp-update-heading" tabIndex={-1}><SlidersHorizontal size={21} /> Update order</h2>
+    <Field id="sp-status" label="Order status">
+      <select id="sp-status" value={form.status} onChange={event => update('status', event.target.value)}>
+        {STUDIO_STATUSES.map(([id, label]) => <option key={id} value={id}>{label}</option>)}
+      </select>
+    </Field>
+    <Field id="sp-public-note" label="Customer-visible update" optional>
+      <textarea id="sp-public-note" rows={3} maxLength={2000} value={form.publicNote} placeholder="e.g. Your design is approved. Printing starts tomorrow." onChange={event => update('publicNote', event.target.value)} />
+    </Field>
+    <Field id="sp-expected" label="Expected pickup / delivery date" optional>
+      <input id="sp-expected" type="date" value={form.delivery.expectedDate} onChange={event => updateDelivery('expectedDate', event.target.value)} />
+    </Field>
+    <details className="sp-update-group">
+      <summary><Truck size={16} /> Courier & tracking <ChevronDown size={15} /></summary>
+      <div className="sp-update-fields">
+        <div className="sp-editor-fields">
+          <Field id="sp-courier" label="Courier" optional><input id="sp-courier" value={form.delivery.courier} maxLength={100} onChange={event => updateDelivery('courier', event.target.value)} /></Field>
+          <Field id="sp-awb" label="AWB / consignment no." optional><input id="sp-awb" value={form.delivery.awb} maxLength={100} onChange={event => updateDelivery('awb', event.target.value)} /></Field>
+        </div>
+        <Field id="sp-courier-link" label="Courier tracking link" optional><input id="sp-courier-link" type="url" placeholder="https://…" value={form.delivery.trackingUrl} onChange={event => updateDelivery('trackingUrl', event.target.value)} /></Field>
+      </div>
+    </details>
+    <details className="sp-update-group">
+      <summary><LockKeyhole size={16} /> Payment & studio notes <ChevronDown size={15} /></summary>
+      <div className="sp-update-fields">
+        <Field id="sp-final-total" label="Final amount including delivery (₹)">
+          <input id="sp-final-total" type="number" min={1} step="0.01" value={form.grandTotal} disabled={order.commerceVersion >= 2 || order.payment.method === 'razorpay' || order.payment.isPaid} onChange={event => update('grandTotal', event.target.value)} />
+          <small>{order.commerceVersion >= 2 ? 'Manage the final amount in the Quote tab.' : 'Razorpay uses the confirmed total and locks it once checkout starts.'}</small>
+        </Field>
+        {!order.payment.isPaid && order.payment.method !== 'razorpay' && <>
+          <label className="sp-check">
+            <input type="checkbox" checked={form.recordOfflinePayment} onChange={event => update('recordOfflinePayment', event.target.checked)} />
+            <span>Record payment received outside the website</span>
+          </label>
+          {form.recordOfflinePayment && <Field id="sp-offline-ref" label="Receipt / UPI / cash reference"><input id="sp-offline-ref" required maxLength={200} value={form.paymentReference} onChange={event => update('paymentReference', event.target.value)} /></Field>}
+        </>}
+        <label className="sp-check">
+          <input type="checkbox" checked={form.filesReviewed} onChange={event => update('filesReviewed', event.target.checked)} />
+          <span>Original files match the approved artwork</span>
+        </label>
+        <label className="sp-check">
+          <input type="checkbox" checked={form.legalHold} onChange={event => update('legalHold', event.target.checked)} />
+          <span>Pause working-file deletion for an unresolved issue or legal retention. Record the reason below.</span>
+        </label>
+        <Field id="sp-private-note" label="Internal studio note" optional>
+          <textarea id="sp-private-note" rows={3} maxLength={5000} value={form.privateNotes} onChange={event => update('privateNotes', event.target.value)} />
+          <small>Visible only to the studio.</small>
+        </Field>
+      </div>
+    </details>
+    {form.status === 'cancelled' && <p className="sp-cancel-note">Manage any refund separately in the Razorpay Dashboard.</p>}
+    {error && <ErrorBox error={error} />}
+    {saved && <p className="sp-success" role="status"><Check size={15} /> Customer tracking updated.</p>}
+    <button type="submit" className="sp-primary" disabled={busy}><Check size={16} /> {busy ? 'Saving update…' : 'Save customer update'}</button>
+  </form>;
+}
+
+export function StudioOrderEditor({ order, onSaved, onBack }) {
+  const [activeTab, setActiveTab] = useState('details');
+
+  const handleTabKey = (event, index) => {
+    const lastIndex = ORDER_TABS.length - 1;
+    const nextIndex = {
+      ArrowRight: (index + 1) % ORDER_TABS.length,
+      ArrowLeft: (index + lastIndex) % ORDER_TABS.length,
+      Home: 0,
+      End: lastIndex,
+    }[event.key];
+    if (nextIndex === undefined) return;
+    event.preventDefault();
+    const [next] = ORDER_TABS[nextIndex];
+    setActiveTab(next);
+    event.currentTarget.parentElement.children[nextIndex].focus();
+  };
+
+  const panels = {
+    details: <><OrderDetails order={order} /><TrackingCard order={order} /></>,
+    quote: <QuoteEditor key={order.reference + '-' + order.pricingConfirmed + '-' + order.grandTotal} order={order} onUpdated={onSaved} />,
+    artwork: <StudioArtwork order={order} onUpdated={onSaved} />,
+    timeline: <section className="sp-editor-card">
+      <h2>Order timeline</h2>
+      <ol className="sp-editor-history">
+        {[...order.history].reverse().map((event, index) => <li key={event.at + '-' + index}>
+          <strong>{event.title}</strong>
+          <time dateTime={event.at}>{date(event.at)}</time>
+          {event.note && <p>{event.note}</p>}
+        </li>)}
+      </ol>
+    </section>,
+  };
+
+  return <section className="sp-order-editor" aria-labelledby="sp-order-title">
+    <button type="button" className="sp-editor-back" onClick={onBack}><ArrowLeft size={16} /> Back to orders</button>
+    <header className="sp-editor-hero">
+      <div className="sp-editor-identity">
+        <p><Package size={16} /> Order placed <time dateTime={order.placedAt}>{date(order.placedAt)}</time></p>
+        <h1 id="sp-order-title">{order.orderId}</h1>
+        <span>{order.customer.name}</span>
+      </div>
+      <dl className="sp-editor-summary">
+        <div>
+          <dt>Order status</dt>
+          <dd><span className="sp-editor-status" data-status={order.status}>{order.statusLabel}</span></dd>
+        </div>
+        <div>
+          <dt>Payment</dt>
+          <dd><span className="sp-editor-payment" data-paid={order.payment.isPaid}>{order.payment.label}</span></dd>
+        </div>
+        <div>
+          <dt>Order total</dt>
+          <dd>{money(order.grandTotal)}</dd>
+        </div>
+      </dl>
+    </header>
+    <button type="button" className="sp-secondary sp-editor-jump" onClick={() => document.getElementById('sp-update-heading')?.focus()}>
+      <SlidersHorizontal size={16} /> Update order
+    </button>
+    <div className="sp-editor-layout">
+      <div role="tablist" aria-label="Order workspace" className="sp-editor-tabs">
+        {ORDER_TABS.map(([id, label, Icon], index) => <button
+          key={id}
+          type="button"
+          role="tab"
+          id={'sp-tab-' + id}
+          aria-controls={'sp-panel-' + id}
+          aria-selected={activeTab === id}
+          tabIndex={activeTab === id ? 0 : -1}
+          onClick={() => setActiveTab(id)}
+          onKeyDown={event => handleTabKey(event, index)}
+        ><Icon size={17} /> {label}</button>)}
+      </div>
+      <div className="sp-editor-content">
+        {ORDER_TABS.map(([id]) => <div key={id} role="tabpanel" id={'sp-panel-' + id} aria-labelledby={'sp-tab-' + id} hidden={activeTab !== id} tabIndex={0}>
+          {panels[id]}
+        </div>)}
+      </div>
+      <OrderUpdateForm order={order} onSaved={onSaved} />
+    </div>
+  </section>;
 }
 
 function StudioDesk({onLogout}){

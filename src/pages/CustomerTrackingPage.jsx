@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import { ArrowRight, ArrowUpRight, Check, ChevronDown, Clock3, Copy, CreditCard, MessageCircle, Package, RefreshCw, ShieldCheck, Truck } from 'lucide-react';
 import { getWhatsAppUrl } from '../data/businessConfig';
-import { payStudioOrder, rememberStudioOrder, rememberedStudioOrders, studioRequest, trackingPath } from '../utils/studioApi';
+import { payStudioOrder, rememberStudioOrder, rememberedStudioOrders, studioRequest, trackingPath, trackingUrl } from '../utils/studioApi';
 import { readOrderStore, buildOrderStatusMessage } from '../utils/orderStorage';
 import './TrackOrderPage.css';
 import './CustomerTrackingPage.css';
@@ -17,7 +17,7 @@ function getInitialToken(reference){if(typeof window==='undefined')return '';con
 export function CustomerOrderStatus({order,paymentConfig,onRefresh,onOrderChange}){
   const [copied,setCopied]=useState(false),[paying,setPaying]=useState(false),[paymentError,setPaymentError]=useState('');
   const index=STAGES.findIndex(([id])=>id===order.status),cancelled=order.status==='cancelled';
-  const link=typeof window!=='undefined'?`${window.location.origin}${trackingPath(order)}`:trackingPath(order);
+  const link=typeof window!=='undefined'?trackingUrl(order):trackingPath(order);
   const pay=async()=>{setPaying(true);setPaymentError('');try{onOrderChange(await payStudioOrder(order));}catch(cause){setPaymentError(cause.message);onRefresh();}finally{setPaying(false);}};
   const recheck=async()=>{setPaying(true);setPaymentError('');try{const result=await studioRequest('/payments/recheck',{method:'POST',body:{reference:order.reference,token:order.trackingToken}});onOrderChange(result.order);}catch(cause){setPaymentError(cause.message);}finally{setPaying(false);}};
   const copy=async()=>{try{await navigator.clipboard.writeText(link);setCopied(true);}catch{setPaymentError('Copy the tracking link from your browser address bar.');}};

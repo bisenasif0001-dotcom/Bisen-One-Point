@@ -7,6 +7,7 @@ export async function studioRequest(path,{method='GET',body,headers={},signal}={
   return result;
 }
 export const trackingPath=order=>`/track-order?id=${encodeURIComponent(order.reference||String(order.orderId).replace(/^#/,''))}#key=${encodeURIComponent(order.trackingToken||'')}`;
+export const trackingUrl = order => new URL(trackingPath(order).slice(1), new URL(import.meta.env.BASE_URL, window.location.origin)).href;
 export function rememberStudioOrder(order){
   try{const previous=JSON.parse(localStorage.getItem('alnoor_server_orders')||'[]');localStorage.setItem('alnoor_server_orders',JSON.stringify([{reference:order.reference,trackingToken:order.trackingToken,placedAt:order.placedAt},...(Array.isArray(previous)?previous.filter(item=>item.reference!==order.reference):[])].slice(0,30)));}catch{/* Server order remains accessible by reference + mobile. */}
 }

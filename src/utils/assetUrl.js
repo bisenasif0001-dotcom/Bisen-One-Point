@@ -21,3 +21,4 @@ export function resolveAssetUrl(url) {
   const cleanUrl = url.startsWith('/') ? url.slice(1) : url;
   return `${cleanBase}${cleanUrl}`;
 }
+

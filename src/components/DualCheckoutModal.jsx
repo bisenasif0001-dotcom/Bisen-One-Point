@@ -7,7 +7,7 @@ import OrderFilesPanel from './OrderFilesPanel';
 import { useBusinessRules } from './BusinessRulesProvider';
 import { getWhatsAppUrl } from '../data/businessConfig';
 import { buildOrderConfirmationMessage } from '../utils/orderRequestMessage';
-import { payStudioOrder, prepareCheckoutItems, rememberStudioOrder, studioRequest, trackingPath } from '../utils/studioApi';
+import { payStudioOrder, prepareCheckoutItems, rememberStudioOrder, studioRequest, trackingPath, trackingUrl } from '../utils/studioApi';
 import './DualCheckoutModal.css';
 
 const money = value => value === null || value === undefined ? 'Quote pending' : `₹${Number(value).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
@@ -70,7 +70,7 @@ function ConnectedCheckout({ onClose, initialTab, cartItems, discountCode, onCle
     } catch (cause) { setError(cause.message); requestAnimationFrame(() => errorBox.current?.scrollIntoView({ block: 'center', behavior: 'instant' })); } finally { setBusy(false); }
   };
   const field = (key, label, options = {}) => <label className={`cc-field ${options.wide ? 'cc-wide' : ''}`} htmlFor={`cc-${key}`}><span>{label}{options.optional && <small>Optional</small>}</span><input ref={key === 'name' ? firstField : undefined} id={`cc-${key}`} type={options.type || 'text'} autoComplete={options.autoComplete} inputMode={options.inputMode} maxLength={options.maxLength || 150} value={form[key]} onChange={event => update(key, event.target.value)} required={!options.optional} aria-invalid={Boolean(errors[key])} aria-describedby={errors[key] ? `cc-${key}-error` : undefined} />{errors[key] && <small className="cc-field-error" id={`cc-${key}-error`}>{errors[key]}</small>}</label>;
-  const share = order ? getWhatsAppUrl(`${buildOrderConfirmationMessage(order)}\n\nMy private tracking link: ${window.location.origin}${trackingPath(order)}`) : '';
+  const share = order ? getWhatsAppUrl(`${buildOrderConfirmationMessage(order)}\n\nMy private tracking link: ${trackingUrl(order)}`) : '';
   return <div className="cc-overlay" ref={dialog} role="dialog" aria-modal="true" aria-labelledby="cc-title">
     <header className="cc-header"><span className="cc-brand">AL-NOOR<small>YOUR PRINT & FRAME STUDIO</small></span><span><LockKeyhole size={14} />Your order, securely connected</span><button disabled={busy} className="cc-icon" onClick={onClose} aria-label="Close checkout"><X size={23} /></button></header>
     <div className="cc-shell"><div className="cc-heading"><span className="cc-kicker">{order ? 'YOUR REQUEST HAS REACHED THE STUDIO' : 'A FEW DETAILS. THEN IT’S YOURS.'}</span><h1 id="cc-title">{order ? 'Your order is saved.' : 'Make it yours.'}</h1><p>{order ? 'Keep your reference, send original files and follow studio updates.' : 'Review your selections and get the complete amount before payment.'}</p></div>
