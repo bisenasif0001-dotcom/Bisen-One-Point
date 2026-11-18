@@ -17,7 +17,7 @@ export default function Footer() {
     <div className="footer-container">
       <div className="footer-intro">
         <Link to="/" className="footer-brand" aria-label="BISEN Frame & Photo Print home">
-          <img src="/logo.png" alt="BISEN Frame & Photo Print" className="footer-brand-logo" width="160" height="52" />
+          <img src="/logo-light.png" alt="BISEN Frame & Photo Print" className="footer-brand-logo" width="160" height="52" />
         </Link>
         <div className="footer-brand-copy"><p>Personalised photo printing, framing, cards, wall art and bespoke gifts by BISEN Frame & Photo Print.</p><div className="footer-socials">
           <a href={getWhatsAppUrl('Hello! I have an inquiry regarding BISEN studio orders.')} target="_blank" rel="noopener noreferrer" aria-label="Chat with BISEN on WhatsApp"><MessageCircle size={17} /></a>
