@@ -24,7 +24,10 @@ test('production pages use correct metadata, private indexing rules, compression
       assert.equal(response.status, 200, path);
       assert.equal(response.headers.get('x-robots-tag'), 'noindex, nofollow', path);
     }
-    for (const path of ['/not-a-page', '/pvc-cards/not-a-product', '/dua-posters/not-a-poster', '/itra/not-a-scent', '/product/not-a-frame', '/cards/not-a-card', '/occasions/not-an-occasion']) {
+    for (const path of ['/cards/occasion/wedding', '/cards/custom-design', '/cards/print-your-design', '/cards/tpl-1']) {
+      assert.equal((await fetch(origin + path)).status, 200, path);
+    }
+    for (const path of ['/not-a-page', '/pvc-cards/not-a-product', '/dua-posters/not-a-poster', '/itra/not-a-scent', '/product/not-a-frame', '/cards/not-a-card', '/cards/occasion/not-an-occasion', '/occasions/not-an-occasion']) {
       const response = await fetch(origin + path);
       assert.equal(response.status, 404, path);
       assert.ok((await response.text()).includes('Page Not Found'));

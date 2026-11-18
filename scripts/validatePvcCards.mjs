@@ -41,7 +41,10 @@ try {
     for (const orientation of ['portrait', 'landscape']) for (const side of ['front', 'back']) {
       const svg = renderToStaticMarkup(React.createElement(Art, { product, orientation, side }));
       assert.ok(!svg.includes('NaN') && svg.includes('<svg'));
-      for (const asset of svg.matchAll(/href="(\/[^"]+)"/g)) assert.ok(existsSync(`public${asset[1]}`), `Existing local visual: ${asset[1]}`);
+      for (const [, asset] of svg.matchAll(/href="(\/[^"]+)"/g)) {
+        const assetPath = asset.startsWith(server.config.base) ? asset.slice(server.config.base.length - 1) : asset;
+        assert.ok(existsSync(`public${assetPath}`), `Existing local visual: ${asset}`);
+      }
     }
     for (const quantity of [1, 5, 10, 25, 50, 100, 375, 100000]) for (const sides of ['single', 'double']) for (const design of ['upload', 'design']) for (const accessories of ['none', 'holder', 'lanyard', 'both']) {
       const draft = { ...initial, quantity: String(quantity), order: quantity === 1 ? 'single' : 'bulk', sides, design, accessories, name: 'Website QA', notes: 'Keep these exact words: नमस्ते & مرحبا.' };

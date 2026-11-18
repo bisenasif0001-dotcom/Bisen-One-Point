@@ -1,14 +1,17 @@
-import React from 'react';
-import { Link, useLocation, useSearchParams } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { ArrowDown, ArrowUpRight, BookOpen, Check, Frame, Sparkles } from 'lucide-react';
 import { DuaPosterCollection } from './DuaPostersPage';
 import IslamicArtGallery from '../components/IslamicArtGallery';
 import AsmaUlHusnaGallery from '../components/AsmaUlHusnaGallery';
 import FramedPosterPreview from '../components/FramedPosterPreview';
+import DuaPosterCustomizer from '../components/DuaPosterCustomizer';
 import { FRAME_FINISHES } from '../data/products';
 import { DUA_POSTERS } from '../data/duaPosters';
-import { ASMA_UL_HUSNA_COUNT, ASMA_UL_HUSNA_ITEMS } from '../data/asmaUlHusnaData';
+import { ASMA_UL_HUSNA_COUNT, ASMA_UL_HUSNA_ITEMS, getAsmaNameById } from '../data/asmaUlHusnaData';
 import { VERSE_ARTWORKS, resolveIslamicArtTab } from '../data/islamicArt';
+import { asmaArtworkImage } from '../utils/asmaArtwork';
+import NotFoundPage from './NotFoundPage';
 import './IslamicArtPage.css';
 
 const COLLECTIONS = [
@@ -23,20 +26,33 @@ const COPY = {
 };
 
 function CollectionHeroArt({ tab }) {
-  const posters = tab === 'names' ? [ASMA_UL_HUSNA_ITEMS[1], ASMA_UL_HUSNA_ITEMS[0], ASMA_UL_HUSNA_ITEMS[2]].map(item => ({ title: item.title, image: item.imageUrl })) : tab === 'verses' ? [VERSE_ARTWORKS[1], VERSE_ARTWORKS[0], VERSE_ARTWORKS[2]] : [DUA_POSTERS[2], VERSE_ARTWORKS[0], DUA_POSTERS[4]];
+  const posters = tab === 'names' ? [ASMA_UL_HUSNA_ITEMS[1], ASMA_UL_HUSNA_ITEMS[0], ASMA_UL_HUSNA_ITEMS[2]].map(item => ({ title: item.title, image: asmaArtworkImage(item) })) : tab === 'verses' ? [VERSE_ARTWORKS[1], VERSE_ARTWORKS[0], VERSE_ARTWORKS[2]] : [DUA_POSTERS[2], VERSE_ARTWORKS[0], DUA_POSTERS[4]];
   const frame = FRAME_FINISHES.find(item => item.id === 'regal_noir');
   return <div className="ia-hero-art" aria-label="Original artwork displayed in a catalogue frame"><span className="ia-hero-art-label">A LITTLE MEANING, EVERY DAY</span><div className="ia-hero-frames">{posters.map((poster, index) => <div key={poster.title} className={`ia-hero-frame ia-hero-frame-${index}`}><FramedPosterPreview poster={{ ...poster, image: poster.thumbnail || poster.image }} frame={frame} /></div>)}</div><span className="ia-hero-art-caption">{COPY[tab].caption}</span></div>;
 }
 
-export default function IslamicArtPage({ onAddToCart }) {
+export default function IslamicArtPage() {
   const [params] = useSearchParams();
   const location = useLocation();
   const activeTab = resolveIslamicArtTab(params, location.pathname);
   const copy = COPY[activeTab];
+  useEffect(() => {
+    if (location.hash === '#islamic-collection') document.getElementById('islamic-collection')?.scrollIntoView({ block: 'start' });
+  }, [location.hash, activeTab]);
   return <div className={`ia-page ia-page-${activeTab}`}><div className="ia-shell">
     <nav className="ia-breadcrumb" aria-label="Breadcrumb"><Link to="/">The studio</Link><span>/</span><span>Dua & wall art</span></nav>
     <header className="ia-hero"><div className="ia-hero-copy"><span className="ia-kicker"><Sparkles size={14} />{copy.kicker}</span><h1>{copy.title}<br /><em>{copy.accent}</em></h1><p>{copy.description}</p><a className="ia-primary" href="#islamic-collection">{copy.button}<ArrowDown size={15} /></a><div className="ia-hero-notes"><span><Check size={13} /> Original artwork</span><span><Check size={13} /> Framed or print only</span></div></div><CollectionHeroArt tab={activeTab} /></header>
     <nav className="ia-collections" aria-label="Islamic art collections">{COLLECTIONS.map(({ id, label, note, icon: Icon }) => <Link key={id} to={`/islamic-art?tab=${id}`} aria-current={activeTab === id ? 'page' : undefined}><Icon size={19} strokeWidth={1.5} /><span><strong>{label}</strong><small>{note}</small></span><ArrowUpRight size={16} /></Link>)}</nav>
-    <div className="ia-collection-content" id="islamic-collection">{activeTab === 'verses' ? <IslamicArtGallery /> : activeTab === 'names' ? <AsmaUlHusnaGallery onAddToCart={onAddToCart} /> : <DuaPosterCollection />}</div>
+    <div className="ia-collection-content" id="islamic-collection">{activeTab === 'verses' ? <IslamicArtGallery /> : activeTab === 'names' ? <AsmaUlHusnaGallery /> : <DuaPosterCollection />}</div>
   </div></div>;
+}
+
+export function AsmaArtworkDetailPage({ onAddToCart }) {
+  const { id } = useParams();
+  useEffect(() => { window.scrollTo({ top: 0, behavior: 'instant' }); }, [id]);
+  const item = getAsmaNameById(id);
+  if (!item) return <NotFoundPage />;
+  const image = asmaArtworkImage(item);
+  return <DuaPosterCustomizer key={id} poster={{ ...item, image, thumbnail: image }} nameArtwork={item}
+    collectionPath="/islamic-art?tab=names#islamic-collection" collectionLabel="Names of Allah" onAddToCart={onAddToCart} />;
 }

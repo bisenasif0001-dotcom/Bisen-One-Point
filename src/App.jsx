@@ -20,11 +20,14 @@ const PvcCardPage = lazy(() => import('./pages/PvcCardsPage').then(module => ({ 
 const CustomFramingPage = lazy(() => import('./pages/CustomFramingPage'));
 const FrameCataloguePage = lazy(() => import('./pages/FrameCataloguePage'));
 const IslamicArtPage = lazy(() => import('./pages/IslamicArtPage'));
+const AsmaArtworkDetailPage = lazy(() => import('./pages/IslamicArtPage').then(module => ({ default: module.AsmaArtworkDetailPage })));
 const ItraPerfumesPage = lazy(() => import('./pages/ItraPerfumesPage'));
 const SizeGuidePage = lazy(() => import('./pages/SizeGuidePage'));
 const PhotoPrintsPage = lazy(() => import('./pages/PhotoPrintsPage'));
 const BirthdayCardBuilderPage = lazy(() => import('./pages/BirthdayCardBuilderPage'));
 const CardsInvitationsPage = lazy(() => import('./pages/CardsInvitationsPage'));
+const CardOccasionPage = lazy(() => import('./pages/CardsInvitationsPage').then(module => ({ default: module.CardOccasionPage })));
+const StationeryRequestPage = lazy(() => import('./pages/StationeryRequestPage'));
 const OccasionLandingPage = lazy(() => import('./pages/OccasionLandingPage'));
 const AboutPage = lazy(() => import('./pages/AboutPage'));
 const PolicyPage = lazy(() => import('./pages/PolicyPage'));
@@ -208,6 +211,9 @@ export default function App() {
               path="/cards-invitations" 
               element={<CardsInvitationsPage />} 
             />
+            <Route path="/cards/occasion/:occasionId" element={<CardOccasionPage />} />
+            <Route path="/cards/print-your-design" element={<StationeryRequestPage mode="print" />} />
+            <Route path="/cards/custom-design" element={<StationeryRequestPage mode="design" />} />
             <Route 
               path="/card/:id" 
               element={<CardProductDetailPage onAddToCart={handleAddToCart} />} 
@@ -248,33 +254,10 @@ export default function App() {
               path="/shop" 
               element={<FrameCataloguePage />} 
             />
-            <Route 
-              path="/islamic-art" 
-              element={
-                <IslamicArtPage
-                  onAddToCart={handleAddToCart}
-                  onQuickView={(item) => setQuickViewItem(item)}
-                />
-              } 
-            />
-            <Route 
-              path="/asma-ul-husna" 
-              element={
-                <IslamicArtPage
-                  onAddToCart={handleAddToCart}
-                  onQuickView={(item) => setQuickViewItem(item)}
-                />
-              } 
-            />
-            <Route 
-              path="/99-names" 
-              element={
-                <IslamicArtPage
-                  onAddToCart={handleAddToCart}
-                  onQuickView={(item) => setQuickViewItem(item)}
-                />
-              } 
-            />
+            <Route path="/islamic-art" element={<IslamicArtPage />} />
+            <Route path="/islamic-art/:id" element={<AsmaArtworkDetailPage onAddToCart={handleAddToCart} />} />
+            <Route path="/asma-ul-husna" element={<IslamicArtPage />} />
+            <Route path="/99-names" element={<IslamicArtPage />} />
             <Route 
               path="/itra-perfumes" 
               element={
@@ -449,7 +432,8 @@ function FloatingActions({ isCartOpen, isCheckoutOpen, showScrollTop }) {
     '/frames-catalogue',
     '/gallery-wall',
     '/printing-services',
-    '/dua-posters/'
+    '/dua-posters/',
+    '/islamic-art/'
   ].some((path) => location.pathname.startsWith(path));
 
   return (

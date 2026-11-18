@@ -18,7 +18,7 @@ const menus = [
     { title: 'MAKE IT PERSONAL', links: [ ['Dua poster printing', '/printing-services?service=Dua%20posters', 'Custom design, size and frame enquiries'], ['Frame your artwork', '/custom-framing', 'See your design in a real frame'], ['Create a gallery wall', '/gallery-walls', 'Bring meaningful pieces together'] ] },
   ], previews: [ { kind: 'dua', title: 'The Dua Collection', note: '22 designs to discover', path: '/dua-posters' }, { kind: 'names', title: 'Names of Allah', note: 'Calligraphy collection', path: '/islamic-art?tab=names' } ] },
   { id: 'gifts', label: 'Cards & gifts', path: '/cards', icon: Gift, intro: 'Little things with a personal touch, for people who mean a lot.', eyebrow: 'GIVE SOMETHING PERSONAL', groups: [
-    { title: 'FOR THEIR OCCASION', links: [ ['Birthday card creator', '/birthday-cards', 'Your message, made just for them'], ['Cards & invitations', '/cards', 'Find the right words for your moment'], ['Shop by occasion', '/occasions', 'A thoughtful place to start'] ] },
+    { title: 'CARDS & INVITATIONS', links: [ ['Browse cards & invitations', '/cards', 'Find a template by occasion'], ['Birthday card creator', '/birthday-cards', 'Personalise a card online'], ['Print your own design', '/cards/print-your-design', 'Print artwork you already have'], ['Get a custom design', '/cards/custom-design', 'Work with the studio on a new design'], ['Gifts by occasion', '/occasions', 'Browse cards, frames and gifts'] ] },
     { title: 'THOUGHTFUL GIFTING', links: [ ['A photo in a frame', '/custom-framing', 'A memory they can keep close'], ['Explore Itra', '/itra-perfumes', 'Discover our fragrance collection'], ['Corporate & bulk gifts', '/contact?inquiry=bulk-gifting', 'Plan a more personal team gift'] ] },
   ], previews: [ { kind: 'greeting', title: 'Write their kind of card', note: 'Birthday card creator', path: '/birthday-cards' }, { kind: 'gift-frame', title: 'Give them a memory', note: 'Personalised frames', path: '/custom-framing' } ] },
   { id: 'printing', label: 'PVC cards', path: '/pvc-cards', icon: CreditCard, intro: 'For your team, your business or a memory worth keeping. One card or a whole community.', eyebrow: 'THE PVC CARD STUDIO', groups: [
@@ -109,7 +109,7 @@ export default function Navbar({ cartCount = 0, onOpenCart }) {
   const requestedPrintingService = new URLSearchParams(location.search).get('service');
   const isDuaPrinting = location.pathname.startsWith('/printing-services') && ['Dua posters', 'dua'].includes(requestedPrintingService);
   const currentSection = isDuaPrinting ? 'art' : (location.pathname.startsWith('/pvc-cards') || (location.pathname.startsWith('/printing-services') && ['PVC cards', 'pvc'].includes(requestedPrintingService))) ? 'printing'
-    : (['/islamic-art', '/asma-ul-husna', '/99-names', '/dua-posters'].includes(location.pathname) || location.pathname.startsWith('/dua-posters/')) ? 'art'
+    : (['/islamic-art', '/asma-ul-husna', '/99-names', '/dua-posters'].includes(location.pathname) || location.pathname.startsWith('/dua-posters/') || location.pathname.startsWith('/islamic-art/')) ? 'art'
     : ['/cards', '/birthday-cards', '/create-card', '/occasions', '/gift-sets'].some(path => location.pathname === path || location.pathname.startsWith(path + '/')) || location.pathname.startsWith('/itra') ? 'gifts'
     : ['/custom-framing', '/frames-catalogue', '/photo-prints', '/prints', '/gallery-walls', '/size-guide', '/shop'].includes(location.pathname) || location.pathname.startsWith('/product/') ? 'frames' : null;
   return <>

@@ -8,6 +8,9 @@ export const CARD_TEMPLATES = [
   { id: 'kids_playful', category: 'Kids', name: 'Little Dreamer', description: 'Big wishes for a little star.', bg: '#fff1d5', ink: '#384f64', accent: '#c16a51', sampleGreeting: 'Hip Hip Hooray!', sampleSub: 'A whole year brighter. A whole lot more magic.', hasPhoto: true },
   { id: 'islamic_barakah', category: 'Islamic', name: 'Barakah & Dua', description: 'A thoughtful wish, filled with blessings.', bg: '#ede9dc', ink: '#304d40', accent: '#9b7843', sampleGreeting: 'A Year of Barakah', sampleSub: 'May your days be filled with peace and goodness.', hasPhoto: true },
   { id: 'fun_celebration', category: 'Fun', name: 'Confetti Club', description: 'A joyful little celebration on paper.', bg: '#e8c5b5', ink: '#354f42', accent: '#a45f45', sampleGreeting: 'Cheers To You!', sampleSub: 'Make a wish. Make it a good one.', hasPhoto: false },
+  { id: 'wedding_vows', category: 'Floral', name: 'The Vow Garden', description: 'An engraved arch framed by climbing garden stems.', sampleGreeting: 'Together, Forever', hasPhoto: true },
+  { id: 'milestone_ribbon', category: 'Elegant', name: 'A Golden Milestone', description: 'Sculpted ribbons and geometric rules for a big achievement.', sampleGreeting: 'Here’s to You!', hasPhoto: true },
+  { id: 'quiet_remembrance', category: 'Minimal', name: 'Quiet Remembrance', description: 'Soft stone tones, a fine double border and an engraved branch.', sampleGreeting: 'In Loving Memory', hasPhoto: true },
 ];
 
 export const CARD_SIZES = [

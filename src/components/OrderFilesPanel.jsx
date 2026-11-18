@@ -17,8 +17,8 @@ async function saveDownload(response, name) {
   link.href = url; link.download = name; link.click(); setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
-export default function OrderFilesPanel({ order, studio = false, onUpdated, evidenceFor = '' }) {
-  const [data, setData] = useState(null), [selected, setSelected] = useState([]), [error, setError] = useState(''), [message, setMessage] = useState(''), [busy, setBusy] = useState(false), [progress, setProgress] = useState('');
+export default function OrderFilesPanel({ order, studio = false, onUpdated, evidenceFor = '', initialFiles = [] }) {
+  const [data, setData] = useState(null), [selected, setSelected] = useState(() => initialFiles.map(file => ({ file, sourceId: '', note: '' }))), [error, setError] = useState(''), [message, setMessage] = useState(''), [busy, setBusy] = useState(false), [progress, setProgress] = useState('');
   const [kind, setKind] = useState('proof'), [proofIds, setProofIds] = useState([]), [note, setNote] = useState(''), [confirmed, setConfirmed] = useState(false);
   const controller = useRef(null), input = useRef(null), mounted = useRef(true);
   const credentials = { reference: order.reference, token: order.trackingToken };

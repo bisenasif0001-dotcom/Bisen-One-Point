@@ -26,8 +26,11 @@ try {
     if (pathname === '/pvc-cards/bulk') { file = 'PvcCardsPage'; name = 'PvcCardPage'; props.bulk = true; }
     else if (pathname.startsWith('/pvc-cards/')) { file = 'PvcCardsPage'; name = 'PvcCardPage'; pattern = '/pvc-cards/:id'; }
     else if (pathname.startsWith('/dua-posters/')) { file = 'DuaPostersPage'; name = 'DuaPosterDetailPage'; pattern = '/dua-posters/:id'; }
+    else if (pathname.startsWith('/islamic-art/')) { file = 'IslamicArtPage'; name = 'AsmaArtworkDetailPage'; pattern = '/islamic-art/:id'; }
     else if (pathname.startsWith('/itra-perfumes/')) { file = 'ItraProductDetailPage'; pattern = '/itra-perfumes/:id'; }
     else if (pathname.startsWith('/product/')) { file = 'ProductDetailPage'; pattern = '/product/:id'; }
+    else if (pathname.startsWith('/cards/occasion/')) { file = 'CardsInvitationsPage'; name = 'CardOccasionPage'; pattern = '/cards/occasion/:occasionId'; }
+    else if (pathname === '/cards/print-your-design' || pathname === '/cards/custom-design') { file = 'StationeryRequestPage'; props.mode = pathname.endsWith('/custom-design') ? 'design' : 'print'; }
     else if (pathname.startsWith('/cards/')) { file = 'CardProductDetailPage'; pattern = '/cards/:id'; }
     else if (pathname.startsWith('/occasions/')) { file = 'OccasionLandingPage'; pattern = '/occasions/:occasionId'; }
     try {
@@ -36,11 +39,13 @@ try {
       report.pages.push(path);
       for (const [, raw] of html.matchAll(/\bsrc="([^"]+)"/g)) {
         const source = decode(raw);
-        if (source.startsWith('/') && !existsSync(`public${decodeURIComponent(source.split('?')[0])}`)) report.missingAssets.push({ page: path, source });
+        const localPath = decodeURIComponent(source.split('?')[0]).replace(/^\/Bisen-One-Point/, '');
+        if (source.startsWith('/') && !existsSync(`public${localPath}`)) report.missingAssets.push({ page: path, source });
       }
       for (const [, raw] of html.matchAll(/\bhref="([^"]+)"/g)) {
         const link = decode(raw);
-        if (link.startsWith('/') && !link.startsWith('//') && !existsSync(`public${decodeURIComponent(link.split('?')[0])}`) && !routeInfo(new URL(link, 'https://local.test').pathname).known) report.invalidLinks.push({ page: path, link });
+        const localLink = decodeURIComponent(link.split('?')[0]).replace(/^\/Bisen-One-Point/, '');
+        if (link.startsWith('/') && !link.startsWith('//') && !existsSync(`public${localLink}`) && !routeInfo(new URL(link, 'https://local.test').pathname).known) report.invalidLinks.push({ page: path, link });
       }
     } catch (error) { report.renderErrors.push({ page: path, error: error.message }); }
   }

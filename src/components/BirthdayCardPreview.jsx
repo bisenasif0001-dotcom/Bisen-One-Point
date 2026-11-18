@@ -1,6 +1,9 @@
 import React, { useId } from 'react';
 import { CARD_DEMO_PHOTO, CARD_TEMPLATES } from '../data/birthdayCards';
+import { PREMIUM_CARD_DESIGN } from '../data/cardDesigns';
+import { getStationeryOccasion } from '../data/cardStationery';
 import { getCardPhotoPlacement, wrapCardText } from '../utils/birthdayCards';
+import PremiumCardArtwork from './PremiumCardArtwork';
 
 function CardText({ children, x = 250, y, width = 390, height = 150, size = 52, color, sans = false, spacing = 0, anchor = 'middle', italic = false }) {
   let fontSize = size;
@@ -36,10 +39,18 @@ function Decorations({ template }) {
   return null;
 }
 
-export default function BirthdayCardPreview({ config = {}, view = 'front', photo, demo = false, decorative = false, singlePage = false, className = '', style }) {
+export default function BirthdayCardPreview(props) {
+  if (props.config?.designVersion === PREMIUM_CARD_DESIGN) return <PremiumCardArtwork {...props} />;
+  return <LegacyCardArtwork {...props} />;
+}
+
+// Render past orders with the artwork the customer originally approved.
+function LegacyCardArtwork({ config = {}, view = 'front', photo, demo = false, decorative = false, singlePage = false, className = '', style }) {
   const uid = useId().replace(/:/g, '');
   const template = CARD_TEMPLATES.find(item => item.id === config.templateId) || CARD_TEMPLATES[0];
   const { ink, accent, bg, id } = template;
+  const purpose = getStationeryOccasion(config.occasionId);
+  const birthday = !purpose || purpose.id === "birthday";
   const recipient = config.recipientName?.trim() || (demo ? 'Amira' : 'Your favourite person');
   const headline = config.headline?.trim() || template.sampleGreeting;
   const selectedPhoto = photo || config.photo || (demo ? CARD_DEMO_PHOTO : null);
@@ -48,11 +59,15 @@ export default function BirthdayCardPreview({ config = {}, view = 'front', photo
   const box = fullBleed ? { x:0, y:0, width:500, height:700 } : id === 'minimal_editorial' ? { x:100, y:110, width:300, height:285 } : id === 'islamic_barakah' ? { x:140, y:175, width:220, height:235 } : { x:115, y:125, width:270, height:265 };
   const placement = showPhoto ? getCardPhotoPlacement(box, selectedPhoto, config.photoFit, config.panX ?? 50, config.panY ?? 50) : null;
 
+  if (view === 'inside' && config.blankInside) return <svg xmlns="http://www.w3.org/2000/svg" viewBox={singlePage ? '500 0 500 700' : '0 0 1000 700'} className={className} style={style} role="img" aria-label="Blank inside">
+    <rect width="1000" height="700" fill="#fcf8ee" /><path d="M500 0 V700" stroke="#d6cebc" strokeWidth="1" />
+  </svg>;
+
   if (view === 'inside') return <svg xmlns="http://www.w3.org/2000/svg" viewBox={singlePage ? '500 0 500 700' : '0 0 1000 700'} className={className} style={style} role={decorative ? undefined : 'img'} aria-hidden={decorative || undefined} aria-label={decorative ? undefined : `Open card. Message for ${recipient}`}>
     <rect width="1000" height="700" fill="#fcf8ee" /><rect width="500" height="700" fill={bg} opacity=".35" /><path d="M500 0 V700" stroke="#d6cebc" strokeWidth="1" />
     <path d="M250 337 C222 307 203 341 250 372 C297 341 278 307 250 337" fill="none" stroke={accent} strokeWidth="1.4" />
     <CardText x={750} y={147} width={370} height={65} size={28} color={ink}>{`Dear ${recipient},`}</CardText>
-    <CardText x={750} y={227} width={360} height={285} size={23} color={ink}>{config.message?.trim() || 'Your words go here. A little note they’ll come back to, long after the candles are out.'}</CardText>
+    <CardText x={750} y={227} width={360} height={285} size={23} color={ink}>{config.message?.trim() || 'Your words go here. A little note they’ll come back to, for them to keep.'}</CardText>
     <path d="M713 547 H787" stroke={accent} />
     <CardText x={750} y={593} width={360} height={65} size={22} italic color={ink}>{config.signoff?.trim() || 'With love, your name'}</CardText>
   </svg>;
@@ -65,10 +80,10 @@ export default function BirthdayCardPreview({ config = {}, view = 'front', photo
     <rect width="500" height="700" fill={bg} /><Decorations template={template} />
     {showPhoto && <g clipPath={`url(#${uid}-photo)`}><rect {...box} fill="#fcf8ee" /><image href={selectedPhoto.url} {...placement} preserveAspectRatio="none" /></g>}
     {fullBleed && <><rect width="500" height="700" fill={`url(#${uid}-shade)`} /><Star x={250} y={105} size={15} color={accent} /></>}
-    {id === 'minimal_editorial' && <CardText y={75} size={11} spacing={3} color={accent} height={20}>A DAY JUST FOR YOU</CardText>}
-    {!showPhoto && !fullBleed && <CardText y={titleY - 64} size={12} spacing={2.3} color={accent} height={30}>LET’S CELEBRATE YOU</CardText>}
+    {id === 'minimal_editorial' && <CardText y={75} size={11} spacing={3} color={accent} height={20}>{birthday ? "A DAY JUST FOR YOU" : purpose.label.toUpperCase()}</CardText>}
+    {birthday && !showPhoto && !fullBleed && <CardText y={titleY - 64} size={12} spacing={2.3} color={accent} height={30}>LET’S CELEBRATE YOU</CardText>}
     <CardText y={titleY} width={fullBleed ? 410 : 360} height={titleHeight} size={titleSize} color={ink} sans={id === 'kids_playful' || id === 'fun_celebration'}>{headline}</CardText>
     <CardText y={fullBleed ? 640 : showPhoto ? 606 : 461} width={365} height={40} size={17} color={ink} italic>{`For ${recipient}`}</CardText>
-    {!fullBleed && <CardText y={658} width={350} height={22} size={10} spacing={.6} color={accent}>{template.sampleSub}</CardText>}
+    {birthday && !fullBleed && <CardText y={658} width={350} height={22} size={10} spacing={.6} color={accent}>{template.sampleSub}</CardText>}
   </svg>;
 }

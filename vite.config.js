@@ -2,8 +2,9 @@ import react from '@vitejs/plugin-react'
 import { defineConfig } from 'vite'
 import studioApiPlugin from './server/vitePlugin.mjs'
 
-const dirRegex = /(['"`])\/(cards|custom-frames|dua-posters|frames|hero|islamic-calligraphy|rooms|studio-previews)\//g;
-const fileRegex = /(['"`])\/(favicon\.svg|favicon\.png|logo(?:-[a-z]+)?\.png|icons\.svg)(['"`])/g;
+// Some public image folders share a name with React Router routes.
+const publicImagePath = /(['"`])\/((?:cards|custom-frames|dua-posters|frames|hero|islamic-calligraphy|rooms|studio-previews)\/[^'"`\r\n?#]+\.(?:avif|gif|jpe?g|png|svg|webp)(?:[?#][^'"`\r\n]*)?|favicon\.(?:svg|png)|logo(?:-[a-z]+)?\.png|icons\.svg)\1/g;
+const base = '/Bisen-One-Point/';
 
 function publicAssetBasePlugin(base) {
   const normalizedBase = base.endsWith('/') ? base : base + '/';
@@ -11,36 +12,18 @@ function publicAssetBasePlugin(base) {
     name: 'public-asset-base',
     enforce: 'pre',
     transform(code, id) {
-      if (!id.includes('node_modules') && /\.(jsx?|tsx?)$/.test(id)) {
-        let transformed = code;
-        let modified = false;
-
-        if (dirRegex.test(transformed)) {
-          dirRegex.lastIndex = 0;
-          transformed = transformed.replace(dirRegex, `$1${normalizedBase}$2/`);
-          modified = true;
-        }
-
-        if (fileRegex.test(transformed)) {
-          fileRegex.lastIndex = 0;
-          transformed = transformed.replace(fileRegex, `$1${normalizedBase}$2$3`);
-          modified = true;
-        }
-
-        if (modified) {
-          return { code: transformed, map: null };
-        }
-      }
-      return null;
+      if (id.includes('node_modules') || !/\.(jsx?|tsx?)$/.test(id)) return null;
+      const transformed = code.replace(publicImagePath, `$1${normalizedBase}$2$1`);
+      return transformed === code ? null : { code: transformed, map: null };
     }
   };
 }
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: '/Bisen-One-Point/',
+  base,
   plugins: [
-    publicAssetBasePlugin('/Bisen-One-Point/'),
+    publicAssetBasePlugin(base),
     react(),
     studioApiPlugin()
   ],

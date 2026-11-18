@@ -2,22 +2,27 @@ import assert from 'node:assert/strict';
 import { existsSync } from 'node:fs';
 import React from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { createServer } from 'vite';
 const server = await createServer({ server: { middlewareMode: true, hmr: false } });
 try {
   const { VERSE_ARTWORKS, filterVerseArtworks, verseDesignPath, resolveIslamicArtTab, buildQulsSetEnquiry, getVerseSelection, verseCollectionPath } = await server.ssrLoadModule('/src/data/islamicArt.js');
   const { FRAME_FINISHES, FRAME_SIZES } = await server.ssrLoadModule('/src/data/products.js');
   const { DUA_PRINT_PRICES } = await server.ssrLoadModule('/src/data/duaPricing.js');
-  const { default: Page } = await server.ssrLoadModule('/src/pages/IslamicArtPage.jsx');
+  const { default: Page, AsmaArtworkDetailPage } = await server.ssrLoadModule('/src/pages/IslamicArtPage.jsx');
+  const { ASMA_UL_HUSNA_ITEMS } = await server.ssrLoadModule('/src/data/asmaUlHusnaData.js');
+  const { asmaArtworkPath, asmaArtworkImage, asmaArtworkPrice } = await server.ssrLoadModule('/src/utils/asmaArtwork.js');
+  const { routeInfo } = await server.ssrLoadModule('/src/data/siteRoutes.js');
   const { default: Customizer } = await server.ssrLoadModule('/src/components/DuaPosterCustomizer.jsx');
   const { getWhatsAppUrl, BUSINESS_CONFIG } = await server.ssrLoadModule('/src/data/businessConfig.js');
   const render = (component, path='/islamic-art?tab=verses') => renderToStaticMarkup(React.createElement(MemoryRouter, {initialEntries:[path]}, component));
+  const base = server.config.base.replace(/\/$/, '');
+  const publicFile = pathname => `public${decodeURIComponent(pathname.startsWith(`${base}/`) ? pathname.slice(base.length) : pathname)}`;
   assert.equal(VERSE_ARTWORKS.length,4);
   assert.equal(new Set(VERSE_ARTWORKS.map(item=>item.id)).size,4);
   for (const item of VERSE_ARTWORKS) {
     assert.ok(item.id && item.title && item.displayTitle);
-    assert.ok(existsSync(`public${item.image}`) && existsSync(`public${item.thumbnail}`));
+    assert.ok(existsSync(publicFile(item.image)) && existsSync(publicFile(item.thumbnail)));
   }
   assert.equal(filterVerseArtworks('', 'all').length,4);
   assert.equal(filterVerseArtworks('', 'surahs').length,3);
@@ -58,6 +63,24 @@ try {
   }
   const fallback=render(React.createElement(Customizer,{poster:VERSE_ARTWORKS[0],initialSize:'bad-size'}));
   assert.ok(fallback.includes('A4 · '));
+  const names = renderToStaticMarkup(React.createElement(MemoryRouter, { basename: server.config.base, initialEntries: [`${base}/islamic-art?tab=names`] }, React.createElement(Page)));
+  const links = [...names.matchAll(/class="anh-card" href="([^"]+)"/g)].map(match => match[1]);
+  assert.deepEqual(links, ASMA_UL_HUSNA_ITEMS.map(item => `${base}${asmaArtworkPath(item)}`));
+  for (const item of ASMA_UL_HUSNA_ITEMS) {
+    const image = asmaArtworkImage(item);
+    assert.ok(existsSync(publicFile(image)), item.title);
+    assert.ok(names.includes(`src="${base}${image.replaceAll("'", '&#x27;')}"`), item.title);
+    assert.equal(routeInfo(asmaArtworkPath(item)).known, true, item.title);
+  }
+  const sample = ASMA_UL_HUSNA_ITEMS.find(item => item.id === 'asma-06-al-mu-min');
+  const nameDetail = render(React.createElement(Routes, null, React.createElement(Route, {
+    path: '/islamic-art/:id', element: React.createElement(AsmaArtworkDetailPage, { onAddToCart() {} }),
+  })), asmaArtworkPath(sample));
+  for (const label of ['Al-Mu&#x27;min', 'Print only', 'With frame', 'Custom size', 'Quantity', 'Add to Bag', 'estimated subtotal', 'Get quote on WhatsApp']) assert.ok(nameDetail.includes(label), label);
+  assert.equal(asmaArtworkPrice(sample, 'print', 'A4'), 399);
+  assert.equal(asmaArtworkPrice(sample, 'framed', 'A4', FRAME_FINISHES[1]), 849);
+  assert.equal(asmaArtworkPrice(sample, 'framed', 'Custom'), null);
+  assert.equal(routeInfo('/islamic-art/not-a-design').known, false);
   for(const format of ['framed','print']) {
     const brief=buildQulsSetEnquiry({format,frame:FRAME_FINISHES[1],sizeId:'A3'});
     for(const item of VERSE_ARTWORKS.slice(1)) assert.ok(brief.includes(`1 × ${item.displayTitle}`));
@@ -67,5 +90,5 @@ try {
     assert.equal(url.pathname,`/${BUSINESS_CONFIG.contact.whatsapp}`);
     assert.equal(url.searchParams.get('text'),brief);
   }
-  console.log(`Validated 4 original assets, ${choices} design/size/frame/format links, search and filter combinations, legacy tabs, size hand-off and matching-set enquiries.`);
+  console.log(`Validated all ${ASMA_UL_HUSNA_ITEMS.length} Names of Allah artwork files and links, configurator options and estimates, and ${choices} verse design links.`);
 } finally { await server.close(); }

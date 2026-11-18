@@ -1,4 +1,6 @@
 import { CARD_SIZES, CARD_TEMPLATES, QUANTITY_DISCOUNTS } from '../data/birthdayCards.js';
+import { stationeryCardTitle } from '../data/cardStationery.js';
+import { getCardPalette, getCardPalettes, PREMIUM_CARD_DESIGN } from '../data/cardDesigns.js';
 
 export function getCardPricing(sizeId, cardCount) {
   const size = CARD_SIZES.find(item => item.id === sizeId);
@@ -13,11 +15,21 @@ export function validateCard(config, photo) {
   if (!CARD_TEMPLATES.some(item => item.id === config.templateId)) return 'Choose a card design.';
   if (!config.recipientName.trim()) return 'Add the name of the person you’re celebrating.';
   if (!config.headline.trim()) return 'Add a greeting for the front of your card.';
-  if (!config.message.trim()) return 'Write a message for the inside of your card.';
-  if (!config.signoff.trim()) return 'Add your name or sign-off so they know who it’s from.';
+  if (!config.blankInside && !config.message.trim()) return 'Write a message for the inside of your card.';
+  if (!config.blankInside && !config.signoff.trim()) return 'Add your name or sign-off so they know who it’s from.';
   if (config.recipientName.length > 30 || config.headline.length > 48 || config.message.length > 400 || config.signoff.length > 64) return 'Please keep your text within the character limits.';
-  if (config.message.split('\n').length > 10) return 'Use up to 10 lines for your inside message.';
+  if (config.designVersion === PREMIUM_CARD_DESIGN) {
+    const designError = validatePremiumCardOptions(config);
+    if (designError) return designError;
+  }
+  if (!config.blankInside && config.message.split('\n').length > 10) return 'Use up to 10 lines for your inside message.';
   if (config.includePhoto && (!photo || photo.isSample)) return 'Upload your own photo, or choose “Without photo”, before adding your card to the bag.';
+  return '';
+}
+
+export function validatePremiumCardOptions(config) {
+  if (!getCardPalettes(config.templateId).some(option => option.id === config.paletteId)) return 'Choose a colour palette for this design.';
+  if (typeof config.coverDetail !== 'string' || config.coverDetail.length > 64 || /[\r\n]/.test(config.coverDetail)) return 'Keep the cover detail to one line of up to 64 characters.';
   return '';
 }
 
@@ -28,23 +40,28 @@ export function createBirthdayCardItem(config, photo, image, id = `birthday-card
   const template = CARD_TEMPLATES.find(item => item.id === config.templateId);
   const size = CARD_SIZES.find(item => item.id === config.sizeId);
   const pricing = getCardPricing(config.sizeId, config.cardCount);
+  const message = config.blankInside ? '' : config.message.trim();
+  const signoff = config.blankInside ? '' : config.signoff.trim();
   return {
-    id, type: 'birthday_card', title: `${template.name} · Birthday card`, template: template.name,
+    id, type: 'birthday_card', title: stationeryCardTitle(template, config.occasionId), template: template.name,
     size: size.name, dimensions: size.dimensionsCm, cardCount: config.cardCount,
     quantity: 1, price: pricing.total, pricing, format: 'Folded card + envelope',
     paperStock: '350 GSM textured board', envelopeIncluded: true, image,
-    configuration: { ...config, photo: config.includePhoto ? { url: photo.url, width: photo.width, height: photo.height, name: photo.name, originalId: photo.id } : null },
-    personalisation: { recipientName: config.recipientName.trim(), frontHeadline: config.headline.trim(), insideMessage: config.message.trim(), senderName: config.signoff.trim() },
+    configuration: { ...config, message, signoff, photo: config.includePhoto ? { url: photo.url, width: photo.width, height: photo.height, name: photo.name, originalId: photo.id } : null },
+    personalisation: { recipientName: config.recipientName.trim(), frontHeadline: config.headline.trim(), insideMessage: message, senderName: signoff },
   };
 }
 
 export function birthdayOrderDetails(item) {
   const p = item.personalisation || {};
   const c = item.configuration || {};
+  const premium = c.designVersion === PREMIUM_CARD_DESIGN;
   return [
     `Cards: ${item.cardCount} per set × ${item.quantity} set(s) = ${item.cardCount * item.quantity} cards`,
     `Design: ${item.template}`, `Front: ${p.frontHeadline || ''}`,
-    `For: ${p.recipientName || ''}`, `Inside message: ${p.insideMessage || ''}`, `Sign-off: ${p.senderName || ''}`,
+    `For: ${p.recipientName || ''}`,
+    ...(premium ? [`Colour palette: ${getCardPalette(c.templateId, c.paletteId).name}`, ...(c.coverDetail?.trim() ? [`Cover detail: ${c.coverDetail.trim()}`] : [])] : []),
+    ...(c.blankInside ? ['Blank inside for handwriting'] : [`Inside message: ${p.insideMessage || ''}`, `Sign-off: ${p.senderName || ''}`]),
     ...(c.includePhoto ? [`Photo: ${c.photo?.name || 'Customer photo'}; ${c.photoFit}; crop ${c.panX}% / ${c.panY}%`, 'Original photo to be shared with the studio.'] : ['No photo']),
     `${item.paperStock}; an envelope for each card.`,
   ].join('\n');

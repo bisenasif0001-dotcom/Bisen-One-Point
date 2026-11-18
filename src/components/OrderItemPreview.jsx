@@ -4,6 +4,7 @@ import FramedPosterPreview from './FramedPosterPreview';
 import PrintPaperPreview from './PrintPaperPreview';
 import BirthdayCardPreview from './BirthdayCardPreview';
 import { GalleryWallArt } from './GalleryWallPreview';
+import { resolveAssetUrl } from '../utils/assetUrl';
 
 export default function OrderItemPreview({ item }) {
   if (item.type === 'gallery_wall' && item.configuration?.slots) {
@@ -16,8 +17,9 @@ export default function OrderItemPreview({ item }) {
     const photo = item.photos[0];
     return <PrintPaperPreview photo={{ ...photo, url: photo.thumbnail || item.image }} config={item.configuration} style={{ display: 'block', width: '100%', height: '100%' }} />;
   }
-  const frame = item.type === 'custom_frame' && FRAME_FINISHES.find(f => f.id === item.frameId);
-  if (!frame) return <img src={item.image} alt={item.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />;
+  const isCalligraphy = item.type === 'islamic_art';
+  const frame = (item.type === 'custom_frame' || isCalligraphy) && FRAME_FINISHES.find(f => f.id === item.frameId);
+  if (!frame) return <img src={resolveAssetUrl(item.image)} alt={item.title} style={{ width: '100%', height: '100%', objectFit: isCalligraphy ? 'contain' : 'cover' }} />;
   return <FramedPosterPreview
     poster={{ image: item.photoUrl || item.image, title: item.photoName || item.title, width: item.photoWidth, height: item.photoHeight }}
     frame={frame}

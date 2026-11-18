@@ -2,9 +2,11 @@ import { DEFAULT_BUSINESS_RULES, couponCalculation } from '../src/data/businessR
 import { ITRA_PRODUCTS } from '../src/data/itraProducts.js';
 import { FRAME_FINISHES, GLASS_OPTIONS, SAMPLE_CARDS_AND_GIFTS } from '../src/data/products.js';
 import { CARD_TEMPLATES } from '../src/data/birthdayCards.js';
+import { PREMIUM_CARD_DESIGN } from '../src/data/cardDesigns.js';
+import { stationeryCardTitle } from '../src/data/cardStationery.js';
 import { getStudioPrice } from '../src/utils/frameStudio.js';
 import { getPrintTotals, PRINT_FINISHES } from '../src/utils/photoPrints.js';
-import { getCardPricing } from '../src/utils/birthdayCards.js';
+import { getCardPricing, validatePremiumCardOptions } from '../src/utils/birthdayCards.js';
 import { GALLERY_LAYOUTS } from '../src/data/galleryWalls.js';
 
 export class ApiError extends Error { constructor(status,message){super(message);this.status=status;} }
@@ -32,7 +34,11 @@ export function priceItem(item){
     if(price!==null)item.title=`${config.sizeId} Photo Prints (${PRINT_FINISHES.find(value=>value.id===config.finishId).name})`;
   } else if(item.type==='birthday_card'){
     const template=CARD_TEMPLATES.find(value=>value.id===config.templateId);
-    try{if(!template)throw new Error();price=getCardPricing(config.sizeId,config.cardCount).total;item.title=`${template.name} · Birthday card`;item.cardCount=config.cardCount;}catch{throw new ApiError(400,'Please review your birthday-card design, size and quantity.');}
+    if (config.designVersion === PREMIUM_CARD_DESIGN) {
+      const designError = validatePremiumCardOptions(config);
+      if (designError) throw new ApiError(400, designError);
+    }
+    try{if(!template)throw new Error();price=getCardPricing(config.sizeId,config.cardCount).total;item.title=stationeryCardTitle(template, config.occasionId);item.cardCount=config.cardCount;}catch{throw new ApiError(400,'Please review your card design, size and quantity.');}
   } else if(item.type==='gallery_wall'){
     if(FRAME_FINISHES.some(value=>value.id===config.frameId)){const layout=GALLERY_LAYOUTS.find(value=>value.id===config.layoutId);price=layout?.startingPrice??null;if(layout){item.title=`${layout.name} · ${layout.framesCount} frames`;item.frameCount=layout.framesCount;}}
   } else {

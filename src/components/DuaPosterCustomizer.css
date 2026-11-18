@@ -161,3 +161,6 @@
 }
 @media(max-width:350px){.dpd-size-grid small,.dpd-formats small,.dpd-frame-grid strong{font-size:9px}.dpd-size-use{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.dua-product-page *{scroll-behavior:auto!important;transition:none!important}}
+.dpd-arabic-name{display:block;margin-top:5px;color:#775b37;font:500 27px/1.5 var(--font-arabic,serif);text-align:left}
+.dua-product-page .dpd-secondary-action{margin-top:8px;border-color:#c9d7c7;background:#f0f5ed;color:#294738}
+.dua-product-page .dpd-secondary-action:hover{background:#e2eddf;color:#1e3b2a}
