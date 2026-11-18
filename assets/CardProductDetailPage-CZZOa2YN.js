@@ -1,0 +1,1 @@
+import{n as e,r as t}from"./createLucideIcon-DW12Ni9B.js";import{dt as n,u as r}from"./index-DoNlBmBG.js";import i from"./BirthdayCardBuilderPage-8TRi7muN.js";import{n as a}from"./cardStationery-DYhi2PyK.js";t();var o=e();function s({onAddToCart:e}){let{id:t}=n(),s=a.find(e=>e.id===t);return s?(0,o.jsx)(i,{preset:s,onAddToCart:e}):(0,o.jsx)(r,{})}export{s as default};

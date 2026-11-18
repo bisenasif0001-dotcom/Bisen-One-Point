@@ -1,0 +1,1 @@
+function e(e){if(!e||typeof e!=`string`||e.startsWith(`http://`)||e.startsWith(`https://`)||e.startsWith(`data:`)||e.startsWith(`blob:`))return e;let t=`/Bisen-One-Point/`,n=t.endsWith(`/`)?t:`${t}/`;return e.startsWith(n)?e:`${n}${e.startsWith(`/`)?e.slice(1):e}`}export{e as t};
