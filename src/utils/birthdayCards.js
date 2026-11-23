@@ -1,12 +1,14 @@
 import { CARD_SIZES, CARD_TEMPLATES, QUANTITY_DISCOUNTS } from '../data/birthdayCards.js';
 import { stationeryCardTitle } from '../data/cardStationery.js';
 import { getCardPalette, getCardPalettes, PREMIUM_CARD_DESIGN } from '../data/cardDesigns.js';
+import { getCardSizePrice } from './priceRegistry.js';
 
-export function getCardPricing(sizeId, cardCount) {
+export function getCardPricing(sizeId, cardCount, overrides) {
   const size = CARD_SIZES.find(item => item.id === sizeId);
   const tier = QUANTITY_DISCOUNTS.find(item => item.qty === cardCount);
   if (!size || !tier) throw new Error('Choose a card size and quantity from the available options.');
-  const baseTotal = size.unitPrice * cardCount;
+  const unitPrice = getCardSizePrice(sizeId, overrides);
+  const baseTotal = unitPrice * cardCount;
   const savings = Math.round(baseTotal * tier.discountPercent / 100);
   return { baseTotal, savings, total: baseTotal - savings, percent: tier.discountPercent };
 }
@@ -34,12 +36,12 @@ export function validatePremiumCardOptions(config) {
 }
 
 /** A bag quantity counts identical sets. The selected card count is priced once per set. */
-export function createBirthdayCardItem(config, photo, image, id = `birthday-card-${Date.now()}`) {
+export function createBirthdayCardItem(config, photo, image, id = `birthday-card-${Date.now()}`, overrides) {
   const error = validateCard(config, photo);
   if (error) throw new Error(error);
   const template = CARD_TEMPLATES.find(item => item.id === config.templateId);
   const size = CARD_SIZES.find(item => item.id === config.sizeId);
-  const pricing = getCardPricing(config.sizeId, config.cardCount);
+  const pricing = getCardPricing(config.sizeId, config.cardCount, overrides);
   const message = config.blankInside ? '' : config.message.trim();
   const signoff = config.blankInside ? '' : config.signoff.trim();
   return {

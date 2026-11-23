@@ -31,7 +31,7 @@ export default function PvcCardArt({ product, orientation, side = 'front', decor
         {[0,1,2].map(n=><rect key={n} x="24" y={130+n*15} width={n===2?w*.42:w*.7} height="2" fill={ink} opacity=".3" />)}
         <SampleCode x="26" y={portrait ? 220 : 180} colour={ink} size={portrait ? 80 : 53} />
         <text x={portrait ? 24 : 100} y={portrait ? 338 : 204} fill={ink} fontFamily="Georgia,serif" fontSize={portrait ? 20 : 25}>A little more personal.</text>
-        <text x="24" y={h-22} fill={ink} opacity=".7" fontFamily="Arial,sans-serif" fontSize="8" letterSpacing="1.8">AL-NOOR / SAMPLE DESIGN</text>
+        <text x="24" y={h-22} fill={ink} opacity=".7" fontFamily="Arial,sans-serif" fontSize="8" letterSpacing="1.8">BISEN / SAMPLE DESIGN</text>
       </> : photo ? <>
         <image href="/hero/wedding-couple.jpg" x="0" y="0" width={w} height={h} preserveAspectRatio="xMidYMid slice" />
         <rect y={h-72} width={w} height="72" fill="#fcf7eb" />
@@ -46,7 +46,7 @@ export default function PvcCardArt({ product, orientation, side = 'front', decor
         <text x={portrait ? w/2 : 135} y={portrait ? 295 : 144} textAnchor={portrait ? 'middle' : 'start'} fill={ink} opacity=".8" fontFamily="Arial,sans-serif" fontSize="8" letterSpacing="1.4">{product.art==='education' ? 'STUDENT / CLASS OF 2026' : product.art==='visitor' ? 'VISITOR / 001' : product.art==='events' ? 'ALL ACCESS / SAMPLE PASS' : 'DESIGN TEAM / ALN-001'}</text>
         {[0,1,2].map(n=><rect key={n} x={portrait ? 63 : 135} y={(portrait ? 319 : 164)+n*11} height="2" width={n===2?81:132} fill={ink} opacity=".2" />)}
         <rect x="20" y={h-39} width={w-40} height="1" fill={ink} opacity=".2" />
-        <text x={w/2} y={h-20} textAnchor="middle" fill={ink} opacity=".7" fontFamily="Arial,sans-serif" fontSize="7" letterSpacing="2">AL-NOOR / SAMPLE DESIGN</text>
+        <text x={w/2} y={h-20} textAnchor="middle" fill={ink} opacity=".7" fontFamily="Arial,sans-serif" fontSize="7" letterSpacing="2">BISEN / SAMPLE DESIGN</text>
       </> : <>
         <circle cx={w-27} cy={h/2} r={portrait ? 147 : 158} fill="none" stroke={accent} strokeWidth="1" opacity=".65" /><circle cx={w-27} cy={h/2} r={portrait ? 117 : 126} fill="none" stroke={accent} strokeWidth="1" opacity=".5" />
         <text x="27" y="37" fontFamily="Arial,sans-serif" fill={ink} fontSize="10" letterSpacing="2">{product.art==='business' || product.art==='qr' ? 'YOUR BRAND / CREATIVE STUDIO' : 'THE MEMBERS COLLECTIVE'}</text>
@@ -55,7 +55,7 @@ export default function PvcCardArt({ product, orientation, side = 'front', decor
         {product.art==='qr' && <SampleCode x={w-82} y={h-83} colour={ink} size={55} />}
         <rect x="27" y={h-60} width={product.art==='qr'?w-129:w-54} height="1" fill={ink} opacity=".3" />
         <text x="27" y={h-33} fontFamily="Arial,sans-serif" fill={ink} fontSize="8" letterSpacing="1.6">{product.art==='business' || product.art==='qr' ? 'YOUR NAME · YOUR DETAILS' : 'MEMBERSHIP / 001'}</text>
-        <text x="27" y={h-18} fontFamily="Arial,sans-serif" fill={ink} opacity=".6" fontSize="6" letterSpacing="1.6">AL-NOOR / SAMPLE DESIGN</text>
+        <text x="27" y={h-18} fontFamily="Arial,sans-serif" fill={ink} opacity=".6" fontSize="6" letterSpacing="1.6">BISEN / SAMPLE DESIGN</text>
       </>}
       <rect width={w} height={h} fill={`url(#pvc-light-${uid})`} />
       <rect x=".6" y=".6" width={w-1.2} height={h-1.2} rx="14" fill="none" stroke={ink} strokeOpacity=".15" />

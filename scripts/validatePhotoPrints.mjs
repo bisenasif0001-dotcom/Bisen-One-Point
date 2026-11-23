@@ -29,7 +29,7 @@ assert.ok(getPrintQuality({ ...photo, zoom: 2 }, base).dpi < normalQuality.dpi, 
 assert.ok(getPrintQuality(photo, { ...base, sizeId: 'A3' }).dpi < normalQuality.dpi, 'Larger print sizes need more resolution');
 assert.equal(getPrintQuality({ ...photo, isSample: true }, base), null, 'Samples cannot claim measured print quality');
 assert.equal(getPrintQuality({ ...photo, width: 0 }, base), null);
-assert.deepEqual(getPrintTotals(3, '5x7', 5), { photoCount: 3, copies: 5, printCount: 15, unitPrice: 49, total: 735 });
+assert.deepEqual(getPrintTotals(3, '5x7', 5), { photoCount: 3, copies: 5, printCount: 15, unitPrice: 39, total: 585 });
 for (const quantity of ['', 0, -1, 1.5, 100, NaN]) assert.equal(getPrintTotals(2, '5x7', quantity), null);
 assert.equal(getPrintTotals(21, '5x7', 1), null);
 assert.ok(validatePrintFile({ type: 'image/heic', size: 100 }).includes('HEIC'));
@@ -38,7 +38,7 @@ assert.ok(validatePrintFile({ type: 'image/jpeg', size: MAX_PRINT_FILE_BYTES + 1
 assert.equal(validatePrintFile({ type: 'image/webp', size: 1024 }), '');
 const second = { ...photo, id: 'second-photo', name: 'Another memory.png', rotation: 90, panX: 80, zoom: 1.4 };
 const cart = buildPrintCartItem({ photos: [photo, second], config: base, copies: 5, notes: 'Keep the date visible.', id: 'test-batch' });
-assert.equal(cart.price, 490);
+assert.equal(cart.price, 390);
 assert.equal(cart.quantity, 1, 'A complete print batch is one bag item');
 assert.equal(cart.printQuantity, 10);
 assert.equal(cart.photos.length, 2, 'Every photo is retained, not only the inspected image');

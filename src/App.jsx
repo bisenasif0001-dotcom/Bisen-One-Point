@@ -141,12 +141,12 @@ export default function App() {
           <RouteScreen><Routes>
             {['/privacy', '/terms', '/returns', '/shipping', '/original-files', '/cancellation', '/grievance'].map(path => <Route key={path} path={path} element={<PolicyPage />} />)}
             <Route path="/dua-posters" element={<DuaPostersPage />} />
-            <Route path="/dua-posters/:id" element={<DuaPosterDetailPage />} />
+            <Route path="/dua-posters/:id" element={<DuaPosterDetailPage onAddToCart={handleAddToCart} />} />
             <Route path="/studio/*" element={<StudioPanelPage />} />
             <Route path="/printing-services" element={<PrintingServicesPage />} />
             <Route path="/pvc-cards" element={<PvcCardsPage />} />
-            <Route path="/pvc-cards/bulk" element={<PvcCardPage bulk />} />
-            <Route path="/pvc-cards/:id" element={<PvcCardPage />} />
+            <Route path="/pvc-cards/bulk" element={<PvcCardPage bulk onAddToCart={handleAddToCart} />} />
+            <Route path="/pvc-cards/:id" element={<PvcCardPage onAddToCart={handleAddToCart} />} />
             <Route 
               path="/" 
               element={
@@ -154,6 +154,7 @@ export default function App() {
                   onAddToCart={handleAddToCart}
                   onQuickView={(item) => setQuickViewItem(item)}
                   onOpenSizeGuide={() => setIsSizeGuideModalOpen(true)}
+                  onHeroPhotoChange={setFrameGuidePhoto}
                 />
               } 
             />
@@ -419,6 +420,22 @@ export default function App() {
  */
 function FloatingActions({ isCartOpen, isCheckoutOpen, showScrollTop }) {
   const location = useLocation();
+  const [footerInView, setFooterInView] = useState(false);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === 'undefined') return undefined;
+    const footer = document.querySelector('.studio-footer');
+    if (!footer) {
+      const id = requestAnimationFrame(() => setFooterInView(false));
+      return () => cancelAnimationFrame(id);
+    }
+    const observer = new IntersectionObserver(
+      ([entry]) => setFooterInView(entry.isIntersecting),
+      { threshold: 0.05 },
+    );
+    observer.observe(footer);
+    return () => observer.disconnect();
+  }, [location.pathname]);
 
   // Tracking has contextual studio actions beside the request details.
   if (isCartOpen || isCheckoutOpen || location.pathname.startsWith('/track-order') || location.pathname.startsWith('/pvc-cards') || location.pathname.startsWith('/studio')) return null;
@@ -442,9 +459,11 @@ function FloatingActions({ isCartOpen, isCheckoutOpen, showScrollTop }) {
         href={getWhatsAppUrl('Assalam o Alaikum! I have an inquiry regarding custom photo framing.')}
         target="_blank"
         rel="noopener noreferrer"
-        className={`studio-floating-whatsapp ${isBuilderRoute ? 'hide-on-mobile-builder' : ''} ${location.pathname === '/' ? 'hide-on-mobile-home' : ''}`}
+        className={`studio-floating-whatsapp ${isBuilderRoute ? 'hide-on-mobile-builder' : ''} ${location.pathname === '/' ? 'hide-on-mobile-home' : ''} ${footerInView ? 'is-footer-visible' : ''}`}
         aria-label="Need Help? WhatsApp Us"
         title="Need Help? WhatsApp Us"
+        tabIndex={footerInView ? -1 : undefined}
+        aria-hidden={footerInView || undefined}
       >
         <style>{`
           .studio-floating-whatsapp {
@@ -462,7 +481,12 @@ function FloatingActions({ isCartOpen, isCheckoutOpen, showScrollTop }) {
             justify-content: center;
             box-shadow: 0 4px 16px rgba(23, 23, 23, 0.08);
             text-decoration: none;
-            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.22s ease;
+          }
+          .studio-floating-whatsapp.is-footer-visible {
+            opacity: 0;
+            pointer-events: none;
+            transform: translateY(10px);
           }
           .studio-floating-whatsapp:hover {
             transform: translateY(-2px);
@@ -488,9 +512,11 @@ function FloatingActions({ isCartOpen, isCheckoutOpen, showScrollTop }) {
       {showScrollTop && !isBuilderRoute && (
         <button
           onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-          className={`studio-scroll-top-btn ${location.pathname === '/' ? 'hide-on-mobile-home' : ''}`}
+          className={`studio-scroll-top-btn ${location.pathname === '/' ? 'hide-on-mobile-home' : ''} ${footerInView ? 'is-footer-visible' : ''}`}
           title="Scroll to Top"
           aria-label="Scroll to Top"
+          tabIndex={footerInView ? -1 : undefined}
+          aria-hidden={footerInView || undefined}
         >
           <style>{`
             .studio-scroll-top-btn {
@@ -509,7 +535,12 @@ function FloatingActions({ isCartOpen, isCheckoutOpen, showScrollTop }) {
               align-items: center;
               justify-content: center;
               box-shadow: 0 4px 16px rgba(23, 23, 23, 0.08);
-              transition: transform 0.2s ease, box-shadow 0.2s ease;
+              transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.22s ease;
+            }
+            .studio-scroll-top-btn.is-footer-visible {
+              opacity: 0;
+              pointer-events: none;
+              transform: translateY(10px);
             }
             .studio-scroll-top-btn:hover {
               transform: translateY(-2px);

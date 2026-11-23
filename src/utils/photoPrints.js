@@ -1,12 +1,7 @@
-export const PRINT_SIZES = [
-  { id: '4x6', name: '4 × 6 in', dimensions: '10.2 × 15.2 cm', mm: [101.6, 152.4], price: 29, group: 'photo', use: 'Albums & everyday moments' },
-  { id: '5x7', name: '5 × 7 in', dimensions: '12.7 × 17.8 cm', mm: [127, 177.8], price: 49, group: 'photo', use: 'Keepsakes & tabletop frames' },
-  { id: '6x8', name: '6 × 8 in', dimensions: '15.2 × 20.3 cm', mm: [152.4, 203.2], price: 69, group: 'photo', use: 'Portraits & thoughtful gifts' },
-  { id: '8x10', name: '8 × 10 in', dimensions: '20.3 × 25.4 cm', mm: [203.2, 254], price: 119, group: 'photo', use: 'A favourite photo, a little larger' },
-  { id: 'A5', name: 'A5', dimensions: '14.8 × 21 cm', mm: [148, 210], price: 89, group: 'wall', use: 'Small art & desk displays' },
-  { id: 'A4', name: 'A4', dimensions: '21 × 29.7 cm', mm: [210, 297], price: 179, group: 'wall', use: 'Artwork & wall displays' },
-  { id: 'A3', name: 'A3', dimensions: '29.7 × 42 cm', mm: [297, 420], price: 349, group: 'wall', use: 'A statement on your wall' },
-];
+import { PRINT_SIZES } from '../data/printSizes.js';
+import { getPrintSizePrice } from './priceRegistry.js';
+
+export { PRINT_SIZES };
 
 export const PRINT_FINISHES = [
   { id: 'lustre', name: 'Lustre', detail: 'Soft pearl sheen', description: 'A subtle sheen for everyday photos.', texture: 'pearl' },
@@ -33,11 +28,12 @@ export function validatePrintFile(file) {
   return '';
 }
 
-export function getPrintTotals(photoCount, sizeId, copies) {
+export function getPrintTotals(photoCount, sizeId, copies, overrides) {
   const size = PRINT_SIZES.find(item => item.id === sizeId);
   const count = Number(copies);
   if (!size || !Number.isInteger(photoCount) || photoCount < 1 || photoCount > MAX_PRINT_PHOTOS || !Number.isInteger(count) || count < 1 || count > MAX_PRINT_COPIES) return null;
-  return { photoCount, copies: count, printCount: photoCount * count, unitPrice: size.price, total: photoCount * count * size.price };
+  const unitPrice = getPrintSizePrice(sizeId, overrides);
+  return { photoCount, copies: count, printCount: photoCount * count, unitPrice, total: photoCount * count * unitPrice };
 }
 
 /** All placement is in millimetres. Rotation changes image geometry before fitting. */
@@ -102,9 +98,9 @@ export async function readPrintPhoto(file) {
   }
 }
 
-export function buildPrintCartItem({ photos, config, copies, notes = '', id }) {
+export function buildPrintCartItem({ photos, config, copies, notes = '', id, overrides }) {
   if (!photos.length || photos.some(photo => photo.isSample || !photo.thumbnail)) throw new Error('Upload your own photos before adding prints to the bag.');
-  const totals = getPrintTotals(photos.length, config.sizeId, copies);
+  const totals = getPrintTotals(photos.length, config.sizeId, copies, overrides);
   const size = PRINT_SIZES.find(item => item.id === config.sizeId);
   const finish = PRINT_FINISHES.find(item => item.id === config.finishId);
   const tone = PRINT_TONES.find(item => item.id === config.tone);

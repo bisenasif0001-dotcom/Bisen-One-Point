@@ -21,7 +21,7 @@ export default function AboutPage() {
               marginBottom: '0.6rem'
             }}
           >
-            The House of AL-NOOR
+            The House of BISEN
           </span>
           <h1 style={{
             fontFamily: 'var(--font-serif)',
@@ -41,7 +41,7 @@ export default function AboutPage() {
             margin: '0 auto',
             lineHeight: 1.6
           }}>
-            Founded as a unified creative house, AL-NOOR brings bespoke photo printing, handcrafted solid wood framing, custom greeting cards, and artisanal fragrances into one seamless studio.
+            Founded as a unified creative house, BISEN brings bespoke photo printing, handcrafted solid wood framing, custom greeting cards, and artisanal fragrances into one seamless studio.
           </p>
         </div>
       </div>
@@ -88,7 +88,7 @@ export default function AboutPage() {
               Handcrafted with Devotion, <span style={{ fontStyle: 'italic', fontWeight: 400, color: 'var(--accent-bronze)' }}>Precision & Integrity</span>
             </h2>
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '1rem', fontSize: '0.95rem' }}>
-              At AL-NOOR, we believe that life's most precious memories, sacred verses, and heartfelt celebrations deserve tangible form. Whether turning a smartphone capture into a studio gallery-framed print, penning a personalized greeting card for a loved one, or sharing an artisanal non-alcoholic attar, every creation reflects our uncompromising commitment to craftsmanship.
+              At BISEN, we believe that life's most precious memories, sacred verses, and heartfelt celebrations deserve tangible form. Whether turning a smartphone capture into a studio gallery-framed print, penning a personalized greeting card for a loved one, or sharing an artisanal non-alcoholic attar, every creation reflects our uncompromising commitment to craftsmanship.
             </p>
             <p style={{ color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: '1.5rem', fontSize: '0.95rem' }}>
               We manage our printing and framing in-house using seasoned solid hardwoods, acid-free mounts, shatter-resistant optical cast acrylic, and genuine 6-colour Epson MicroPiezo photographic systems.
@@ -112,20 +112,20 @@ export default function AboutPage() {
           }}>
             <img
               src="https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=900&q=80"
-              alt="AL-NOOR Studio Craftsmanship"
+              alt="BISEN Studio Craftsmanship"
               style={{ width: '100%', height: '380px', objectFit: 'cover', display: 'block' }}
             />
           </div>
         </div>
 
-        {/* 3 Unified Divisions of AL-NOOR */}
+        {/* 3 Unified Divisions of BISEN */}
         <div style={{ marginBottom: '4rem' }}>
           <div style={{ textAlign: 'center', maxWidth: '640px', margin: '0 auto 2.5rem auto' }}>
             <span style={{ fontSize: '0.74rem', fontWeight: 600, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent-bronze)', display: 'block', marginBottom: '0.4rem' }}>
               One Parent Studio. Three Creative Expressions.
             </span>
             <h3 style={{ fontSize: '1.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-              The House of AL-NOOR Architecture
+              The House of BISEN Architecture
             </h3>
           </div>
 
@@ -143,7 +143,7 @@ export default function AboutPage() {
                 Division 01
               </div>
               <h4 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                AL-NOOR Print & Frame Studio
+                BISEN Print & Frame Studio
               </h4>
               <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                 Custom photo framing across standard A5 to A1 dimensions, 6-colour photographic printing, curated gallery walls, and sacred Islamic art prints.
@@ -162,7 +162,7 @@ export default function AboutPage() {
                 Division 02
               </div>
               <h4 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                AL-NOOR Cards & Gifts
+                BISEN Cards & Gifts
               </h4>
               <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                 Personalised birthday cards, bespoke wedding invitations, heartfelt anniversary stationery, and custom-engraved keepsake gifts for loved ones.
@@ -181,7 +181,7 @@ export default function AboutPage() {
                 Division 03
               </div>
               <h4 style={{ fontSize: '1.2rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>
-                AL-NOOR Itra House
+                BISEN Itra House
               </h4>
               <p style={{ fontSize: '0.88rem', color: 'var(--text-secondary)', lineHeight: 1.6, marginBottom: '1.25rem' }}>
                 Artisanal 100% alcohol-free concentrated perfume oils, authentic Dehn Al Oud, Kashmir Black Musk, and curated 4-Attar Royal Discovery Boxes.

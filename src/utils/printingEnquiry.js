@@ -1,6 +1,6 @@
-import { PRINTING_OPTIONS, PRINTING_SIZES } from '../data/printingServices';
-import { DUA_POSTERS } from '../data/duaPosters';
-import { FRAME_FINISHES } from '../data/products';
+import { PRINTING_OPTIONS, PRINTING_SIZES } from '../data/printingServices.js';
+import { DUA_POSTERS } from '../data/duaPosters.js';
+import { FRAME_FINISHES } from '../data/products.js';
 
 export function localPrintingDate(date = new Date()) {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
@@ -95,5 +95,5 @@ export function printingEnquiryRows(service, draft) {
 }
 
 export function buildPrintingMessage(service,draft) {
-  return [`Hello AL-NOOR! I would like a printing quote.`, `Name: ${draft.name.trim()}`, '', ...printingEnquiryRows(service,draft).map(row=>`${row.label}: ${row.value}`), '', 'Please confirm the suitable material, artwork requirements, price and turnaround. I will share my artwork / original files in this conversation.'].join('\n');
+  return [`Hello BISEN! I would like a printing quote.`, `Name: ${draft.name.trim()}`, '', ...printingEnquiryRows(service,draft).map(row=>`${row.label}: ${row.value}`), '', 'Please confirm the suitable material, artwork requirements, price and turnaround. I will share my artwork / original files in this conversation.'].join('\n');
 }

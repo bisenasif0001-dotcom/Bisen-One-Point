@@ -13,6 +13,8 @@ export function rememberStudioOrder(order){
 }
 export function rememberedStudioOrders(){try{const items=JSON.parse(localStorage.getItem('alnoor_server_orders')||'[]');return Array.isArray(items)?items.filter(item=>/^ALN-[A-Z0-9-]+$/.test(item.reference)&&typeof item.trackingToken==='string'):[];}catch{return [];}}
 
+import { openSandboxCheckout } from './sandboxCheckout';
+
 let checkoutScript;
 function loadRazorpay(){
   if(window.Razorpay)return Promise.resolve();
@@ -22,10 +24,25 @@ function loadRazorpay(){
 export async function payStudioOrder(order){
   const credentials={reference:order.reference,token:order.trackingToken};
   const data=await studioRequest('/payments/order',{method:'POST',body:credentials});
+  if(data.provider==='sandbox'){
+    return openSandboxCheckout(data,async(outcome,paymentMethod)=>{
+      const result=await studioRequest('/payments/sandbox',{
+        method:'POST',
+        body:{...credentials,razorpay_order_id:data.razorpayOrderId,outcome,paymentMethod},
+      });
+      rememberStudioOrder(result.order);
+      if(outcome==='failed'){
+        const err=new Error('Test payment failed. Your order is saved; you can retry anytime.');
+        err.order=result.order;
+        throw err;
+      }
+      return result.order;
+    });
+  }
   await loadRazorpay();
   return new Promise((resolve,reject)=>{
     let settled=false;
-    const checkout=new window.Razorpay({key:data.keyId,order_id:data.razorpayOrderId,amount:data.amount,currency:data.currency,name:'AL-NOOR Studio',description:`Order ${data.reference}`,prefill:data.prefill,theme:{color:'#2e4b3d'},modal:{ondismiss:()=>{if(!settled){settled=true;reject(new Error('Payment checkout was closed. Your order is saved; you can pay again from its tracking page.'));}}},handler:async response=>{
+    const checkout=new window.Razorpay({key:data.keyId,order_id:data.razorpayOrderId,amount:data.amount,currency:data.currency,name:'BISEN Studio',description:`Order ${data.reference}`,prefill:data.prefill,theme:{color:'#2e4b3d'},modal:{ondismiss:()=>{if(!settled){settled=true;reject(new Error('Payment checkout was closed. Your order is saved; you can pay again from its tracking page.'));}}},handler:async response=>{
       settled=true;
       try{const result=await studioRequest('/payments/verify',{method:'POST',body:{...credentials,...response}});rememberStudioOrder(result.order);resolve(result.order);}catch(error){reject(error);}
     }});

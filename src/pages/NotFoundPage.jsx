@@ -154,7 +154,7 @@ export default function NotFoundPage() {
             Return to Homepage
           </PrimaryButton>
           <SecondaryButton
-            href={getWhatsAppUrl('Hi AL-NOOR! I was looking for a page on your website and could not find it. Could you please help?')}
+            href={getWhatsAppUrl('Hi BISEN! I was looking for a page on your website and could not find it. Could you please help?')}
             icon={MessageCircle}
             iconPosition="left"
             size="md"

@@ -1,5 +1,31 @@
 export const PVC_SPEC = { size: '86 × 54 mm', thickness: '0.76 mm', material: 'Inkjet-coated white PVC' };
 
+export const DEFAULT_PVC_PRICES = {
+  single_card: 99,
+  double_side_extra: 40,
+  holder_extra: 20,
+  lanyard_extra: 25,
+  both_accessories_extra: 40,
+  design_fee: 149,
+};
+
+export const PVC_PRICE_ITEMS = [
+  { id: 'single_card', name: 'Single Card Print (Front Only)', price: DEFAULT_PVC_PRICES.single_card },
+  { id: 'double_side_extra', name: 'Both Sides Extra (Front + Back)', price: DEFAULT_PVC_PRICES.double_side_extra },
+  { id: 'holder_extra', name: 'Card Holder Accessory', price: DEFAULT_PVC_PRICES.holder_extra },
+  { id: 'lanyard_extra', name: 'Lanyard Ribbon Accessory', price: DEFAULT_PVC_PRICES.lanyard_extra },
+  { id: 'both_accessories_extra', name: 'Holder + Lanyard Set', price: DEFAULT_PVC_PRICES.both_accessories_extra },
+  { id: 'design_fee', name: 'Studio Custom Design Service (One-Time)', price: DEFAULT_PVC_PRICES.design_fee },
+];
+
+export const PVC_VOLUME_TIERS = [
+  { min: 100, discountPercent: 45, label: '100+ cards · 45% bulk off' },
+  { min: 50, discountPercent: 35, label: '50–99 cards · 35% bulk off' },
+  { min: 25, discountPercent: 25, label: '25–49 cards · 25% bulk off' },
+  { min: 10, discountPercent: 15, label: '10–24 cards · 15% bulk off' },
+  { min: 1, discountPercent: 0, label: 'Standard rate' },
+];
+
 export const PVC_CATEGORIES = [
   { id: 'id', label: 'ID cards', note: 'Employee, student & visitor', headline: 'A clear identity. A considered design.', description: 'Cards for your team, campus and everyone who belongs.', icon: 'id' },
   { id: 'business', label: 'Business cards', note: 'PVC visiting & QR cards', headline: 'Leave a lasting introduction.', description: 'Put your business, contact details and a printed QR code in their hands.', icon: 'business' },

@@ -1,11 +1,11 @@
-import { birthdayOrderDetails } from './birthdayCards';
-import { galleryOrderDetails } from './galleryWalls';
+import { birthdayOrderDetails } from './birthdayCards.js';
+import { galleryOrderDetails } from './galleryWalls.js';
 
 const amount = value => value === null || value === undefined ? 'To be confirmed' : `₹${Number(value).toLocaleString('en-IN',{maximumFractionDigits:2})}`;
 
 /** A customer-reviewed hand-off to the studio, with the complete saved request. */
 export function buildOrderConfirmationMessage(order) {
-  const lines = ['Hello AL-NOOR! Please review and confirm my saved order request.', `Order reference: ${order.orderId}`, '', `Name: ${order.customer.name || 'To be confirmed'}`];
+  const lines = ['Hello BISEN! Please review and confirm my saved order request.', `Order reference: ${order.orderId}`, '', `Name: ${order.customer.name || 'To be confirmed'}`];
   if (order.customer.phone) lines.push(`Checkout mobile: ${order.customer.phone}`);
   if (order.customer.email) lines.push(`Email: ${order.customer.email}`);
   const address=['address','apartment','city','state','pincode'].map(key=>order.customer[key]).filter(Boolean).join(', ');
@@ -17,6 +17,14 @@ export function buildOrderConfirmationMessage(order) {
     if(item.finish) lines.push(`Finish: ${item.finish}`);
     if(item.volume) lines.push(`Volume: ${item.volume}`);
     if(item.type==='birthday_card' && item.configuration) lines.push(birthdayOrderDetails(item));
+    if(item.type==='pvc_card' && item.configuration) {
+      const cfg = item.configuration;
+      lines.push(`Cards: ${cfg.cardCount} per set × ${item.quantity} set(s) · ₹${item.unitPrice}/card${item.discountPercent ? ` (${item.discountPercent}% bulk off)` : ''}`);
+      lines.push(`Printing: ${cfg.sides === 'double' ? 'Both sides' : 'Single side'} · ${cfg.orientation === 'portrait' ? 'Vertical (54 × 86 mm)' : 'Horizontal (86 × 54 mm)'}`);
+      lines.push(`Design: ${cfg.design === 'design' ? 'Get it designed by the studio' : 'Customer design'}${cfg.frontFileName ? ` (Front: ${cfg.frontFileName})` : ''}${cfg.backFileName ? ` (Back: ${cfg.backFileName})` : ''}`);
+      if(cfg.organisation) lines.push(`Organisation: ${cfg.organisation}`);
+      lines.push('Original artwork / photos / batch list will be shared in this conversation.');
+    }
     if(item.type==='gallery_wall' && item.configuration?.slots) lines.push(galleryOrderDetails(item));
     if(item.type==='photo_prints') {
       const layout=[item.orientation,item.cropMode,item.border,item.colorTone].filter(Boolean).join('; ');
@@ -25,12 +33,18 @@ export function buildOrderConfirmationMessage(order) {
       lines.push('Original photo files will be shared in this conversation.');
     }
     if(item.type==='custom_frame') {
-      lines.push(`Photo: ${item.photoName || 'Original photo to be shared'}`,`Layout: ${item.orientation || 'Portrait'}; fit: ${item.fit==='cover'?'Fill opening':'Keep full photo'}`);
-      if(item.fit==='cover') lines.push(`Crop: ${item.panX ?? 50}% / ${item.panY ?? 50}%`);
-      if(item.mat) lines.push(`Mount: ${item.mat}`);
-      if(item.glass) lines.push(`Glazing: ${item.glass}`);
-      if(item.personalisation?.filter) lines.push(`Photo effect: ${item.personalisation.filter}`);
-      lines.push('Original photo file will be shared in this conversation.');
+      if (item.configuration?.includePrint === false) {
+        lines.push(`Format: Frame only (without print)`, `Orientation: ${item.orientation || 'Portrait'}`);
+        if (item.mat) lines.push(`Mount: ${item.mat}`);
+        if (item.glass) lines.push(`Glazing: ${item.glass}`);
+      } else {
+        lines.push(`Photo: ${item.photoName || 'Original photo to be shared'}`,`Layout: ${item.orientation || 'Portrait'}; fit: ${item.fit==='cover'?'Fill opening':'Keep full photo'}`);
+        if(item.fit==='cover') lines.push(`Crop: ${item.panX ?? 50}% / ${item.panY ?? 50}%`);
+        if(item.mat) lines.push(`Mount: ${item.mat}`);
+        if(item.glass) lines.push(`Glazing: ${item.glass}`);
+        if(item.personalisation?.filter) lines.push(`Photo effect: ${item.personalisation.filter}`);
+        lines.push('Original photo file will be shared in this conversation.');
+      }
     }
     if(item.type!=='birthday_card' && item.personalisation?.recipientName) lines.push(`Recipient: ${item.personalisation.recipientName}`);
     if(item.type!=='birthday_card' && item.personalisation?.message) lines.push(`Personal message: ${item.personalisation.message}`);

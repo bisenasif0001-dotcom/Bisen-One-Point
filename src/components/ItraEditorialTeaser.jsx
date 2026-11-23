@@ -71,7 +71,7 @@ export default function ItraEditorialTeaser() {
               }}
             >
               <span style={{ width: '20px', height: '1px', backgroundColor: '#D8CEBE', opacity: 0.6 }} />
-              <span>AL-NOOR • THE ITRA HOUSE</span>
+              <span>BISEN • THE ITRA HOUSE</span>
             </div>
 
             {/* Heading (Exact Prompt 18 text) */}
@@ -101,7 +101,7 @@ export default function ItraEditorialTeaser() {
                 letterSpacing: '-0.01em'
               }}
             >
-              Discover the AL-NOOR Itra Collection.
+              Discover the BISEN Itra Collection.
             </h3>
 
             {/* Supporting Copy (Exact Prompt 18 text) */}
@@ -237,7 +237,7 @@ export default function ItraEditorialTeaser() {
             >
               <img 
                 src="https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=1200&q=80" 
-                alt="AL-NOOR Artisanal Pure Itra Flacon"
+                alt="BISEN Artisanal Pure Itra Flacon"
                 loading="lazy"
                 style={{
                   width: '100%',

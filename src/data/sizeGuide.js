@@ -1,5 +1,5 @@
-import { FRAME_FINISHES } from './products';
-import { CUSTOM_FRAME_SIZES, getFrameGeometry } from '../utils/frameStudio';
+import { FRAME_FINISHES } from './products.js';
+import { CUSTOM_FRAME_SIZES, getFrameGeometry } from '../utils/frameStudio.js';
 
 export const GUIDE_ROOMS = [
   {
@@ -39,6 +39,9 @@ const PLACEMENTS = {
   A4: { label: 'The everyday classic', use: 'Portraits, certificates and gallery grids' },
   A3: { label: 'A personal focal point', use: 'Reading corners, pairs and gallery walls' },
   '12x18': { label: 'The portrait format', use: 'Photography, portraits and wall displays' },
+  '13x19': { label: 'The studio poster format', use: 'Fine-art prints, wall art and wedding portraits' },
+  '15x21': { label: 'The bold statement format', use: 'Living rooms, couples portraits and sacred calligraphy' },
+  '16x22': { label: 'The gallery showcase', use: 'Feature walls, family displays and prayer spaces' },
   A2: { label: 'Room to make a statement', use: 'Living rooms, hallways and feature walls' },
   A1: { label: 'The larger picture', use: 'Spacious walls and a single focal artwork' },
 };

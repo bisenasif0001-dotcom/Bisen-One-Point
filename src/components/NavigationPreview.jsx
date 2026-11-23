@@ -12,6 +12,6 @@ export default function NavigationPreview({ kind }) {
   if (kind === 'prints') return <div className="np-photo-stack"><img src={HOME_PHOTO.image} alt="Family photo print" loading="lazy" /><img src={HOME_LANDSCAPE.image} alt="Landscape photo print" loading="lazy" /></div>;
   if (kind === 'gift-frame') return <FramedPosterPreview poster={HOME_PHOTO} frame={homeFrame('regal_heritage')} fit="cover" />;
   if (kind === 'greeting') return <div className="np-greeting" aria-hidden="true"><small>JUST FOR YOU</small><Gift size={24} strokeWidth={1.1} /><strong>make their<br /><em>day.</em></strong><span>A LITTLE MORE PERSONAL</span></div>;
-  if (kind === 'pvc') return <div className="np-pvc" aria-hidden="true"><span>AL-NOOR / PRINT STUDIO</span><CreditCard size={22} strokeWidth={1.2} /><strong>Your identity.<br />Beautifully printed.</strong><i /></div>;
+  if (kind === 'pvc') return <div className="np-pvc" aria-hidden="true"><span>BISEN / PRINT STUDIO</span><CreditCard size={22} strokeWidth={1.2} /><strong>Your identity.<br />Beautifully printed.</strong><i /></div>;
   return <div className="np-poster" aria-hidden="true"><span>YOUR<br />NEXT<br /><em>big idea.</em></span><small>PRINTED TO STAND OUT</small></div>;
 }

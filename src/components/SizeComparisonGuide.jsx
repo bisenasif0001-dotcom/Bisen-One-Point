@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { Maximize2, Sparkles, X, Check, ArrowRight, Layers } from 'lucide-react';
-import { FRAME_SIZES } from '../data/products';
+import { FRAME_FINISHES, FRAME_SIZES } from '../data/products';
+import { usePriceOverrides } from './BusinessRulesProvider';
+import { getStudioPrice } from '../utils/frameStudio';
 
 export default function SizeComparisonGuide({ isOpen, onClose, onSelectSizeForCustomizer }) {
+  const priceOverrides = usePriceOverrides();
   const [activeSize, setActiveSize] = useState(FRAME_SIZES[2]); // Default A3
 
   if (!isOpen) return null;
@@ -72,7 +75,7 @@ export default function SizeComparisonGuide({ isOpen, onClose, onSelectSizeForCu
         {/* Interactive Size Tabs */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(5, 1fr)',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(112px, 1fr))',
           gap: '0.5rem',
           marginBottom: '2rem'
         }}>
@@ -174,11 +177,15 @@ export default function SizeComparisonGuide({ isOpen, onClose, onSelectSizeForCu
                 <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Dimensions (cm)</th>
                 <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Dimensions (Inches)</th>
                 <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Recommended Best Use</th>
-                <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Base Price</th>
+                <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>Frame Only</th>
+                <th style={{ padding: '0.75rem 0.5rem', fontWeight: 600 }}>With Print</th>
               </tr>
             </thead>
             <tbody>
-              {FRAME_SIZES.map((s) => (
+              {FRAME_SIZES.map((s) => {
+                const emptyPrice = getStudioPrice({ sizeId: s.id, frameId: FRAME_FINISHES[0].id, includePrint: false, overrides: priceOverrides })?.unit ?? s.basePrice;
+                const framedPrice = getStudioPrice({ sizeId: s.id, frameId: FRAME_FINISHES[0].id, includePrint: true, overrides: priceOverrides })?.unit ?? (s.basePrice + (s.printAddon || 0));
+                return (
                 <tr 
                   key={s.id} 
                   style={{
@@ -192,9 +199,11 @@ export default function SizeComparisonGuide({ isOpen, onClose, onSelectSizeForCu
                   <td style={{ padding: '0.75rem 0.5rem' }}>{s.dimensionsCm}</td>
                   <td style={{ padding: '0.75rem 0.5rem' }}>{s.dimensionsInch}</td>
                   <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-secondary)' }}>{s.bestFor}</td>
-                  <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>₹{s.basePrice}</td>
+                  <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>₹{emptyPrice.toLocaleString('en-IN')}</td>
+                  <td style={{ padding: '0.75rem 0.5rem', color: 'var(--text-primary)', fontWeight: 600 }}>₹{framedPrice.toLocaleString('en-IN')}</td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </div>

@@ -13,7 +13,7 @@
 .fs-orientation-control .fs-orientation-icon{flex-shrink:0}
 .fs-sample-grid .fs-sample-option{display:flex;flex-direction:column;gap:6px;height:auto;min-height:104px;padding:5px 5px 7px;border-radius:6px}
 .fs-sample-grid .fs-sample-option img{display:block;width:100%;height:70px;flex:none;object-fit:cover;border-radius:3px;background:#e9e7df}
-.fs-sample-grid .fs-sample-option[data-orientation="portrait"] img{object-fit:contain}
+.fs-sample-grid .fs-sample-option[data-orientation="portrait"] img{object-fit:cover;object-position:center 15%}
 .fs-sample-grid .fs-sample-option .fs-sample-caption{color:#526047;font-size:10px;line-height:15px;letter-spacing:.2px}
 .fs-sample-grid .fs-sample-option[aria-pressed="true"] .fs-sample-caption{color:#254b36;font-weight:600}
 .fs-sample-grid .fs-sample-option>span{top:10px;right:10px;bottom:auto;box-shadow:0 0 0 2px #fff}
@@ -31,3 +31,9 @@
 
 .fs-preview-orientation .fs-orientation-control button.selected{color:#254b36;background:#fff;border-color:#b2c0a0;box-shadow:0 1px 3px #253a2410}
 @media(max-width:1100px){.fs-preview-orientation>.fs-control-label{display:none}.fs-preview-orientation .fs-orientation-control{display:flex;width:100%}.fs-preview-orientation .fs-orientation-control button{flex:1;min-height:44px}}
+.fs-mode-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-bottom:22px;padding:5px;background:#f3f5ec;border:1px solid #dce2d0;border-radius:7px}
+.fs-mode-switch>button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:10px 13px;border:1px solid transparent;border-radius:5px;background:transparent;text-align:left;color:#5c6c50;transition:background .15s,border-color .15s}
+.fs-mode-switch>button strong{font-size:12px;font-weight:600;color:inherit;display:flex;align-items:center;gap:6px}
+.fs-mode-switch>button small{font-size:10px;color:#6e7e61;line-height:1.4}
+.fs-mode-switch>button[aria-pressed=true]{background:#fffefa;border-color:#728d5a;color:#274434;box-shadow:0 1px 4px #203a2714}
+@media(max-width:500px){.fs-mode-switch{grid-template-columns:1fr}}

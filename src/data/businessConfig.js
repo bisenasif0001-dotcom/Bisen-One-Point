@@ -22,14 +22,14 @@ export const BUSINESS_CONFIG = {
     // Primary WhatsApp contact (Used for direct orders, custom quotes & live concierge)
     whatsapp: '919643970064',
     whatsappFormatted: '+91 96439 70064',
-    
+
     // Primary Voice Support
     phone: '+91 96439 70064',
-    
+
     // Official Email Inquiries
     email: 'avarto@outlook.com',
     inquiriesEmail: 'avarto@outlook.com',
-    
+
     // Operating Hours
     hours: {
       weekdays: 'Monday – Saturday: 10:00 AM – 8:00 PM IST',
@@ -56,9 +56,9 @@ export const BUSINESS_CONFIG = {
 
   supportPolicies: {
     transitGuarantee: 'Contact the studio with your order reference and photographs for help with transit damage.',
-    dispatchTime: 'Dispatch timing is confirmed by the studio.',
-    deliveryTime: 'Delivery availability and timing are confirmed for your address.',
-    freeShippingThreshold: 999 // Free shipping on orders over ₹999
+    dispatchTime: '1–2 working days (frames without print) · 2–4 working days (custom print & frames).',
+    deliveryTime: 'Same/next-day via Porter in Lucknow; Pan-India surface & air courier across India.',
+    freeShippingThreshold: 799 // Unframed prints & cards free at ₹799+; framed orders (excluding A1) free at ₹1,999+ (src/utils/shippingCalculator.js)
   }
 };
 

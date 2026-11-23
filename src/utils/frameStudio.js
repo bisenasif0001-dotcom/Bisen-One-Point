@@ -1,22 +1,9 @@
 import { FRAME_SIZES, FRAME_FINISHES, MAT_OPTIONS, GLASS_OPTIONS } from '../data/products.js';
 import { FRAME_PREVIEW_APERTURES } from '../data/framePreviewApertures.js';
+import { getFrameSizeBasePrice, getFramePrintAddonPrice, getFrameFinishExtraPrice, getGlassExtraPrice, getMatExtraPrice } from './priceRegistry.js';
 
 // Keep the size guide and the custom frame builder on the same supported sizes.
-export const CUSTOM_FRAME_SIZES = [
-  ...FRAME_SIZES.slice(0, 3),
-  {
-    id: '12x18',
-    name: '12 × 18 inches',
-    dimensionsCm: '30.48 x 45.72 cm',
-    dimensionsInch: '12.0 x 18.0 in',
-    bestFor: 'Portrait photography, wall displays and gifts',
-    basePrice: 1199,
-    multiplier: 2,
-    aspectRatio: '2/3',
-    scaleRatio: 0.9,
-  },
-  ...FRAME_SIZES.slice(3),
-];
+export const CUSTOM_FRAME_SIZES = FRAME_SIZES;
 
 export const STUDIO_MAX_FILE_BYTES = 20 * 1024 * 1024;
 export const STUDIO_FILE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -56,15 +43,19 @@ export function placeStudioPhoto({ photoWidth, photoHeight, width, height, fit =
   return { x, y, width: imageWidth, height: imageHeight };
 }
 
-export function getStudioPrice({ sizeId, frameId, glassId, quantity = 1 }) {
+export function getStudioPrice({ sizeId, frameId, glassId = GLASS_OPTIONS[0].id, matId = 'no_mat', includePrint = true, quantity = 1, overrides }) {
   const size = CUSTOM_FRAME_SIZES.find(s => s.id === sizeId);
   const frame = FRAME_FINISHES.find(f => f.id === frameId);
-  const glass = GLASS_OPTIONS.find(g => g.id === glassId);
+  const glass = GLASS_OPTIONS.find(g => g.id === glassId) || GLASS_OPTIONS[0];
+  const mount = MAT_OPTIONS.find(m => m.id === matId) || MAT_OPTIONS[0];
   if (!size || !frame || !glass || !Number.isInteger(quantity) || quantity < 1 || quantity > 99) return null;
-  // Retain the existing builder prices, including its default studio mount.
-  const mount = MAT_OPTIONS[0];
-  const unit = size.basePrice + frame.extraPrice + mount.extra + glass.extra;
-  return { base: size.basePrice, frame: frame.extraPrice, mount: mount.extra, glass: glass.extra, unit, total: unit * quantity };
+  const base = getFrameSizeBasePrice(sizeId, overrides);
+  const printExtra = includePrint ? getFramePrintAddonPrice(sizeId, overrides) : 0;
+  const frameExtra = getFrameFinishExtraPrice(frameId, overrides);
+  const glassExtra = getGlassExtraPrice(glass.id, overrides);
+  const mountExtra = getMatExtraPrice(mount.id, overrides);
+  const unit = base + printExtra + frameExtra + mountExtra + glassExtra;
+  return { base, print: printExtra, frame: frameExtra, mount: mountExtra, glass: glassExtra, includePrint, unit, total: unit * quantity };
 }
 
 export function getStudioQuality({ photoWidth, photoHeight, sizeId, orientation = 'portrait', fit = 'contain' }) {

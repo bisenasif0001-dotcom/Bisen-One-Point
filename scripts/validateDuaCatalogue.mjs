@@ -13,9 +13,19 @@ for (const poster of DUA_POSTERS) {
   assert.ok(existsSync(`public${poster.image}`), poster.image);
   assert.ok(existsSync(`public${poster.thumbnail}`), poster.thumbnail);
 }
-assert.deepEqual(DUA_PRINT_PRICES, { A5: 22, A4: 43, A3: 85, A2: 170, A1: 340 });
-assert.equal(DUA_PRINT_PRICES.A3 * 3, 255);
-assert.equal(DUA_PRINT_PRICES.A1 * 2, 680);
+assert.deepEqual(DUA_PRINT_PRICES, {
+  A5: 49,
+  A4: 79,
+  A3: 149,
+  '12x18': 179,
+  '13x19': 199,
+  '15x21': 279,
+  '16x22': 299,
+  A2: 329,
+  A1: 549,
+});
+assert.equal(DUA_PRINT_PRICES.A3 * 3, 447);
+assert.equal(DUA_PRINT_PRICES.A1 * 2, 1098);
 const server = await createServer({ server: { middlewareMode: true, hmr: false } });
 try {
   const { DuaPosterCollection } = await server.ssrLoadModule('/src/pages/DuaPostersPage.jsx');

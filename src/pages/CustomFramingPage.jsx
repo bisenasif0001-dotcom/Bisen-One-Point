@@ -13,5 +13,6 @@ export default function CustomFramingPage({ onAddToCart, onOpenSizeGuide, frameG
     initialOrientation={location.state?.orientation || 'portrait'}
     initialPhoto={location.state?.hasGuidePhoto ? frameGuidePhoto : null}
     requestUpload={Boolean(location.state?.triggerUpload)}
+    initialIncludePrint={location.state?.includePrint !== false}
   />;
 }

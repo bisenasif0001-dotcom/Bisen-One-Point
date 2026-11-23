@@ -15,9 +15,14 @@ test('production pages use correct metadata, private indexing rules, compression
     const html = await page.text();
     assert.equal(page.status, 200);
     assert.equal(page.headers.get('content-encoding'), 'gzip');
-    assert.ok(html.includes('Photo Prints | AL-NOOR Studio'));
+    assert.ok(html.includes('Photo Prints | BISEN Studio'));
     assert.ok(html.includes('href="https://studio.example.test/photo-prints"'));
     assert.ok(html.includes('content="index, follow"'));
+    assert.ok(html.includes('content="https://studio.example.test/og-share.jpg"'));
+    assert.ok(html.includes('name="twitter:card" content="summary_large_image"'));
+    assert.ok(html.includes('application/ld+json'));
+    assert.ok(html.includes('BISEN Frame & Photo Print'));
+    assert.equal(html.split('name="twitter:card"').length, 2);
     assert.equal(page.headers.get('x-frame-options'), 'DENY');
     for (const path of ['/studio', '/studio/orders', '/track-order', '/track', '/orders', '/my-orders']) {
       const response = await fetch(origin + path);

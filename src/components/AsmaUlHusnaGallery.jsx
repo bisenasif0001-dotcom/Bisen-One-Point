@@ -4,6 +4,7 @@ import { ArrowUpRight, Search, X } from 'lucide-react';
 import { ASMA_UL_HUSNA_ITEMS, ASMA_UL_HUSNA_COUNT } from '../data/asmaUlHusnaData';
 import { asmaArtworkImage, asmaArtworkPath, asmaArtworkPrice } from '../utils/asmaArtwork';
 import { resolveAssetUrl } from '../utils/assetUrl';
+import { usePriceOverrides } from './BusinessRulesProvider';
 import './AsmaUlHusnaGallery.css';
 
 const filters = [
@@ -16,6 +17,7 @@ const filters = [
 const normalize = value => value.toLowerCase().normalize('NFKD').replace(/[\p{M}'’]/gu, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 
 export default function AsmaUlHusnaGallery() {
+  const priceOverrides = usePriceOverrides();
   const [query, setQuery] = useState('');
   const [filterId, setFilterId] = useState('all');
   const filter = filters.find(option => option.id === filterId);
@@ -48,7 +50,7 @@ export default function AsmaUlHusnaGallery() {
         <div className="anh-copy">
           <div className="anh-title"><h3>{item.title}</h3><span lang="ar" dir="rtl">{item.arabicTitle}</span></div>
           <p>{item.meaning}</p>
-          <div className="anh-action"><span>Print from ₹{asmaArtworkPrice(item, 'print', 'A5')}</span><strong>Choose options <ArrowUpRight size={15} /></strong></div>
+          <div className="anh-action"><span>Print from ₹{asmaArtworkPrice(item, 'print', 'A5', null, priceOverrides)}</span><strong>Choose options <ArrowUpRight size={15} /></strong></div>
         </div>
       </Link>)}
     </div> : <div className="anh-empty">

@@ -30,8 +30,8 @@ try {
   assert.ok(validateStudioFile({ type: 'image/png', size: STUDIO_MAX_FILE_BYTES + 1 }).includes('20 MB'));
   assert.ok(validateStudioFile({ type: 'image/png', size: 0 }).includes('empty'));
   assert.ok(validateStudioFile({ type: 'text/plain', size: 40 }));
-  assert.equal(getStudioPrice({ sizeId: 'A4', frameId: 'regal_aurelia', glassId: 'crystal_acrylic' }).unit, 749);
-  assert.equal(getStudioPrice({ sizeId: 'A3', frameId: 'regal_heritage', glassId: 'anti_glare_acrylic', quantity: 2 }).total, 3298);
+  assert.equal(getStudioPrice({ sizeId: 'A4', frameId: 'regal_aurelia', glassId: 'crystal_acrylic' }).unit, 429);
+  assert.equal(getStudioPrice({ sizeId: 'A3', frameId: 'regal_heritage', glassId: 'anti_glare_acrylic', quantity: 2 }).total, 2158);
   for (const quantity of [0, -1, 1.5, NaN, 100]) assert.equal(getStudioPrice({ sizeId: 'A4', frameId: 'regal_noir', glassId: 'crystal_acrylic', quantity }), null);
   assert.equal(getStudioPrice({ sizeId: 'invalid', frameId: 'regal_noir', glassId: 'crystal_acrylic' }), null);
   const high = getStudioQuality({ photoWidth: 4000, photoHeight: 6000, sizeId: 'A4' });
@@ -58,7 +58,8 @@ try {
   assert.equal((studio.match(/class="fs-step-number"/g) || []).length, 3);
   assert.equal((studio.match(/<h1>/g) || []).length, 1);
   assert.ok(studio.includes('regal-heritage/front.png')); assert.ok(studio.includes('SAMPLE PHOTO'));
-  assert.ok(studio.includes('Keep full photo')); assert.ok(studio.includes('20 MB')); assert.ok(studio.includes('₹899'));
+  assert.ok(studio.includes('preserveAspectRatio="xMidYMid slice"'), 'Default custom photo framing fills opening without white sidebars');
+  assert.ok(studio.includes('Keep full photo')); assert.ok(studio.includes('20 MB')); assert.ok(studio.includes('₹579'));
   assert.ok(studio.includes('aria-label="Preview frame orientation"'));
   assert.equal((studio.match(/class="fs-sample-caption"/g) || []).length, 4);
   assert.ok(studio.includes('href="/hero/wedding-bride.jpg"'), 'Portrait frame starts with a portrait sample');

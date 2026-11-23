@@ -41,7 +41,7 @@ try {
     const html = renderToStaticMarkup(React.createElement(MemoryRouter, { initialEntries: [path] }, React.createElement(PolicyPage)));
     assert.equal((html.match(/<h1(?:\s|>)/g) || []).length, 1, label);
     assert.ok(html.includes('M. Talib Khan') && html.includes('avarto@outlook.com'), path);
-    assert.ok(html.includes(`href="${path}" aria-current="page"`), path);
+    assert.match(html, new RegExp(`<a\\b(?=[^>]*\\bhref="${path}")(?=[^>]*\\baria-current="page")[^>]*>`), path);
     assert.ok(!html.includes('BARAKAH15') && !html.includes('No refund under any circumstances'), path);
   }
   const report = { checkedAt: new Date().toISOString(), passed: { routeAndSearchLinks: links.length, authoritativeItraPrices: prices, invalidCartRecovery: true, unknownProductProtection: true }, openLaunchFindings: [

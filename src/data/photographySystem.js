@@ -116,7 +116,7 @@ export const CARDS_PHOTOGRAPHY_SYSTEM = [
     id: 'card-back',
     label: 'Card Back',
     shortLabel: 'Back Cover',
-    desc: 'Rear panel with subtle blind-embossed AL-NOOR studio seal and provenance.',
+    desc: 'Rear panel with subtle blind-embossed BISEN studio seal and provenance.',
     image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=1000&q=80'
   },
   {

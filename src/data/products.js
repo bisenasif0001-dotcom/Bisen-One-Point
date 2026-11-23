@@ -5,7 +5,8 @@ export const FRAME_SIZES = [
     dimensionsCm: '14.8 x 21.0 cm',
     dimensionsInch: '5.8 x 8.3 in',
     bestFor: 'Tabletops, Desks, Small Gift Memories, Prayer Corner',
-    basePrice: 349,
+    basePrice: 279,
+    printAddon: 80,
     multiplier: 1.0,
     aspectRatio: '148/210',
     scaleRatio: 0.55
@@ -16,7 +17,8 @@ export const FRAME_SIZES = [
     dimensionsCm: '21.0 x 29.7 cm',
     dimensionsInch: '8.3 x 11.7 in',
     bestFor: 'Certificates, Portraits, Family Photos, Wall Collages',
-    basePrice: 599,
+    basePrice: 329,
+    printAddon: 100,
     multiplier: 1.35,
     aspectRatio: '210/297',
     scaleRatio: 0.7
@@ -27,10 +29,59 @@ export const FRAME_SIZES = [
     dimensionsCm: '29.7 x 42.0 cm',
     dimensionsInch: '11.7 x 16.5 in',
     bestFor: 'Living Room Walls, Calligraphy Art, Wedding Portraits',
-    basePrice: 999,
+    basePrice: 449,
+    printAddon: 130,
     multiplier: 1.85,
     aspectRatio: '297/420',
     scaleRatio: 0.85
+  },
+  {
+    id: '12x18',
+    name: '12 × 18 inches',
+    dimensionsCm: '30.48 x 45.72 cm',
+    dimensionsInch: '12.0 x 18.0 in',
+    bestFor: 'Portrait photography, wall displays and gifts',
+    basePrice: 479,
+    printAddon: 150,
+    multiplier: 2.0,
+    aspectRatio: '2/3',
+    scaleRatio: 0.9
+  },
+  {
+    id: '13x19',
+    name: '13 × 19 inches',
+    dimensionsCm: '33.02 x 48.26 cm',
+    dimensionsInch: '13.0 x 19.0 in',
+    bestFor: 'Studio posters, family portraits and wedding photographs',
+    basePrice: 529,
+    printAddon: 160,
+    multiplier: 2.15,
+    aspectRatio: '13/19',
+    scaleRatio: 0.94
+  },
+  {
+    id: '15x21',
+    name: '15 × 21 inches',
+    dimensionsCm: '38.10 x 53.34 cm',
+    dimensionsInch: '15.0 x 21.0 in',
+    bestFor: 'Statement walls, couple portraits and sacred calligraphy',
+    basePrice: 849,
+    printAddon: 200,
+    multiplier: 2.45,
+    aspectRatio: '15/21',
+    scaleRatio: 1.0
+  },
+  {
+    id: '16x22',
+    name: '16 × 22 inches',
+    dimensionsCm: '40.64 x 55.88 cm',
+    dimensionsInch: '16.0 x 22.0 in',
+    bestFor: 'Feature walls, family galleries and drawing rooms',
+    basePrice: 899,
+    printAddon: 250,
+    multiplier: 2.55,
+    aspectRatio: '16/22',
+    scaleRatio: 1.03
   },
   {
     id: 'A2',
@@ -38,7 +89,8 @@ export const FRAME_SIZES = [
     dimensionsCm: '42.0 x 59.4 cm',
     dimensionsInch: '16.5 x 23.4 in',
     bestFor: 'Feature Walls, Above Sofa, Hallways, Luxury Lounges',
-    basePrice: 1699,
+    basePrice: 999,
+    printAddon: 250,
     multiplier: 2.6,
     aspectRatio: '420/594',
     scaleRatio: 1.05
@@ -49,7 +101,8 @@ export const FRAME_SIZES = [
     dimensionsCm: '59.4 x 84.1 cm',
     dimensionsInch: '23.4 x 33.1 in',
     bestFor: 'Majestic Living Rooms, Villa Entrances, Office Boardrooms',
-    basePrice: 2799,
+    basePrice: 1999,
+    printAddon: 500,
     multiplier: 3.8,
     aspectRatio: '594/841',
     scaleRatio: 1.3
@@ -96,7 +149,7 @@ export const FRAME_FINISHES = [
       { id: 'layered', label: 'Layered Angle', image: '/frames/regal-aurelia/layered.png' },
       { id: 'side', label: 'Side Profile', image: '/frames/regal-aurelia/side.png' }
     ],
-    availableSizes: ['A5', 'A4', 'A3', 'A2', 'A1', '4x6', '5x7', '8x10'],
+    availableSizes: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1', '4x6', '5x7', '8x10'],
     extraPrice: 0,
     tag: 'Natural Wood & Gold ✨'
   },
@@ -132,7 +185,7 @@ export const FRAME_FINISHES = [
       { id: 'layered', label: 'Layered Angle', image: '/frames/regal-noir/layered.png' },
       { id: 'side', label: 'Side Profile', image: '/frames/regal-noir/side.png' }
     ],
-    availableSizes: ['A5', 'A4', 'A3', 'A2', 'A1', '4x6', '5x7', '8x10'],
+    availableSizes: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1', '4x6', '5x7', '8x10'],
     extraPrice: 0,
     tag: 'Matte Black & White'
   },
@@ -168,7 +221,7 @@ export const FRAME_FINISHES = [
       { id: 'layered', label: 'Layered Angle', image: '/frames/regal-heritage/layered.png' },
       { id: 'side', label: 'Side Profile', image: '/frames/regal-heritage/side.png' }
     ],
-    availableSizes: ['A5', 'A4', 'A3', 'A2', 'A1', '4x6', '5x7', '8x10'],
+    availableSizes: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1', '4x6', '5x7', '8x10'],
     extraPrice: 150,
     tag: 'Walnut Brown & Gold'
   },
@@ -204,7 +257,7 @@ export const FRAME_FINISHES = [
       { id: 'layered', label: 'Layered Angle', image: '/frames/emberstone/layered.png' },
       { id: 'side', label: 'Side Profile', image: '/frames/emberstone/side.png' }
     ],
-    availableSizes: ['A5', 'A4', 'A3', 'A2', 'A1', '4x6', '5x7', '8x10'],
+    availableSizes: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1', '4x6', '5x7', '8x10'],
     extraPrice: 200,
     tag: 'Antique Black & Bronze'
   },
@@ -240,7 +293,7 @@ export const FRAME_FINISHES = [
       { id: 'layered', label: 'Layered Angle', image: '/frames/regal-onyx/layered.png' },
       { id: 'side', label: 'Side Profile', image: '/frames/regal-onyx/side.png' }
     ],
-    availableSizes: ['A5', 'A4', 'A3', 'A2', 'A1', '4x6', '5x7', '8x10'],
+    availableSizes: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1', '4x6', '5x7', '8x10'],
     extraPrice: 150,
     tag: 'Glossy Black & Silver'
   },
@@ -276,7 +329,7 @@ export const FRAME_FINISHES = [
       { id: 'layered', label: 'Layered Angle', image: '/frames/regal-windsor/layered.png' },
       { id: 'side', label: 'Side Profile', image: '/frames/regal-windsor/side.png' }
     ],
-    availableSizes: ['A5', 'A4', 'A3', 'A2', 'A1', '4x6', '5x7', '8x10'],
+    availableSizes: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1', '4x6', '5x7', '8x10'],
     extraPrice: 200,
     tag: 'Mahogany & Gold Rim'
   },
@@ -312,17 +365,17 @@ export const FRAME_FINISHES = [
       { id: 'layered', label: 'Layered Angle', image: '/frames/regal-blue/layered.png' },
       { id: 'side', label: 'Side Profile', image: '/frames/regal-blue/side.png' }
     ],
-    availableSizes: ['A5', 'A4', 'A3', 'A2', 'A1', '4x6', '5x7', '8x10'],
+    availableSizes: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1', '4x6', '5x7', '8x10'],
     extraPrice: 150,
     tag: 'White & Blue Accent'
   }
 ];
 
 export const MAT_OPTIONS = [
-  { id: 'white_mat', name: 'Studio White Mat (1.5 in)', color: '#f8f8f8', extra: 150 },
-  { id: 'cream_gold_mat', name: 'Warm Cream with Gold Bevel', color: '#f4eedb', extra: 220 },
-  { id: 'black_mat', name: 'Dramatic Velvet Black Mat', color: '#141416', extra: 180 },
-  { id: 'no_mat', name: 'No Mat / Full Bleed Photo', color: 'transparent', extra: 0 }
+  { id: 'no_mat', name: 'No Mat / Full Bleed Photo', color: 'transparent', extra: 0 },
+  { id: 'white_mat', name: 'Studio White Mat (1.5 in)', color: '#f8f8f8', extra: 120 },
+  { id: 'black_mat', name: 'Dramatic Velvet Black Mat', color: '#141416', extra: 150 },
+  { id: 'cream_gold_mat', name: 'Warm Cream with Gold Bevel', color: '#f4eedb', extra: 180 }
 ];
 
 export const GLASS_OPTIONS = [
@@ -377,9 +430,9 @@ export const ISLAMIC_ART_COLLECTION = [
     category: 'Ayat-ul-Kursi',
     description: 'Majestic Thuluth calligraphy with metallic gold foil detailing on deep celestial black canvas. Brings peace and divine barakah to your home.',
     image: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=900&q=80',
-    framedPriceA4: 899,
-    unframedPriceA4: 449,
-    sizesAvailable: ['A5', 'A4', 'A3', 'A2', 'A1'],
+    framedPriceA4: 408,
+    unframedPriceA4: 79,
+    sizesAvailable: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1'],
     rating: 4.95,
     reviewsCount: 142,
     badge: 'Bestseller ⭐',
@@ -392,9 +445,9 @@ export const ISLAMIC_ART_COLLECTION = [
     category: '99 Names',
     description: 'Circular geometric Islamic mandala featuring all 99 names of Allah in sublime gold and emerald detailing with immaculate precision.',
     image: 'https://images.unsplash.com/photo-1590076215667-875d4ef2d7ee?auto=format&fit=crop&w=900&q=80',
-    framedPriceA4: 1049,
-    unframedPriceA4: 549,
-    sizesAvailable: ['A4', 'A3', 'A2', 'A1'],
+    framedPriceA4: 428,
+    unframedPriceA4: 99,
+    sizesAvailable: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1'],
     rating: 4.98,
     reviewsCount: 98,
     badge: 'Royal Edition',
@@ -407,9 +460,9 @@ export const ISLAMIC_ART_COLLECTION = [
     category: 'Surahs',
     description: 'So which of the favors of your Lord would you deny? Beautiful Diwani calligraphy with ambient turquoise and gold gradient flourishes.',
     image: 'https://images.unsplash.com/photo-1564507592333-c60657eea523?auto=format&fit=crop&w=900&q=80',
-    framedPriceA4: 949,
-    unframedPriceA4: 499,
-    sizesAvailable: ['A5', 'A4', 'A3', 'A2', 'A1'],
+    framedPriceA4: 408,
+    unframedPriceA4: 79,
+    sizesAvailable: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1'],
     rating: 4.91,
     reviewsCount: 84,
     badge: 'Trending',
@@ -422,9 +475,9 @@ export const ISLAMIC_ART_COLLECTION = [
     category: 'Protection Surahs',
     description: 'Surah Al-Kafirun, Al-Ikhlas, Al-Falaq, and An-Nas. Essential protection and barakah frames designed in synchronized royal luxury styling.',
     image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80',
-    framedPriceA4: 1799,
-    unframedPriceA4: 899,
-    sizesAvailable: ['A5', 'A4', 'A3', 'A2'],
+    framedPriceA4: 1149,
+    unframedPriceA4: 219,
+    sizesAvailable: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2'],
     rating: 5.0,
     reviewsCount: 165,
     badge: '3-Piece Set 🔥',
@@ -437,9 +490,9 @@ export const ISLAMIC_ART_COLLECTION = [
     category: 'Minimalist Dua',
     description: 'Contemporary Square Kufic calligraphy in satin gold on matte midnight finish. Perfect for dining spaces, office desks, and modern entryways.',
     image: 'https://images.unsplash.com/photo-1609599006353-e629aaabfeae?auto=format&fit=crop&w=900&q=80',
-    framedPriceA4: 799,
-    unframedPriceA4: 399,
-    sizesAvailable: ['A5', 'A4', 'A3', 'A2', 'A1'],
+    framedPriceA4: 408,
+    unframedPriceA4: 79,
+    sizesAvailable: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2', 'A1'],
     rating: 4.88,
     reviewsCount: 73,
     badge: 'Modern Chic',
@@ -452,9 +505,9 @@ export const ISLAMIC_ART_COLLECTION = [
     category: 'Holy Mosques',
     description: 'Elegant dual silhouettes of the holy Kaaba and the Prophet’s Green Dome with subtle gold foil domes and glowing minarets.',
     image: 'https://images.unsplash.com/photo-1591604129939-f1efa4d9f7fa?auto=format&fit=crop&w=900&q=80',
-    framedPriceA4: 1299,
-    unframedPriceA4: 649,
-    sizesAvailable: ['A5', 'A4', 'A3', 'A2'],
+    framedPriceA4: 779,
+    unframedPriceA4: 149,
+    sizesAvailable: ['A5', 'A4', 'A3', '12x18', '13x19', '15x21', '16x22', 'A2'],
     rating: 4.97,
     reviewsCount: 110,
     badge: 'Duo Collection',
@@ -617,7 +670,7 @@ export const SAMPLE_CUSTOM_PHOTOS = [
 export const BRAND_DIVISIONS = [
   {
     id: 'print-frame',
-    name: 'AL-NOOR Print & Frame Studio',
+    name: 'BISEN Print & Frame Studio',
     descriptor: 'Custom Framing & Photographic Printing',
     path: '/custom-framing',
     tagline: 'Thoughtfully printed. Beautifully framed.',
@@ -625,7 +678,7 @@ export const BRAND_DIVISIONS = [
   },
   {
     id: 'cards-gifts',
-    name: 'AL-NOOR Cards & Gifts',
+    name: 'BISEN Cards & Gifts',
     descriptor: 'Bespoke Stationery & Keepsakes',
     path: '/contact',
     tagline: 'Personally gifted with love.',
@@ -633,7 +686,7 @@ export const BRAND_DIVISIONS = [
   },
   {
     id: 'itra-house',
-    name: 'AL-NOOR Itra House',
+    name: 'BISEN Itra House',
     descriptor: 'Pure Concentrated Perfume Oils',
     path: '/itra-perfumes',
     tagline: 'Artisanal non-alcoholic fragrance treasures.',

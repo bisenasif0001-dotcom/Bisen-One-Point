@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   Sparkles, 
@@ -14,8 +14,48 @@ import {
   Truck,
   ArrowUpRight
 } from 'lucide-react';
+import { FRAME_FINISHES } from '../data/products';
+import { getStudioPrice } from '../utils/frameStudio';
+import { usePriceOverrides } from '../components/BusinessRulesProvider';
+import {
+  getDuaPosterPrice,
+  getMinCardPrice,
+  getMinItraPrice,
+  getMinPrintPrice,
+  getItraProductPrice,
+} from '../utils/priceRegistry';
 
-export const OCCASIONS_MAP = {
+function buildOccasionsMap(overrides) {
+  const defaultFrame = FRAME_FINISHES[0].id;
+  const a5WithPrint = getStudioPrice({ sizeId: 'A5', frameId: defaultFrame, includePrint: true, overrides })?.unit ?? 359;
+  const a4WithPrint = getStudioPrice({ sizeId: 'A4', frameId: defaultFrame, includePrint: true, overrides })?.unit ?? 429;
+  const a3WithPrint = getStudioPrice({ sizeId: 'A3', frameId: defaultFrame, includePrint: true, overrides })?.unit ?? 579;
+  const a5Empty = getStudioPrice({ sizeId: 'A5', frameId: defaultFrame, includePrint: false, overrides })?.unit ?? 279;
+  const duaA5 = getDuaPosterPrice('A5', overrides) ?? 49;
+  const duaA4 = getDuaPosterPrice('A4', overrides) ?? 79;
+  const a4Empty = getStudioPrice({ sizeId: 'A4', frameId: defaultFrame, includePrint: false, overrides })?.unit ?? 329;
+  const minCard = getMinCardPrice(overrides) || 149;
+  const minPrint = getMinPrintPrice(overrides) || 25;
+  const minItra3 = getMinItraPrice(overrides, { volume: '3ml' }) || 329;
+  const minItra6 = getMinItraPrice(overrides, { volume: '6ml' }) || 599;
+  const oud6 = getItraProductPrice('oud-royale', '6ml', overrides) ?? 899;
+  const taif6 = getItraProductPrice('taif-rose', '6ml', overrides) ?? 799;
+  const musk6 = getItraProductPrice('kasturi-black-musk', '6ml', overrides) ?? 699;
+  const kiswah6 = getItraProductPrice('makkah-kiswah', '6ml', overrides) ?? 999;
+
+  const bundlePrices = (regular) => ({
+    regularPrice: regular,
+    price: Math.round(regular * 0.85),
+  });
+
+  const bdayReg = a4WithPrint + minCard + minPrint * 10 + musk6;
+  const weddingReg = a3WithPrint + minCard + minPrint * 20 + oud6;
+  const annivReg = a3WithPrint + minCard + minPrint * 15 + taif6;
+  const babyReg = a4WithPrint + minCard + minPrint * 20 + minItra6;
+  const parentsReg = a3WithPrint + minCard + minPrint * 15 + oud6;
+  const eidReg = (duaA4 + a4Empty) + (minCard * 5) + minPrint * 10 + kiswah6;
+
+  return {
   birthday: {
     id: 'birthday',
     navLabel: 'Birthday',
@@ -30,9 +70,9 @@ export const OCCASIONS_MAP = {
         title: 'Frame A Favourite Photo',
         category: 'CUSTOM FRAMING',
         subtitle: 'Turn a snapshot into a timeless wall-hung memory in under 2 minutes.',
-        description: 'Choose from 6 handcrafted solid wood finishes. Printed with Professional 6-Colour Epson Photo Printing on premium lustre paper with a bevel-cut matboard.',
-        price: 'From ₹599',
-        features: ['Solid pinewood moulding', 'Bevel-cut studio matboard included', 'Shatter-resistant acrylic glazing', 'Ready to hang right out of the box'],
+        description: 'Choose from 7 handcrafted solid wood finishes. Printed with Professional 6-Colour Epson Photo Printing on premium lustre paper.',
+        price: `From ₹${a5WithPrint} (A5) · ₹${a4WithPrint} (A4)`,
+        features: ['Solid pinewood moulding', 'Optional archival matboard', 'Shatter-resistant acrylic glazing', 'Ready to hang right out of the box'],
         image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Frame Their Photo',
         ctaLink: '/custom-framing?occasion=birthday'
@@ -44,8 +84,8 @@ export const OCCASIONS_MAP = {
         category: 'CARDS & GIFTS',
         subtitle: 'Personalised greeting card with their name, your photo, and your heartfelt letter.',
         description: 'Printed on heavy 350 GSM tactile textured cardstock. Customise both the front cover and inside letter with our easy live card designer.',
-        price: 'From ₹149',
-        features: ['350 GSM heavyweight textured cardstock', 'Dual-sided cover & message customization', 'Premium textured envelope included', 'Optional gold foil stamping'],
+        price: `From ₹${minCard}`,
+        features: ['350 GSM heavyweight textured cardstock', 'Dual-sided cover & message customization', 'Premium textured envelope included', 'Bulk savings up to 45%'],
         image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Design Birthday Card',
         ctaLink: '/birthday-cards'
@@ -57,7 +97,7 @@ export const OCCASIONS_MAP = {
         category: 'PHOTO LAB PRINTS',
         subtitle: 'Pack of true lustre or matte studio prints to slip inside the card or gift box.',
         description: 'Professional 6-Colour Epson Photo Printing from your phone photos. Crisp skin tones and vibrant colors printed on 260 GSM photo stock.',
-        price: 'From ₹149 / pack of 10',
+        price: `From ₹${minPrint} / print (10 for ₹${minPrint * 10})`,
         features: ['260 GSM premium photo paper', 'Fade-resistant lab finish', 'Lustre, Gloss, or Matte finishes', 'Sizes from 4×6" to A3'],
         image: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Print Shared Memories',
@@ -70,7 +110,7 @@ export const OCCASIONS_MAP = {
         category: 'THE ITRA HOUSE',
         subtitle: 'Pure, concentrated alcohol-free attar presented in a hand-cut crystal bottle.',
         description: 'Distilled using centuries-old methods in Kannauj. 100% pure perfume oil that warms on skin and lasts all day.',
-        price: 'From ₹699',
+        price: `From ₹${minItra3} (3ml) · ₹${minItra6} (6ml)`,
         features: ['100% pure alcohol-free attar', 'Hand-cut crystal applicator flacon', 'Signature Royal Amber & Taif Rose notes', 'Velvet gift pouch included'],
         image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Explore Itra Gift',
@@ -82,14 +122,13 @@ export const OCCASIONS_MAP = {
       title: 'THE BIRTHDAY MEMORY BOX',
       badge: 'All-In-One Coordinated Gift',
       tagline: 'Everything they need for an unforgettable celebration in one elegant presentation.',
-      price: 1499,
-      regularPrice: 1999,
+      ...bundlePrices(bdayReg),
       image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',
       items: [
-        'Personalised 8×10" Solid Wood Frame with your photo',
+        'Personalised A4 Solid Wood Frame with your photo',
         'Personalised Birthday Card with custom letter & envelope',
-        'Set of 10 Studio Photo Prints',
-        '6ml Royal Amber Pure Attar in crystal bottle',
+        'Set of 10 Studio Photo Prints (4×6")',
+        '6ml Kasturi Black Musk Pure Attar in crystal bottle',
         'Complimentary Luxury Gift Box with satin ribbon'
       ]
     }
@@ -110,8 +149,8 @@ export const OCCASIONS_MAP = {
         category: 'CUSTOM FRAMING',
         subtitle: 'Immortalise the ceremony vows in an elegant statement frame.',
         description: 'Deep bevel-cut matting and solid Walnut-finish or Champagne mouldings ensure wedding day portraits look regal and pristine for generations.',
-        price: 'From ₹999',
-        features: ['Double-layer bevel-cut studio matboard', 'Walnut or Champagne moulding', 'Professional 6-Colour Epson Photo Printing', 'Shatter-resistant optical acrylic glazing'],
+        price: `From ₹${a4WithPrint} (A4) · ₹${a3WithPrint} (A3)`,
+        features: ['Optional studio bevel-cut matboard', 'Walnut or Champagne moulding', 'Professional 6-Colour Epson Photo Printing', 'Shatter-resistant optical acrylic glazing'],
         image: 'https://images.unsplash.com/photo-1544078751-58fee2d8a03b?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Frame Wedding Portrait',
         ctaLink: '/custom-framing?occasion=wedding'
@@ -121,10 +160,10 @@ export const OCCASIONS_MAP = {
         num: '02',
         title: 'Create A Wedding Card',
         category: 'CARDS & GIFTS',
-        subtitle: 'Luxury foil-embossed blessing card for the newly wedded couple.',
-        description: 'Letterpress finish on 350 GSM textured cardstock with gold foil accents. Customise your blessing message and include wedding details.',
-        price: 'From ₹199',
-        features: ['Gold foil letterpress detailing', 'Bespoke wax seal emblem', 'Thick 350 GSM textured cardstock', 'Custom Dua or blessing inside'],
+        subtitle: 'Personalised keepsake card for the newly wedded couple.',
+        description: 'Folded card on 350 GSM textured cardstock with custom greeting accents. Customise your blessing message and include wedding details.',
+        price: `From ₹${minCard}`,
+        features: ['Personalised couple cover details', 'Matching envelope included', 'Thick 350 GSM textured cardstock', 'Custom Dua or blessing inside'],
         image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Design Wedding Card',
         ctaLink: '/cards?occasion=wedding'
@@ -136,7 +175,7 @@ export const OCCASIONS_MAP = {
         category: 'PHOTO LAB PRINTS',
         subtitle: 'Lab-grade print sets of all ceremony, reception, and family rituals.',
         description: 'True continuous-tone photographic lab printing capturing vivid sarees, sherwanis, and emotional wedding moments without pixelation.',
-        price: 'From ₹199 / pack',
+        price: `From ₹${minPrint} / print`,
         features: ['Professional 6-colour Epson printing', 'Vivid ceremonial colour reproduction', 'Lustre finish resists fingerprints', 'Safe keepsake storage'],
         image: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Print Wedding Moments',
@@ -147,10 +186,10 @@ export const OCCASIONS_MAP = {
         num: '04',
         title: 'Add A Fragrance Gift',
         category: 'THE ITRA HOUSE',
-        subtitle: 'Mukhallat Royale and aged Dehn Al Oud in royal bridal presentation.',
+        subtitle: 'Oud Royale and aged Dehn Al Oud in royal bridal presentation.',
         description: 'Exquisite bridal attars featuring aged agarwood, Kashmiri saffron, and Taif rose for prayer and special occasions.',
-        price: 'From ₹1,499',
-        features: ['Aged Cambodian Dehn Al Oud', 'Taif Rose & Saffron infusion', 'Long-lasting sacred sillage', 'Handcrafted velvet coffret'],
+        price: `From ₹${minItra3} (3ml) · ₹${oud6} (6ml)`,
+        features: ['Aged Cambodian Dehn Al Oud', 'Taif Rose & Saffron infusion', 'Long-lasting sacred sillage', 'Handcrafted velvet pouch'],
         image: 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Explore Bridal Itra',
         ctaLink: '/itra'
@@ -161,14 +200,13 @@ export const OCCASIONS_MAP = {
       title: 'THE GRAND WEDDING HEIRLOOM SET',
       badge: 'Luxury Bridal Set',
       tagline: 'A coordinated heirloom suite commemorating sacred vows with timeless dignity.',
-      price: 2899,
-      regularPrice: 3599,
+      ...bundlePrices(weddingReg),
       image: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=800&q=80',
       items: [
-        'Large Wedding Statement Frame (12×16")',
-        'Gold Foil Embossed Wedding Blessing Card & Wax Seal',
+        'Statement Wedding Frame (A3) with Photo Print',
+        'Personalised Wedding Blessing Card & Envelope',
         'Set of 20 High-Res Ceremony Photo Lab Prints',
-        'Mukhallat Royale Luxury Attar in velvet gift box',
+        'Oud Royale Al-Maliki (6ml) Pure Attar',
         'Rigid Ivory Presentation Box with personalised inscription'
       ]
     }
@@ -187,10 +225,10 @@ export const OCCASIONS_MAP = {
         num: '01',
         title: 'Frame A Favourite Photo',
         category: 'CUSTOM FRAMING',
-        subtitle: 'Dark Walnut frame with engraved milestone coordinates and dates.',
-        description: 'Honor every year of shared devotion. Choose classic black, warm walnut, or champagne gold with custom matboard spacing.',
-        price: 'From ₹799',
-        features: ['Handcrafted dark walnut finish', 'Fine art portrait printing', 'Acid-free preservation mat', 'Pre-installed hanging hardware'],
+        subtitle: 'Classic solid wood frames for milestone couple portraits.',
+        description: 'Honor every year of shared devotion. Choose classic black, warm walnut, or champagne gold with optional matboard spacing.',
+        price: `From ₹${a4WithPrint} (A4) · ₹${a3WithPrint} (A3)`,
+        features: ['Handcrafted solid wood finish', 'Fine art portrait printing', 'Acid-free preservation acrylic', 'Pre-installed hanging hardware'],
         image: 'https://images.unsplash.com/photo-1582533561751-ef6f6ab93a2e?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Frame Couple Photo',
         ctaLink: '/custom-framing?occasion=anniversary'
@@ -200,10 +238,10 @@ export const OCCASIONS_MAP = {
         num: '02',
         title: 'Create An Anniversary Card',
         category: 'CARDS & GIFTS',
-        subtitle: 'Feature your wedding day photo alongside today with your love letter.',
-        description: 'Two-sided folded keepsake card. Insert your then-and-now photos and write a personal letter they will keep forever.',
-        price: 'From ₹149',
-        features: ['Then & Now dual photo layout', 'Personalised year milestone counter', 'Textured 350 GSM cardstock', 'Included peel & seal envelope'],
+        subtitle: 'Feature your favourite photo alongside your personal love letter.',
+        description: 'Two-sided folded keepsake card. Insert your photo and write a personal letter they will keep forever.',
+        price: `From ₹${minCard}`,
+        features: ['Personalised cover photo layout', 'Custom milestone details', 'Textured 350 GSM cardstock', 'Included matching envelope'],
         image: 'https://images.unsplash.com/photo-1530103862676-de8c9debad1d?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Design Anniversary Card',
         ctaLink: '/cards?occasion=anniversary'
@@ -215,7 +253,7 @@ export const OCCASIONS_MAP = {
         category: 'PHOTO LAB PRINTS',
         subtitle: 'Print annual vacations and quiet moments of joy together.',
         description: 'Set of high-contrast, fade-resistant prints made for family photo albums or framed collages.',
-        price: 'From ₹149 / pack',
+        price: `From ₹${minPrint} / print`,
         features: ['Premium lustre finish', 'Accurate natural skin tones', 'Professional 6-Colour Epson Photo Printing', 'Quick mobile upload flow'],
         image: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Print Shared Memories',
@@ -226,10 +264,10 @@ export const OCCASIONS_MAP = {
         num: '04',
         title: 'Add A Fragrance Gift',
         category: 'THE ITRA HOUSE',
-        subtitle: 'His & Hers pairing of pure, alcohol-free artisanal attars.',
-        description: 'A harmonious pairing of Kashmir White Musk and Taif Rose created for unforgettable anniversary evenings.',
-        price: 'From ₹999',
-        features: ['Harmonious couple fragrance duo', '100% pure alcohol-free oil', 'Hand-cut crystal bottles', 'Presented in dual velvet pouch'],
+        subtitle: 'Ward Taifi & Pure Musk artisanal attars in crystal bottles.',
+        description: 'A harmonious pairing of White Musk and Taif Rose created for unforgettable anniversary evenings.',
+        price: `From ₹${minItra3} (3ml) · ₹${taif6} (6ml)`,
+        features: ['Pure concentrated floral & musk attar', '100% alcohol-free oil', 'Hand-cut crystal bottles', 'Presented in velvet pouch'],
         image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Explore Couple Fragrance',
         ctaLink: '/itra'
@@ -239,15 +277,14 @@ export const OCCASIONS_MAP = {
       id: 'bundle-anniversary',
       title: 'THE ANNIVERSARY KEEPSAKE SET',
       badge: 'Couples Choice',
-      tagline: 'Frame, card, prints, and pairing fragrances celebrating your enduring partnership.',
-      price: 1899,
-      regularPrice: 2499,
+      tagline: 'Frame, card, prints, and fragrance celebrating your enduring partnership.',
+      ...bundlePrices(annivReg),
       image: 'https://images.unsplash.com/photo-1516589178581-6cd7833ae3b2?auto=format&fit=crop&w=800&q=80',
       items: [
-        'Personalised Couple Frame in Dark Walnut (10×12")',
-        'Then & Now Milestone Anniversary Card',
+        'Personalised Couple Frame (A3) with Photo Print',
+        'Personalised Milestone Anniversary Card',
         'Set of 15 Studio Photo Prints of your travels',
-        'His & Hers Pure Itra Duo (White Musk + Taif Rose)',
+        'Ward Taifi Rose & Amber Pure Itra (6ml)',
         'Deluxe Rigid Presentation Gift Box'
       ]
     }
@@ -266,10 +303,10 @@ export const OCCASIONS_MAP = {
         num: '01',
         title: 'Frame A Favourite Photo',
         category: 'CUSTOM FRAMING',
-        subtitle: 'Pure White or Natural Maple frames with shatterproof acrylic glass.',
-        description: 'Designed specifically for nurseries and child bedrooms with safe materials, non-toxic finishes, and professional photo print quality.',
-        price: 'From ₹649',
-        features: ['Shatter-resistant safety acrylic', 'Non-toxic sustainable pinewood', 'Pure white or natural maple', 'Captures fine baby details'],
+        subtitle: 'Natural wood & crisp contemporary frames with shatterproof acrylic.',
+        description: 'Designed safely with shatterproof cast acrylic and solid pinewood moulding to cherish newborn portraits.',
+        price: `From ₹${a5WithPrint} (A5) · ₹${a4WithPrint} (A4)`,
+        features: ['Shatter-resistant safety acrylic', 'Solid wood sustainable moulding', 'Portrait or landscape ready', 'Captures fine baby details'],
         image: 'https://images.unsplash.com/photo-1519689680058-324335c77eba?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Frame Baby Photo',
         ctaLink: '/custom-framing?occasion=baby'
@@ -281,8 +318,8 @@ export const OCCASIONS_MAP = {
         category: 'CARDS & GIFTS',
         subtitle: 'Record birth stats: date, time, weight, and heartfelt welcome prayers.',
         description: 'Cherish the arrival of the newborn with a customised keepsake announcement card parents will hold onto forever.',
-        price: 'From ₹149',
-        features: ['Birth stats customization', 'Soft pastel minimal designs', '350 GSM heavyweight card', 'Keepsake envelope with sticker'],
+        price: `From ₹${minCard}`,
+        features: ['Birth stats customization', 'Soft minimal designs', '350 GSM heavyweight card', 'Matching envelope included'],
         image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Design Baby Card',
         ctaLink: '/cards?occasion=baby'
@@ -292,10 +329,10 @@ export const OCCASIONS_MAP = {
         num: '03',
         title: 'Print Shared Memories',
         category: 'PHOTO LAB PRINTS',
-        subtitle: 'Pack of 20 milestone prints documenting every first smile and milestone.',
+        subtitle: 'Pack of milestone prints documenting every first smile.',
         description: 'Don’t let thousands of baby phone photos stay trapped on your screen. Print high-res lustre memory cards month by month.',
-        price: 'From ₹249 / pack of 20',
-        features: ['Pack of 20 pocket prints', 'Month-by-month keepsake format', 'Fingerprint-proof lustre paper', 'Fast mobile batch upload'],
+        price: `From ₹${minPrint} / print (20 for ₹${minPrint * 20})`,
+        features: ['High-detail 4×6" prints', 'Month-by-month keepsake format', 'Fingerprint-proof lustre paper', 'Fast mobile batch upload'],
         image: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Order Milestone Prints',
         ctaLink: '/photo-prints'
@@ -305,10 +342,10 @@ export const OCCASIONS_MAP = {
         num: '04',
         title: 'Add A Fragrance Gift',
         category: 'THE ITRA HOUSE',
-        subtitle: 'Mild, soothing alcohol-free floral essence for the nursery atmosphere.',
-        description: 'Gentle Jannat-ul-Firdaus and distilled rosewater essence bringing serene freshness to family living spaces.',
-        price: 'From ₹499',
-        features: ['Zero alcohol or harsh chemicals', 'Delicate natural floral notes', 'Calming nursery atmosphere', 'Roll-on glass bottle'],
+        subtitle: 'Mild, soothing alcohol-free floral essence for parents.',
+        description: 'Gentle pure floral & citrus attar essence bringing serene freshness to family living spaces.',
+        price: `From ₹${minItra3} (3ml) · ₹${minItra6} (6ml)`,
+        features: ['Zero alcohol or harsh chemicals', 'Delicate natural floral notes', 'Calming subtle aroma', 'Crystal applicator bottle'],
         image: 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Explore Gentle Attar',
         ctaLink: '/itra'
@@ -319,14 +356,13 @@ export const OCCASIONS_MAP = {
       title: 'THE NEWBORN MILESTONE HAMPER',
       badge: 'Nursery Favourite',
       tagline: 'A gentle, child-safe bundle documenting first milestones and warm welcomes.',
-      price: 1699,
-      regularPrice: 2199,
+      ...bundlePrices(babyReg),
       image: 'https://images.unsplash.com/photo-1555252333-9f8e92e65df9?auto=format&fit=crop&w=800&q=80',
       items: [
-        'Child-Safe Nursery Keepsake Frame (8×10")',
+        'Child-Safe Nursery Keepsake Frame (A4)',
         'Welcome Little One Birth Stats Card',
         'Pack of 20 Baby Milestone Photo Prints',
-        'Gentle Floral Natural Essence Oil',
+        'Gentle Floral & Vetiver Natural Attar (6ml)',
         'Soft Linen Keepsake Storage Box'
       ]
     }
@@ -347,8 +383,8 @@ export const OCCASIONS_MAP = {
         category: 'CUSTOM FRAMING',
         subtitle: 'Large statement family portrait frame honoring generations of love.',
         description: 'Give them the pride of seeing their children and grandchildren framed on the living room wall with studio-grade craftsmanship.',
-        price: 'From ₹899',
-        features: ['Substantial solid wood mouldings', 'Generous 2-inch border matting', 'Rich 6-colour photo print contrast', 'Lifetime structural guarantee'],
+        price: `From ₹${a4WithPrint} (A4) · ₹${a3WithPrint} (A3)`,
+        features: ['Substantial solid wood mouldings', 'Optional generous mat border', 'Rich 6-colour photo print contrast', 'Durable backing & hangers'],
         image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Frame Family Portrait',
         ctaLink: '/custom-framing?occasion=parents'
@@ -360,8 +396,8 @@ export const OCCASIONS_MAP = {
         category: 'CARDS & GIFTS',
         subtitle: 'A heartfelt letter of appreciation printed on luxury 350 GSM textured stock.',
         description: 'Say the words we often forget to say. Write a long, heartfelt note thanking your mother and father for their unconditional sacrifices.',
-        price: 'From ₹149',
-        features: ['Extra writing room for long letters', 'Durable 350 GSM textured cardstock', 'Custom family photo on cover', 'Elegant gold foil trim'],
+        price: `From ₹${minCard}`,
+        features: ['Extra writing room for long letters', 'Durable 350 GSM textured cardstock', 'Custom family photo on cover', 'Matching textured envelope'],
         image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Write Gratitude Card',
         ctaLink: '/cards?occasion=parents'
@@ -373,8 +409,8 @@ export const OCCASIONS_MAP = {
         category: 'PHOTO LAB PRINTS',
         subtitle: 'Restored vintage family photos and recent gathering moments.',
         description: 'Bring old black-and-white family photographs and new smartphone pictures to physical life on heavy lab paper.',
-        price: 'From ₹249 / pack',
-        features: ['Enhanced tonal contrast', 'Fade-resistant vibrant finish', 'Multiple size combinations', 'Easy envelope preservation'],
+        price: `From ₹${minPrint} / print`,
+        features: ['Enhanced tonal contrast', 'Fade-resistant vibrant finish', 'Multiple size combinations', 'Easy mobile batch upload'],
         image: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Print Family Photos',
         ctaLink: '/photo-prints'
@@ -384,10 +420,10 @@ export const OCCASIONS_MAP = {
         num: '04',
         title: 'Add A Fragrance Gift',
         category: 'THE ITRA HOUSE',
-        subtitle: 'Aged Cambodian Dehn Al Oud & therapeutic Kannauj Shamama.',
-        description: 'Traditional earthy, warming attars revered by elders for decades. 100% pure, natural, and therapeutic.',
-        price: 'From ₹1,299',
-        features: ['12-year aged Cambodian Oud', 'Traditional Kannauj Shamama blend', 'Therapeutic grounding scent profile', 'Artisanal crystal applicator'],
+        subtitle: 'Aged Cambodian Dehn Al Oud & therapeutic traditional blends.',
+        description: 'Traditional earthy, warming attars revered by elders for decades. 100% pure, natural, and long-lasting.',
+        price: `From ₹${minItra3} (3ml) · ₹${oud6} (6ml)`,
+        features: ['Aged Agarwood Oud', 'Traditional warming scent profile', 'Therapeutic grounding blend', 'Artisanal crystal applicator'],
         image: 'https://images.unsplash.com/photo-1594035910387-fea47794261f?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Explore Pure Oud',
         ctaLink: '/itra'
@@ -398,15 +434,14 @@ export const OCCASIONS_MAP = {
       title: 'THE PARENTS TRIBUTE HERITAGE SET',
       badge: 'Family Heirloom',
       tagline: 'Honor mother and father with a framed portrait, tribute letter, prints, and aged oud.',
-      price: 2499,
-      regularPrice: 3199,
+      ...bundlePrices(parentsReg),
       image: 'https://images.unsplash.com/photo-1511895426328-dc8714191300?auto=format&fit=crop&w=800&q=80',
       items: [
-        'Generations Family Statement Frame (11×14")',
+        'Generations Family Statement Frame (A3)',
         'Heartfelt Letter of Gratitude Card with personal photos',
         'Set of 15 High-Definition Family Reunion Prints',
-        'Pure Aged Cambodian Dehn Al Oud (6ml)',
-        'Heirloom Wooden Keepsake Gift Packaging'
+        'Pure Aged Oud Royale Al-Maliki (6ml)',
+        'Heirloom Presentation Gift Packaging'
       ]
     }
   },
@@ -415,19 +450,19 @@ export const OCCASIONS_MAP = {
     id: 'eid',
     navLabel: 'Eid & Islamic Gifts',
     heroHeading: 'SHARE THE BLESSINGS OF EID & SACRED ART.',
-    heroSubheading: 'Gold-foiled Quranic ayat wall frames, luxury Eid greeting cards, family prayer gathering prints, and holy Kaaba Kiswah attar.',
+    heroSubheading: 'Sacred Quranic ayat & Dua wall frames, personalised Eid greeting cards, family prayer gathering prints, and holy Kaaba Kiswah attar.',
     heroImage: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=1600&q=80',
     tag: 'Curated Eid & Barakah Collection',
     groups: [
       {
         id: 'frame-photo',
         num: '01',
-        title: 'Frame A Favourite Photo',
+        title: 'Sacred Dua & Verse Frames',
         category: 'CUSTOM FRAMING / SACRED ART',
-        subtitle: 'Ayatul Kursi, 4 Quls, or family Eid morning prayers beautifully framed.',
-        description: 'Handcrafted gallery shadowbox frames preserving sacred calligraphy or festive Eid morning prayer portraits.',
-        price: 'From ₹849',
-        features: ['Gold foil calligraphy prints', 'Deep shadowbox wooden frame', 'Shatter-resistant optical acrylic glazing', 'Brings daily barakah to living rooms'],
+        subtitle: 'Ayatul Kursi, 4 Quls, 99 Names of Allah, or Dua posters framed to order.',
+        description: 'Handcrafted solid wood frames paired with 250 GSM glossy sacred calligraphy prints bringing daily barakah to living spaces.',
+        price: `Print from ₹${duaA5} · Framed from ₹${duaA5 + a5Empty}`,
+        features: ['250 GSM archival glossy prints', 'Handcrafted wooden catalogue frames', 'Shatter-resistant optical acrylic glazing', 'Print only or Framed options'],
         image: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Explore Sacred Frames',
         ctaLink: '/islamic-art'
@@ -437,10 +472,10 @@ export const OCCASIONS_MAP = {
         num: '02',
         title: 'Create An Eid Card',
         category: 'CARDS & GIFTS',
-        subtitle: 'Luxe gold-embossed Eid Mubarak cards with Dua envelopes.',
-        description: 'Send sincere Eid greetings to loved ones near and far with bespoke Islamic geometric patterns and warm prayers.',
-        price: 'From ₹199 / pack',
-        features: ['Gold foil Islamic geometric patterns', 'Warm Dua & greeting printed inside', 'Textured envelope with crescent seal', 'Available in sets of 5'],
+        subtitle: 'Personalised Eid Mubarak cards with warm Duas and custom names.',
+        description: 'Send sincere Eid greetings to loved ones near and far with bespoke Islamic typography and warm prayers.',
+        price: `From ₹${minCard}`,
+        features: ['Islamic Barakah & Dua design templates', 'Warm Dua & greeting printed inside', 'Textured 350 GSM card + envelope', 'Bulk discounts up to 45%'],
         image: 'https://images.unsplash.com/photo-1586075010923-2dd4570fb338?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Customise Eid Cards',
         ctaLink: '/cards?occasion=eid'
@@ -450,10 +485,10 @@ export const OCCASIONS_MAP = {
         num: '03',
         title: 'Print Shared Memories',
         category: 'PHOTO LAB PRINTS',
-        subtitle: 'True-to-life prints of Eid feasts, prayer morning, and cousins reunions.',
-        description: 'Capture the radiant colors of festive clothes, tables full of sewai, and family hugs on 6-colour photo lab paper.',
-        price: 'From ₹199 / pack',
-        features: ['True-to-life 6-colour photo lab tech', 'Vibrant festive colour rendering', 'Fingerprint-proof lustre finish', 'Ready to gift in paper wallet'],
+        subtitle: 'True-to-life prints of Eid feasts, prayer morning, and family reunions.',
+        description: 'Capture the radiant colors of festive clothes, family feasts, and warm hugs on 6-colour photo lab paper.',
+        price: `From ₹${minPrint} / print`,
+        features: ['True-to-life 6-colour photo lab tech', 'Vibrant festive colour rendering', 'Fingerprint-proof lustre finish', 'Ready to slip inside Eid cards'],
         image: 'https://images.unsplash.com/photo-1526047932273-341f2a7631f9?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Print Eid Photos',
         ctaLink: '/photo-prints'
@@ -465,8 +500,8 @@ export const OCCASIONS_MAP = {
         category: 'THE ITRA HOUSE',
         subtitle: 'Holy Makkah Kiswah musk, amber, and Taif rose perfume oils.',
         description: 'Sacred, 100% non-alcoholic formulations crafted for Salah, Jummah, Eid visits, and daily sunnah.',
-        price: 'From ₹799',
-        features: ['Sacred Kiswah musk & Taif rose', '100% alcohol-free & prayer safe', 'Rich long-lasting fragrance trail', 'Presented in royal green velvet pouch'],
+        price: `From ₹${minItra3} (3ml) · ₹${kiswah6} (6ml)`,
+        features: ['Sacred Kiswah musk & Taif rose', '100% alcohol-free & prayer safe', 'Rich long-lasting fragrance trail', 'Presented in velvet pouch'],
         image: 'https://images.unsplash.com/photo-1615634260167-c8cdede054de?auto=format&fit=crop&w=800&q=80',
         ctaText: 'Explore Sacred Itra',
         ctaLink: '/itra'
@@ -477,27 +512,31 @@ export const OCCASIONS_MAP = {
       title: 'THE EID MUBARAK BARAKAH BOX',
       badge: 'Festive Favourite',
       tagline: 'Calligraphy wall art, luxury greeting cards, family prints, and holy Kiswah musk.',
-      price: 2199,
-      regularPrice: 2899,
+      ...bundlePrices(eidReg),
       image: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=800&q=80',
       items: [
-        'Ayat-ul-Kursi Gold Foiled Calligraphy Frame (A4)',
-        'Set of 5 Foil-Stamped Eid Mubarak Greeting Cards',
+        'Ayat-ul-Kursi Calligraphy Frame (A4)',
+        'Set of 5 Personalised Eid Mubarak Greeting Cards',
         'Set of 10 Feast & Prayer Photo Prints',
-        'Makkah Kiswah Holy Musk Pure Attar (6ml)',
+        'Makkah Kiswah Sacred Blend Pure Attar (6ml)',
         'Embossed Emerald & Gold Luxury Gift Box'
       ]
     }
   }
-};
+  };
+}
+
+export const OCCASIONS_MAP = buildOccasionsMap();
 
 export default function OccasionLandingPage({ onAddToCart }) {
   const { occasionId } = useParams();
   const navigate = useNavigate();
+  const priceOverrides = usePriceOverrides();
+  const occasionsMap = useMemo(() => buildOccasionsMap(priceOverrides), [priceOverrides]);
 
   // Normalize occasion key
   const activeKey = (occasionId || 'birthday').toLowerCase();
-  const currentOccasion = OCCASIONS_MAP[activeKey] || OCCASIONS_MAP.birthday;
+  const currentOccasion = occasionsMap[activeKey] || occasionsMap.birthday;
 
   const [bundleAdded, setBundleAdded] = useState(false);
 

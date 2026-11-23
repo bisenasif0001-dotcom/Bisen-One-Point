@@ -3,6 +3,7 @@ import { resolve, extname, sep } from 'node:path';
 import { gzip as gzipCallback } from 'node:zlib';
 import { promisify } from 'node:util';
 import { routeInfo, SITEMAP_PATHS } from '../src/data/siteRoutes.js';
+import { BUSINESS_CONFIG } from '../src/data/businessConfig.js';
 
 const gzip = promisify(gzipCallback);
 const escape = value => String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
@@ -10,6 +11,26 @@ const types = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; ch
 
 export function createStaticHandler({ directory = resolve('dist'), publicOrigin, indexable = false }) {
   const root = resolve(directory), origin = new URL(publicOrigin).origin;
+  const ogImage = `${origin}/og-share.jpg`;
+  const schemaJson = JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'LocalBusiness',
+    name: BUSINESS_CONFIG.brand.legalName,
+    alternateName: BUSINESS_CONFIG.brand.name,
+    description: BUSINESS_CONFIG.brand.description,
+    url: origin,
+    image: ogImage,
+    telephone: BUSINESS_CONFIG.contact.phone,
+    email: BUSINESS_CONFIG.contact.email,
+    address: {
+      '@type': 'PostalAddress',
+      streetAddress: BUSINESS_CONFIG.location.workshopAddress,
+      addressLocality: BUSINESS_CONFIG.location.city,
+      addressRegion: BUSINESS_CONFIG.location.state,
+      postalCode: BUSINESS_CONFIG.location.pincode,
+      addressCountry: 'IN',
+    },
+  }).replaceAll('<', '\\u003c');
   return async function serve(req, res) {
     const headers = { 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'DENY', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()', 'Cache-Control': 'no-cache' };
     if (origin.startsWith('https://')) headers['Strict-Transport-Security'] = 'max-age=31536000';
@@ -44,11 +65,12 @@ export function createStaticHandler({ directory = resolve('dist'), publicOrigin,
       const info = routeInfo(pathname === '/index.html' ? '/' : pathname);
       const allowed = indexable && info.indexable;
       let html = await readFile(resolve(root, 'index.html'), 'utf8');
-      html = html.replace('data-indexable="false"', `data-indexable="${indexable}"`)
+      html = html.replace(/<meta (?:property="og:|name="twitter:)[^>]*>\s*/g, '')
+        .replace('data-indexable="false"', `data-indexable="${indexable}"`)
         .replace(/<title>[\s\S]*?<\/title>/, `<title>${escape(info.title)}</title>`)
         .replace(/<meta name="description"[^>]*>/, `<meta name="description" content="${escape(info.description)}" />`)
         .replace(/<meta name="robots"[^>]*>/, `<meta name="robots" content="${allowed ? 'index, follow' : 'noindex, nofollow'}" />`)
-        .replace('</head>', `<link rel="canonical" href="${escape(origin + info.canonical)}" /><meta property="og:type" content="website" /><meta property="og:title" content="${escape(info.title)}" /><meta property="og:description" content="${escape(info.description)}" /><meta property="og:url" content="${escape(origin + info.canonical)}" /></head>`);
+        .replace('</head>', `<link rel="canonical" href="${escape(origin + info.canonical)}" /><meta property="og:type" content="website" /><meta property="og:title" content="${escape(info.title)}" /><meta property="og:description" content="${escape(info.description)}" /><meta property="og:url" content="${escape(origin + info.canonical)}" /><meta property="og:image" content="${escape(ogImage)}" /><meta name="twitter:card" content="summary_large_image" /><meta name="twitter:title" content="${escape(info.title)}" /><meta name="twitter:description" content="${escape(info.description)}" /><meta name="twitter:image" content="${escape(ogImage)}" /><script type="application/ld+json">${schemaJson}</script></head>`);
       if (!allowed) headers['X-Robots-Tag'] = 'noindex, nofollow';
       return send(info.known ? 200 : 404, html, types['.html']);
     } catch {

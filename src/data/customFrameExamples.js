@@ -1,4 +1,4 @@
-import { getWhatsAppUrl } from './businessConfig';
+import { getWhatsAppUrl } from './businessConfig.js';
 
 export const CUSTOM_FRAME_EXAMPLES = [
   {
@@ -23,7 +23,7 @@ export const CUSTOM_FRAME_EXAMPLES = [
 
 export function getCustomFrameEnquiry(example) {
   return getWhatsAppUrl([
-    'Hello AL-NOOR! I’d like a custom frame and print.',
+    'Hello BISEN! I’d like a custom frame and print.',
     example ? `Design reference: ${example.description} (from your website’s custom-frame examples)` : 'Design reference: I will share my photo, artwork or an example.',
     'Required size (width × height): Please help me choose.',
     'Preferred frame colour / finish: To discuss.',

@@ -1,5 +1,5 @@
-import { FRAME_FINISHES, SAMPLE_CUSTOM_PHOTOS } from './products';
-import { DUA_POSTERS } from './duaPosters';
+import { FRAME_FINISHES, SAMPLE_CUSTOM_PHOTOS } from './products.js';
+import { DUA_POSTERS } from './duaPosters.js';
 
 export const HOME_PHOTO = { title: 'A family moment by the sea', image: SAMPLE_CUSTOM_PHOTOS[1].url };
 export const HOME_LANDSCAPE = { title: 'A favourite view', image: SAMPLE_CUSTOM_PHOTOS[0].url };

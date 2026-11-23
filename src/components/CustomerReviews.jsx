@@ -370,7 +370,7 @@ export default function CustomerReviews() {
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
             <Camera size={18} color="var(--accent-bronze)" />
             <span style={{ fontSize: '0.84rem', color: '#181817', fontWeight: 500 }}>
-              Tag your wall or unboxing with <strong>#AlNoorHomes</strong> or share via WhatsApp to be featured.
+              Tag your wall or unboxing with <strong>#BisenHomes</strong> or share via WhatsApp to be featured.
             </span>
           </div>
 

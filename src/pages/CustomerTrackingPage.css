@@ -232,3 +232,31 @@
   .ct-toolbar nav { font-size: 12px; gap: 5px; }
   .ct-toolbar .ct-button { padding-inline: 8px; font-size: 12px; }
 }
+
+.ct-next-step {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding: 15px 18px;
+  margin-top: 14px;
+  border-radius: 13px;
+  border: 1px solid #d5e2d2;
+  background: #f1f6ee;
+  color: var(--ct-ink);
+}
+.ct-next-step[data-tone='attention'] {
+  border-color: #e6ce9f;
+  background: #fcf6e6;
+  color: #5e4419;
+}
+.ct-next-step > div:first-child { display: flex; align-items: flex-start; gap: 11px; min-width: 0; flex: 1; }
+.ct-next-step > div:first-child svg { margin-top: 2px; }
+.ct-next-step strong { display: block; font-size: 14px; font-weight: 700; }
+.ct-next-step p { margin-top: 2px; font-size: 12.5px; color: inherit; opacity: .9; }
+.ct-next-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.ct-items li { grid-template-columns: 54px minmax(0, 1fr) auto; }
+.ct-item-icon { width: 54px; height: 54px; overflow: hidden; border: 1px solid var(--ct-line); background: #fff; }
+.ct-delivery-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.ct-delivery-actions .ct-button { flex: 1; min-width: 120px; }

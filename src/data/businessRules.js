@@ -1,15 +1,26 @@
 export const DEFAULT_BUSINESS_RULES = {
-  shipping: { pickupEnabled: true, pvcStarting: 69, printsStarting: 79, freeThreshold: 999, freePincodes: [], freeTypes: ['pvc_card', 'photo_prints'], freeMaxCharge: 0 },
+  shipping: {
+    pickupEnabled: true,
+    pvcStarting: 69,
+    printsStarting: 69,
+    porterStarting: 59,
+    freeThreshold: 799,
+    printFreeThreshold: 799,
+    frameFreeThreshold: 1999,
+    freePincodes: [],
+    freeTypes: ['pvc_card', 'photo_prints', 'dua_poster', 'islamic_art'],
+    freeMaxCharge: 0,
+  },
   production: { dispatchMinDays: 2, dispatchMaxDays: 4 },
   refunds: { initiateBusinessDays: 3, damagePreferredHours: 48, postProductionNote: 'Cancellation after production starts is assessed against the actual production cost and applicable cancellation rules. The studio explains the costs and any refund before confirming the outcome.' },
   retention: { workingDaysAfterDelivery: 30, backupDays: 30 },
   grievance: { name: 'M. Talib Khan', designation: 'Grievance Officer' },
   coupons: [
-    { code: 'WELCOME10', enabled: true, kind: 'percent', value: 10, maxDiscount: 100, minSubtotal: 499, firstOrderOnly: true, perMobileLimit: 1, expires: '', eligibleTypes: ['custom_frame', 'photo_prints', 'birthday_card', 'itra_perfume'], excludeDiscounted: true },
-    { code: 'SAVE150', enabled: true, kind: 'fixed', value: 150, maxDiscount: 150, minSubtotal: 1499, firstOrderOnly: false, perMobileLimit: 1, expires: '', eligibleTypes: ['custom_frame', 'photo_prints', 'birthday_card', 'itra_perfume'], excludeDiscounted: true },
+    { code: 'WELCOME10', enabled: true, kind: 'percent', value: 10, maxDiscount: 100, minSubtotal: 499, firstOrderOnly: true, perMobileLimit: 1, expires: '', eligibleTypes: ['custom_frame', 'photo_prints', 'birthday_card', 'itra_perfume', 'dua_poster'], excludeDiscounted: true },
+    { code: 'SAVE150', enabled: true, kind: 'fixed', value: 150, maxDiscount: 150, minSubtotal: 1499, firstOrderOnly: false, perMobileLimit: 1, expires: '', eligibleTypes: ['custom_frame', 'photo_prints', 'birthday_card', 'itra_perfume', 'dua_poster'], excludeDiscounted: true },
   ],
 };
-export const COMMERCE_TYPES = ['custom_frame', 'photo_prints', 'birthday_card', 'itra_perfume', 'gallery_wall', 'pvc_card', 'islamic_art'];
+export const COMMERCE_TYPES = ['custom_frame', 'photo_prints', 'birthday_card', 'itra_perfume', 'gallery_wall', 'pvc_card', 'islamic_art', 'dua_poster'];
 export function couponCalculation({ rules = DEFAULT_BUSINESS_RULES, code = '', items = [], subtotal = 0, hasPriorOrder = false, uses = 0, now = new Date() }) {
   code = String(code).trim().toUpperCase();
   if (!code) return { code: '', discountAmount: 0, error: '' };

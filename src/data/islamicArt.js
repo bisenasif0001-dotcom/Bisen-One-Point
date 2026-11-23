@@ -1,5 +1,5 @@
-import { DUA_POSTERS } from './duaPosters';
-import { FRAME_FINISHES, FRAME_SIZES } from './products';
+import { DUA_POSTERS } from './duaPosters.js';
+import { FRAME_FINISHES, FRAME_SIZES } from './products.js';
 
 const VERSE_DESIGNS = [
   ['ayat-al-kursi', 'Ayat al-Kursi', 'ayat', 'QURANIC VERSE', 'A detailed original poster, with the Arabic text and transliteration shown in the artwork.'],
@@ -48,5 +48,5 @@ export function verseCollectionPath(selection) {
 }
 
 export function buildQulsSetEnquiry({ format, frame, sizeId }) {
-  return ['Hello AL-NOOR! I would like a quote for a matching Quls set.', '', ...VERSE_ARTWORKS.slice(1).map(item => `1 × ${item.displayTitle}`), '', 'Total: 3 individual designs, one of each.', `Size: ${sizeId} for each design`, `Presentation: ${format === 'print' ? 'Print only, without frames' : `With frames · ${frame.name} · ${frame.finish}`}`, '', 'Please confirm the set price, availability, delivery charges and timing.'].join('\n');
+  return ['Hello BISEN! I would like a quote for a matching Quls set.', '', ...VERSE_ARTWORKS.slice(1).map(item => `1 × ${item.displayTitle}`), '', 'Total: 3 individual designs, one of each.', `Size: ${sizeId} for each design`, `Presentation: ${format === 'print' ? 'Print only, without frames' : `With frames · ${frame.name} · ${frame.finish}`}`, '', 'Please confirm the set price, availability, delivery charges and timing.'].join('\n');
 }

@@ -7,6 +7,8 @@ import { measureStudioImage } from '../utils/frameStudio';
 import { DEFAULT_PRINT_CONFIG, MAX_PRINT_COPIES, MAX_PRINT_PHOTOS, PRINT_FINISHES, PRINT_SIZES, PRINT_TONES, buildPrintCartItem, getPrintLayout, getPrintQuality, getPrintTotals, readPrintPhoto, validatePrintFile } from '../utils/photoPrints';
 import { savePrintOriginals } from '../utils/printPhotoStorage';
 import PrintPaperPreview from '../components/PrintPaperPreview';
+import { usePriceOverrides } from '../components/BusinessRulesProvider';
+import { getPrintSizePrice } from '../utils/priceRegistry';
 import './PhotoPrintsPage.css';
 
 const samplePhoto = sample => ({ id: `sample-${sample.id}`, name: sample.name, url: sample.url, isSample: true, width: 900, height: 600, rotation: 0, panX: 50, panY: 50, zoom: 1 });
@@ -15,6 +17,7 @@ const money = amount => new Intl.NumberFormat('en-IN', { style: 'currency', curr
 const steps = ['Your photos', 'Print options', 'Review'];
 
 export default function PhotoPrintsPage({ onAddToCart }) {
+  const priceOverrides = usePriceOverrides();
   const [photos, setPhotos] = useState([initialSample]);
   const [activeId, setActiveId] = useState(initialSample.id);
   const [config, setConfig] = useState({ ...DEFAULT_PRINT_CONFIG });
@@ -42,8 +45,9 @@ export default function PhotoPrintsPage({ onAddToCart }) {
   const uploadedPhotos = photos.filter(photo => !photo.isSample);
   const hasPhotos = uploadedPhotos.length > 0;
   const size = PRINT_SIZES.find(item => item.id === config.sizeId);
+  const currentUnitPrice = priceOverrides?.printSizes?.[config.sizeId] ?? getPrintSizePrice(config.sizeId);
   const finish = PRINT_FINISHES.find(item => item.id === config.finishId);
-  const totals = getPrintTotals(hasPhotos ? uploadedPhotos.length : 1, config.sizeId, copies);
+  const totals = getPrintTotals(hasPhotos ? uploadedPhotos.length : 1, config.sizeId, copies, priceOverrides);
   const quality = getPrintQuality(currentPhoto, config);
   const lowQualityCount = uploadedPhotos.filter(photo => getPrintQuality(photo, config)?.level === 'low').length;
   const layout = getPrintLayout(currentPhoto, config);
@@ -135,7 +139,7 @@ export default function PhotoPrintsPage({ onAddToCart }) {
     setSaving(true);
     setErrors([]);
     try {
-      const item = buildPrintCartItem({ photos: uploadedPhotos, config, copies, notes });
+      const item = buildPrintCartItem({ photos: uploadedPhotos, config, copies, notes, overrides: priceOverrides });
       await savePrintOriginals(uploadedPhotos);
       if (!mounted.current) return;
       if (typeof onAddToCart !== 'function') throw new Error('The shopping bag is unavailable. Please refresh the page and try again.');
@@ -152,7 +156,7 @@ export default function PhotoPrintsPage({ onAddToCart }) {
   };
   const actionLabel = busy ? (saving ? 'Saving your photos…' : 'Preparing photos…') : step === 0 ? (hasPhotos ? 'Choose print options' : 'Upload my photos') : step === 1 ? 'Review my prints' : hasPhotos ? 'Add prints to bag' : 'Upload photos to order';
   const mobileActionLabel = busy ? (saving ? 'Saving…' : 'Preparing…') : step === 0 ? (hasPhotos ? 'Print options' : 'Upload photos') : step === 1 ? 'Review' : hasPhotos ? 'Add to bag' : 'Upload photos';
-  const orderMessage = `Hello Al-Noor! I would like photo prints.\nSize: ${size.name} (${size.dimensions})\nFinish: ${finish.name}\nOrientation: ${config.orientation}\nBorder: ${config.border === 'white' ? '5 mm white' : 'Borderless'}\nFit: ${config.fit === 'cover' ? 'Fill the paper' : 'Keep full photo'}\nColour: ${PRINT_TONES.find(tone => tone.id === config.tone).name}\nPhotos: ${uploadedPhotos.length}\nCopies each: ${copies}\n${hasPhotos && totals ? `Print subtotal: ${money(totals.total)} + delivery\n` : ''}${notes.trim() ? `Notes: ${notes.trim()}\n` : ''}Please help me confirm my selection. I can share the original photos here.`;
+  const orderMessage = `Hello BISEN! I would like photo prints.\nSize: ${size.name} (${size.dimensions})\nFinish: ${finish.name}\nOrientation: ${config.orientation}\nBorder: ${config.border === 'white' ? '5 mm white' : 'Borderless'}\nFit: ${config.fit === 'cover' ? 'Fill the paper' : 'Keep full photo'}\nColour: ${PRINT_TONES.find(tone => tone.id === config.tone).name}\nPhotos: ${uploadedPhotos.length}\nCopies each: ${copies}\n${hasPhotos && totals ? `Print subtotal: ${money(totals.total)} + delivery\n` : ''}${notes.trim() ? `Notes: ${notes.trim()}\n` : ''}Please help me confirm my selection. I can share the original photos here.`;
 
   const paper = (large = false) => currentPhoto ? <div className={`pp-paper pp-paper--${config.finishId} ${large ? 'pp-paper--large' : ''}`} style={{ '--paper-ratio': layout.width / layout.height, '--paper-width': config.orientation === 'landscape' ? '340px' : '245px' }}><PrintPaperPreview photo={currentPhoto} config={config} /></div> : <div className="pp-empty-preview"><ImageIcon size={34} strokeWidth={1} /><strong>Your photo goes here</strong><span>Upload a favourite to see it in print.</span><button className="pp-text-button" type="button" onClick={browsePhotos}>Choose photos <ArrowRight size={14} /></button></div>;
   const choice = (key, value, label, extra) => <button key={`${key}-${value}`} type="button" className={`pp-choice ${config[key] === value ? 'is-selected' : ''}`} aria-pressed={config[key] === value} onClick={() => changeConfig(key, value)}>{extra}{label}{config[key] === value && <Check size={12} />}</button>;
@@ -162,7 +166,7 @@ export default function PhotoPrintsPage({ onAddToCart }) {
     <div className="pp-container">
       <header className="pp-intro">
         <div><div className="pp-breadcrumb"><Link to="/">Home</Link><span>/</span><span>Photo prints</span></div><span className="pp-eyebrow">THE PHOTO PRINT STUDIO</span><h1>Photos worth <em>holding.</em></h1><p>Upload your favourites. Find your finish. Make a little room for real memories.</p></div>
-        <div className="pp-intro-note"><span>Small prints. Lasting moments.</span><strong>From {money(29)}<small> / print</small></strong><div>7 sizes <span>·</span> 3 paper finishes</div></div>
+        <div className="pp-intro-note"><span>Small prints. Lasting moments.</span><strong>From {money(priceOverrides?.printSizes?.[PRINT_SIZES[0].id] ?? getPrintSizePrice(PRINT_SIZES[0].id))}<small> / print</small></strong><div>7 sizes <span>·</span> 3 paper finishes</div></div>
       </header>
 
       <div className="pp-workspace">
@@ -171,7 +175,7 @@ export default function PhotoPrintsPage({ onAddToCart }) {
           <div className="pp-stage">{currentPhoto?.isSample && <span className="pp-sample-badge">SAMPLE PHOTO</span>}{paper()}<span className="pp-stage-caption">A moment, made tangible.</span></div>
           <div className="pp-preview-toolbar"><div className="pp-photo-pagination"><button className="pp-icon-button" type="button" onClick={() => changePhoto(-1)} aria-label="Previous photo" disabled={photos.length < 2}><ChevronLeft size={16} /></button><span>{currentPhoto ? `${activeIndex + 1} / ${photos.length}` : 'No photos'}</span><button className="pp-icon-button" type="button" onClick={() => changePhoto(1)} aria-label="Next photo" disabled={photos.length < 2}><ChevronRight size={16} /></button></div><span className="pp-preview-spec">{size.name}<span>·</span>{finish.name}</span><button className="pp-icon-button" type="button" onClick={rotatePhoto} aria-label="Rotate selected photo clockwise" disabled={!currentPhoto || busy}><RotateCw size={16} /></button></div>
           <div className={`pp-quality ${quality ? `pp-quality--${quality.level}` : ''}`}><Info size={14} /><span>{quality ? <>{quality.label}<small>{quality.dpi} DPI at this size</small></> : currentPhoto?.isSample ? <>A sample to help you explore<small>Upload your own photos when you’re ready.</small></> : <>Your print, previewed here<small>Choose a photo to get started.</small></>}</span></div>
-          <div className="pp-preview-summary"><div><span>{hasPhotos ? 'PRINT SUBTOTAL' : 'EXAMPLE PRICE'}</span><strong>{totals ? money(totals.total) : '—'}<small>{money(size.price)} per print</small></strong></div><p>{hasPhotos && totals ? `${totals.photoCount} ${totals.photoCount === 1 ? 'photo' : 'photos'} × ${totals.copies} ${totals.copies === 1 ? 'copy' : 'copies'} = ${totals.printCount} prints` : 'Explore with a sample. Order with your own photos.'}<small>Delivery calculated at checkout.</small></p></div>
+          <div className="pp-preview-summary"><div><span>{hasPhotos ? 'PRINT SUBTOTAL' : 'EXAMPLE PRICE'}</span><strong>{totals ? money(totals.total) : '—'}<small>{money(currentUnitPrice)} per print</small></strong></div><p>{hasPhotos && totals ? `${totals.photoCount} ${totals.photoCount === 1 ? 'photo' : 'photos'} × ${totals.copies} ${totals.copies === 1 ? 'copy' : 'copies'} = ${totals.printCount} prints` : 'Explore with a sample. Order with your own photos.'}<small>Delivery calculated at checkout.</small></p></div>
         </aside>
 
         <div className="pp-editor" ref={controlsRef} aria-label="Customise your photo prints">
@@ -195,8 +199,8 @@ export default function PhotoPrintsPage({ onAddToCart }) {
             {step === 1 && <>
               <div className="pp-panel-heading"><span className="pp-eyebrow">02 / MAKE IT YOURS</span><h2>A size. A finish. Your style.</h2><p>These options apply to every photo in this selection.</p></div>
               <div className="pp-option-heading"><h3>Print size</h3><div className="pp-format-toggle" role="group" aria-label="Print size collections"><button type="button" aria-pressed={sizeGroup === 'photo'} onClick={() => setSizeGroup('photo')}>Photo sizes</button><button type="button" aria-pressed={sizeGroup === 'wall'} onClick={() => setSizeGroup('wall')}>Wall sizes</button></div></div>
-              <div className={`pp-size-grid ${sizeGroup === 'wall' ? 'pp-size-grid--wall' : ''}`} role="group" aria-label="Choose a print size">{PRINT_SIZES.filter(item => item.group === sizeGroup).map(item => <button type="button" className={`pp-size-option ${config.sizeId === item.id ? 'is-selected' : ''}`} key={item.id} aria-pressed={config.sizeId === item.id} onClick={() => changeConfig('sizeId', item.id)}><span><strong>{item.name}</strong><span>{money(item.price)}</span></span><small>{item.dimensions}</small>{config.sizeId === item.id && <Check size={12} />}</button>)}</div>
-              <p className="pp-option-hint">{size.use} <span>·</span> {money(size.price)} per print</p>
+              <div className={`pp-size-grid ${sizeGroup === 'wall' ? 'pp-size-grid--wall' : ''}`} role="group" aria-label="Choose a print size">{PRINT_SIZES.filter(item => item.group === sizeGroup).map(item => { const unit = priceOverrides?.printSizes?.[item.id] ?? getPrintSizePrice(item.id); return <button type="button" className={`pp-size-option ${config.sizeId === item.id ? 'is-selected' : ''}`} key={item.id} aria-pressed={config.sizeId === item.id} onClick={() => changeConfig('sizeId', item.id)}><span><strong>{item.name}</strong><span>{money(unit)}</span></span><small>{item.dimensions}</small>{config.sizeId === item.id && <Check size={12} />}</button>; })}</div>
+              <p className="pp-option-hint">{size.use} <span>·</span> {money(currentUnitPrice)} per print</p>
               <div className="pp-option-heading"><h3>Paper finish</h3><span>Same price for every finish</span></div>
               <div className="pp-finish-grid" role="group" aria-label="Choose a paper finish">{PRINT_FINISHES.map(item => <button type="button" key={item.id} className={`pp-finish-option ${item.id === config.finishId ? 'is-selected' : ''}`} aria-pressed={item.id === config.finishId} onClick={() => changeConfig('finishId', item.id)}><span className={`pp-finish-texture pp-finish-texture--${item.texture}`} aria-hidden="true" /><strong>{item.name}</strong><small>{item.detail}</small>{item.id === config.finishId && <Check size={12} />}</button>)}</div>
               <div className="pp-two-options"><div><h3>Orientation</h3><div className="pp-choice-row" role="group" aria-label="Print orientation">{choice('orientation', 'portrait', 'Portrait', <span className="pp-orientation-icon" />)}{choice('orientation', 'landscape', 'Landscape', <span className="pp-orientation-icon is-landscape" />)}</div></div><div><h3>Paper border</h3><div className="pp-choice-row" role="group" aria-label="Paper border">{choice('border', 'borderless', 'No border')}{choice('border', 'white', '5 mm white')}</div></div></div>

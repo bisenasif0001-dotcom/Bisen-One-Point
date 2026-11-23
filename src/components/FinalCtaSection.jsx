@@ -54,7 +54,7 @@ export default function FinalCtaSection() {
               marginBottom: '1rem'
             }}
           >
-            AL-NOOR • PRINT • FRAME • GIFT
+            BISEN • PRINT • FRAME • GIFT
           </span>
 
           {/* Main Editorial Headline */}

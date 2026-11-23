@@ -21,6 +21,7 @@ export function openStore(directory){
     CREATE TABLE IF NOT EXISTS webhook_events(body_hash TEXT PRIMARY KEY,event_id TEXT UNIQUE,created TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT,reference TEXT,action TEXT NOT NULL,actor TEXT NOT NULL,created TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS business_settings(id INTEGER PRIMARY KEY CHECK(id=1),value TEXT NOT NULL,updated TEXT NOT NULL);
+    CREATE TABLE IF NOT EXISTS price_overrides(id INTEGER PRIMARY KEY CHECK(id=1),data TEXT NOT NULL,updated TEXT NOT NULL);
     CREATE TABLE IF NOT EXISTS order_files(id TEXT PRIMARY KEY,reference TEXT NOT NULL REFERENCES orders(reference),name TEXT NOT NULL,mime TEXT NOT NULL,bytes INTEGER NOT NULL,sha256 TEXT NOT NULL,label TEXT NOT NULL,source_id TEXT NOT NULL,kind TEXT NOT NULL,case_id TEXT NOT NULL,created TEXT NOT NULL,purged_at TEXT);
     CREATE INDEX IF NOT EXISTS files_by_order ON order_files(reference,created);
     CREATE INDEX IF NOT EXISTS order_updated ON orders(updated DESC);

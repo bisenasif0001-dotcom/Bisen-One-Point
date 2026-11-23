@@ -8,6 +8,7 @@ import { FRAME_FINISHES, SAMPLE_CUSTOM_PHOTOS } from '../data/products';
 import { GUIDE_ROOMS, GUIDE_SIZES, getGuideDimensions, getGuideFramePlacement } from '../data/sizeGuide';
 import { homeFrame } from '../data/homeStudio';
 import { readStudioPhoto } from '../utils/frameStudio';
+import { formatFrameSizeLabel } from '../utils/shippingCalculator';
 import FramedPosterPreview from './FramedPosterPreview';
 import './SizeGuide.css';
 
@@ -117,9 +118,9 @@ export default function FindYourPerfectSize({ onPrepareFrame }) {
             <div className="sg-scene" role="group" aria-label={`${size.name} ${orientation} frame in the ${room.name}`}>
               <img className="sg-room-photo" src={room.image} alt={room.alt} fetchPriority="high" />
               <div className="sg-scene-frame" style={placement}>
-                <FramedPosterPreview poster={poster} frame={frame} orientation={orientation} />
+                <FramedPosterPreview poster={poster} frame={frame} orientation={orientation} fit="cover" panY={orientation === 'portrait' ? 12 : 50} />
               </div>
-              <span className="sg-scene-badge">{room.name} / {size.id === '12x18' ? '12 × 18″' : size.id}</span>
+              <span className="sg-scene-badge">{room.name} / {formatFrameSizeLabel(size.id)}</span>
               <button className="sg-inspect-button" onClick={() => dialogRef.current?.showModal()}>
                 <Expand size={14} /> Frame close-up
               </button>
@@ -191,7 +192,7 @@ export default function FindYourPerfectSize({ onPrepareFrame }) {
                     aria-pressed={sizeId === option.id}
                     onClick={() => setSizeId(option.id)}
                   >
-                    <strong>{option.id === '12x18' ? '12 × 18″' : option.id}</strong>
+                    <strong>{formatFrameSizeLabel(option.id)}</strong>
                     <small>{getGuideDimensions(option, orientation, unit)}</small>
                     {sizeId === option.id && <Check size={12} />}
                   </button>
@@ -230,7 +231,7 @@ export default function FindYourPerfectSize({ onPrepareFrame }) {
                     title={option.finish}
                     aria-label={`Choose ${option.name}`}
                   >
-                    <FramedPosterPreview poster={poster} frame={homeFrame(option.id)} orientation={orientation} />
+                    <FramedPosterPreview poster={poster} frame={homeFrame(option.id)} orientation={orientation} fit="cover" panY={orientation === 'portrait' ? 12 : 50} />
                     <span>{option.name.replace('Regal ', '')}</span>
                     {frameId === option.id && <Check size={11} />}
                   </button>
@@ -263,7 +264,7 @@ export default function FindYourPerfectSize({ onPrepareFrame }) {
               <tbody>
                 {GUIDE_SIZES.map(option => (
                   <tr key={option.id} className={sizeId === option.id ? 'selected' : ''}>
-                    <th scope="row"><button aria-pressed={sizeId === option.id} onClick={() => setSizeId(option.id)}>{option.id === '12x18' ? '12 × 18″' : option.id}{sizeId === option.id && <Check size={13} />}</button></th>
+                    <th scope="row"><button aria-pressed={sizeId === option.id} onClick={() => setSizeId(option.id)}>{formatFrameSizeLabel(option.id)}{sizeId === option.id && <Check size={13} />}</button></th>
                     <td>{getGuideDimensions(option, orientation)}</td>
                     <td>{getGuideDimensions(option, orientation, 'in')}</td>
                     <td>{option.use}</td>
@@ -283,7 +284,7 @@ export default function FindYourPerfectSize({ onPrepareFrame }) {
         onClick={event => { if (event.target === event.currentTarget) dialogRef.current?.close(); }}
       >
         <button className="sg-dialog-close" onClick={() => dialogRef.current?.close()} aria-label="Close frame close-up"><X size={22} /></button>
-        <div className="sg-dialog-frame"><FramedPosterPreview poster={poster} frame={frame} orientation={orientation} /></div>
+        <div className="sg-dialog-frame"><FramedPosterPreview poster={poster} frame={frame} orientation={orientation} fit="cover" panY={orientation === 'portrait' ? 12 : 50} /></div>
         <p>{frame.name} · {dimensions} · {photo.isSample ? 'Sample photo' : photo.name}</p>
       </dialog>
     </div>

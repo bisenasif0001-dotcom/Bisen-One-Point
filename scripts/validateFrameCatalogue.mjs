@@ -28,7 +28,8 @@ try {
     }
   }
   assert.deepEqual(FRAME_FINISHES.map(frame => frame.id), originalOrder, 'Sorting must not change the shared frame collection');
-  assert.equal(getCataloguePrice('regal_aurelia', 'A5'), 499, 'Catalogue price includes the mandatory studio mount');
+  assert.equal(getCataloguePrice('regal_aurelia', 'A5'), 359, 'Catalogue price for A5 includes frame + print');
+  assert.equal(getCataloguePrice('regal_aurelia', 'A5', undefined, { includePrint: false }), 279, 'Empty frame price excludes print add-on');
   assert.equal(getCataloguePrice('bad-frame', 'A5'), null);
   assert.deepEqual(getCatalogueFinishes({ sizeId: '4x6' }), [], 'Do not advertise sizes that the frame studio cannot configure');
   assert.deepEqual(getCatalogueFinishes({ category: 'unknown' }), []);

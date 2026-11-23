@@ -1,4 +1,4 @@
-# AL-NOOR Studio
+# BISEN Studio
 
 Order panel: `/studio`. Customer tracking: `/track-order`.
 

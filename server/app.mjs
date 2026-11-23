@@ -1,9 +1,18 @@
 import { createOriginalStorage } from './originalFiles.mjs';
 import { createMaintenance } from './maintenance.mjs';
 import { readBusinessRules, validateBusinessRules } from './businessRules.mjs';
+import { readPriceOverrides, validatePriceOverrides } from './priceOverrides.mjs';
 import { initialArtwork, publishProof, respondToProof, createSupportRequest, updateSupportRequest } from './orderWorkflow.mjs';
 import { originalReferences, ORDER_FILE_RULES } from '../src/data/orderFiles.js';
 import { isFreeDeliveryEligible } from '../src/data/businessRules.js';
+import { FRAME_FINISHES, GLASS_OPTIONS, MAT_OPTIONS, ISLAMIC_ART_COLLECTION, SAMPLE_CARDS_AND_GIFTS } from '../src/data/products.js';
+import { CUSTOM_FRAME_SIZES } from '../src/utils/frameStudio.js';
+import { PRINT_SIZES } from '../src/utils/photoPrints.js';
+import { CARD_SIZES } from '../src/data/birthdayCards.js';
+import { GALLERY_LAYOUTS } from '../src/data/galleryWalls.js';
+import { ITRA_PRODUCTS as ITRA_PRODUCTS_FULL } from '../src/data/itraProducts.js';
+import { DUA_PRINT_PRICES } from '../src/data/duaPricing.js';
+import { PVC_PRICE_ITEMS } from '../src/data/pvcCards.js';
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { isIP } from 'node:net';
@@ -31,8 +40,8 @@ export function createStudioService({directory=resolve('.studio-data'),productio
   const limits=new Map(),paymentLocks=new Set();
   const currentSettings=()=>{const row=db.prepare('SELECT * FROM gateway_settings ORDER BY id DESC LIMIT 1').get();return row?{id:row.id,...decrypt(row.secret)}:{enabled:false,mode:'test'};};
   const configById=id=>{const row=db.prepare('SELECT * FROM gateway_settings WHERE id=?').get(id);if(!row)throw new ApiError(503,'The original payment settings are unavailable. Contact the studio.');return {id:row.id,...decrypt(row.secret)};};
-  const gatewayAvailable=config=>Boolean(config.enabled&&config.keyId&&config.keySecret&&(config.mode!=='live'||(origin.startsWith('https://')&&config.webhookSecret&&config.goLiveConfirmed)));
-  const settingsSummary=()=>{const config=currentSettings();return {configured:Boolean(config.keyId),enabled:gatewayAvailable(config),mode:config.mode,keyId:config.keyId?`${config.keyId.slice(0,9)}…${config.keyId.slice(-4)}`:'',hasSecret:Boolean(config.keySecret),hasWebhookSecret:Boolean(config.webhookSecret),publicOrigin:origin,webhookUrl:`${origin}/api/payments/webhook`,liveAllowed:origin.startsWith('https://'),goLiveConfirmed:config.goLiveConfirmed||false};};
+  const gatewayAvailable=config=>Boolean(config.enabled&&(config.mode==='sandbox'?!production:(config.keyId&&config.keySecret&&(config.mode!=='live'||(origin.startsWith('https://')&&config.webhookSecret&&config.goLiveConfirmed)))));
+  const settingsSummary=()=>{const config=currentSettings();const isSandbox=config.mode==='sandbox';return {configured:Boolean(isSandbox?!production:config.keyId),enabled:gatewayAvailable(config),mode:config.mode,provider:isSandbox?'sandbox':'razorpay',keyId:!isSandbox&&config.keyId?`${config.keyId.slice(0,9)}…${config.keyId.slice(-4)}`:'',hasSecret:!isSandbox&&Boolean(config.keySecret),hasWebhookSecret:!isSandbox&&Boolean(config.webhookSecret),publicOrigin:origin,webhookUrl:`${origin}/api/payments/webhook`,liveAllowed:origin.startsWith('https://'),sandboxAllowed:!production,goLiveConfirmed:config.goLiveConfirmed||false};};
   function rate(req,name,max,window=60000){const forwarded=req.headers['x-real-ip'];const address=production&&process.env.TRUST_PROXY==='1'&&loopback(req.socket.remoteAddress)&&typeof forwarded==='string'&&isIP(forwarded)?forwarded:req.socket.remoteAddress;const key=`${name}:${address}`;const entry=limits.get(key);if(!entry||entry.until<Date.now()){if(limits.size>20000)limits.clear();limits.set(key,{count:1,until:Date.now()+window});}else if(++entry.count>max)throw new ApiError(429,'Too many attempts. Please wait a minute and try again.');}
   function json(res,status,value,headers={}){res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer',...headers});res.end(JSON.stringify(value));}
   async function body(req,max=8_000_000){const parts=[];let length=0;for await(const part of req){length+=part.length;if(length>max)throw new ApiError(413,'This request is too large. Please reduce the preview sizes.');parts.push(part);}return Buffer.concat(parts);}
@@ -54,14 +63,14 @@ export function createStudioService({directory=resolve('.studio-data'),productio
   }
   async function applyPayment(attempt,payment){
     if(payment.order_id!==attempt.id)throw new ApiError(409,'The payment does not belong to this order.');
-    const config=configById(attempt.settings_id),state=gatewayPaymentState(payment,attempt.amount,config.mode);
+    const config=configById(attempt.settings_id),gatewayMode=config.mode==='live'?'live':'test',state=gatewayPaymentState(payment,attempt.amount,gatewayMode);
     return transaction(()=>{const record=get(attempt.reference);if(!record)throw new ApiError(404,'Order not found.');const order=record.order;
       // A late failed attempt must not overwrite an earlier verified payment.
       if(['paid','test_paid','part_refunded','refunded'].includes(order.payment.status)&&!['paid','test_paid','part_refunded','refunded'].includes(state.status))return order;
       if(order.payment.paymentId&&order.payment.paymentId!==payment.id&&['paid','test_paid','part_refunded','refunded'].includes(order.payment.status))throw new ApiError(409,'Another payment is already recorded. Contact the studio.');
       db.prepare('UPDATE attempts SET payment_id=? WHERE id=?').run(payment.id,attempt.id);
-      order.payment={...state,method:'razorpay',mode:config.mode,paymentId:payment.id,razorpayOrderId:attempt.id,verifiedAt:now()};
-      save(order);audit(order.reference,`Razorpay ${state.status}`,'gateway');return order;
+      order.payment={...state,method:config.mode==='sandbox'?'sandbox':'razorpay',mode:gatewayMode,paymentId:payment.id,razorpayOrderId:attempt.id,verifiedAt:now()};
+      save(order);audit(order.reference,config.mode==='sandbox'?`Local test payment ${state.status}`:`Razorpay ${state.status}`,'gateway');return order;
     });
   }
   function decodeHeader(req,key){try{return decodeURIComponent(String(req.headers[key]||''));}catch{throw new ApiError(400,'This filename or file note could not be read.');}}
@@ -69,7 +78,7 @@ export function createStudioService({directory=resolve('.studio-data'),productio
     const phone=phoneNumber(data.customer?.phone),code=cleanText(data.discountCode,30).toUpperCase();
     const prior=db.prepare("SELECT count(*) AS n FROM orders WHERE json_extract(data,'$.customer.phone')=? AND json_extract(data,'$.status')!='cancelled'").get(phone).n;
     const uses=db.prepare("SELECT count(*) AS n FROM orders WHERE json_extract(data,'$.customer.phone')=? AND json_extract(data,'$.discountCode')=? AND json_extract(data,'$.status')!='cancelled'").get(phone,code).n;
-    return calculateCheckout(data,{rules:rules(),hasPriorOrder:prior>0,couponUses:uses});
+    return calculateCheckout(data,{rules:rules(),priceOverrides:readPriceOverrides(db),hasPriorOrder:prior>0,couponUses:uses});
   }
   async function handler(req,res,next){
     const url=new URL(req.url,'http://studio.local');
@@ -95,7 +104,7 @@ export function createStudioService({directory=resolve('.studio-data'),productio
       if(req.headers.origin&&req.headers.origin!==origin)throw new ApiError(403,'This request must come from the studio website.');
       if(method!=='GET'&&req.headers['x-studio-request']!=='1')throw new ApiError(403,'Please reload this page and try again.');
       if(path==='/api/health'&&method==='GET'){db.prepare('SELECT 1').get();return json(res,200,{ok:true});}
-      if(path==='/api/public/config'&&method==='GET'){const config=currentSettings();return json(res,200,{onlinePayments:gatewayAvailable(config),paymentMode:config.mode,stages:STAGES,businessRules:rules()});}
+      if(path==='/api/public/config'&&method==='GET'){const config=currentSettings();return json(res,200,{onlinePayments:gatewayAvailable(config),paymentMode:config.mode==='live'?'live':'test',paymentProvider:config.mode==='sandbox'?'sandbox':'razorpay',stages:STAGES,businessRules:rules(),priceOverrides:readPriceOverrides(db)});}
       if(path==='/api/studio/session'&&method==='GET')return json(res,200,{authenticated:Boolean(session(req)),setupRequired:!admin(),localSetup:!production&&loopback(req.socket.remoteAddress)&&!req.headers['x-forwarded-for']});
       if(path==='/api/studio/setup'&&method==='POST'){
         rate(req,'setup',5);if(admin())throw new ApiError(409,'Studio access has already been created.');
@@ -118,9 +127,17 @@ export function createStudioService({directory=resolve('.studio-data'),productio
         if(path==='/api/studio/settings'&&method==='PUT'){
           const data=parse(await body(req,20000)),previous=currentSettings();
           if(!(await passwordMatches(data.password)))throw new ApiError(401,'Enter your studio password to change payment settings.');
-          const mode=data.mode==='live'?'live':'test',keyId=cleanText(data.keyId,100)||previous.keyId;
-          const keySecret=cleanText(data.keySecret,256)||(keyId===previous.keyId?previous.keySecret:'');
-          const webhookSecret=cleanText(data.webhookSecret,256)||previous.webhookSecret||'';
+          const mode=data.mode==='live'?'live':data.mode==='sandbox'?'sandbox':'test';
+          if(mode==='sandbox'){
+            if(production)throw new ApiError(403,'Local test payment simulator is only available during local development.');
+            const sandboxSecret=(previous.mode==='sandbox'&&previous.keySecret)||`sim_${randomBytes(16).toString('hex')}`;
+            const config={mode:'sandbox',keyId:'rzp_test_LOCAL_SANDBOX',keySecret:sandboxSecret,webhookSecret:'',enabled:Boolean(data.enabled),goLiveConfirmed:false};
+            db.prepare('INSERT INTO gateway_settings(secret,created) VALUES(?,?)').run(encrypt(config),now());audit(null,'Local test payment simulator updated',user.username);return json(res,200,settingsSummary());
+          }
+          const prevReal=previous.mode!=='sandbox'?previous:{};
+          const keyId=cleanText(data.keyId,100)||prevReal.keyId;
+          const keySecret=cleanText(data.keySecret,256)||(keyId===prevReal.keyId?prevReal.keySecret:'');
+          const webhookSecret=cleanText(data.webhookSecret,256)||prevReal.webhookSecret||'';
           if(!new RegExp(`^rzp_${mode}_[a-zA-Z0-9]{6,60}$`).test(keyId||'')||!keySecret||keySecret.length<10)throw new ApiError(400,'Enter matching Razorpay Key ID and Key Secret for the selected mode.');
           if(data.enabled&&mode==='live'&&(!origin.startsWith('https://')||webhookSecret.length<16||!data.goLiveConfirmed))throw new ApiError(400,'Live payments need a public HTTPS domain, a webhook secret of at least 16 characters, and the test-completion confirmation.');
           const config={mode,keyId,keySecret,webhookSecret,enabled:Boolean(data.enabled),goLiveConfirmed:Boolean(data.goLiveConfirmed)};
@@ -131,6 +148,28 @@ export function createStudioService({directory=resolve('.studio-data'),productio
         if(path==='/api/studio/business'&&method==='PUT'){
           const data=parse(await body(req,100000));if(!(await passwordMatches(data.password)))throw new ApiError(401,'Enter your studio password to change business rules.');
           const value=validateBusinessRules(data.rules);db.prepare('INSERT INTO business_settings(id,value,updated) VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET value=excluded.value,updated=excluded.updated').run(JSON.stringify(value),now());audit(null,'Business rules updated',user.username);return json(res,200,{rules:value});
+        }
+        if(path==='/api/studio/prices'&&method==='GET'){
+          const overrides=readPriceOverrides(db);
+          const defaults={
+            frameSizes:CUSTOM_FRAME_SIZES.map(s=>({id:s.id,name:s.name,dimensionsCm:s.dimensionsCm,basePrice:s.basePrice,printAddon:s.printAddon})),
+            frameFinishes:FRAME_FINISHES.map(f=>({id:f.id,name:f.name,finish:f.finish,extraPrice:f.extraPrice})),
+            glassOptions:GLASS_OPTIONS.map(g=>({id:g.id,name:g.name,extra:g.extra})),
+            matOptions:MAT_OPTIONS.map(m=>({id:m.id,name:m.name,extra:m.extra})),
+            printSizes:PRINT_SIZES.map(s=>({id:s.id,name:s.name,dimensions:s.dimensions,price:s.price})),
+            duaPrices:Object.entries(DUA_PRINT_PRICES).map(([size,price])=>({id:size,name:`${size} Dua Print`,price})),
+            pvcPrices:PVC_PRICE_ITEMS,
+            cardSizes:CARD_SIZES.map(s=>({id:s.id,name:s.name,label:s.label,dimensionsCm:s.dimensionsCm,unitPrice:s.unitPrice})),
+            galleryLayouts:GALLERY_LAYOUTS.map(l=>({id:l.id,name:l.name,framesCount:l.framesCount,dimensions:l.dimensions,slots:l.slots.map(s=>s.sizeId),startingPrice:l.startingPrice})),
+            itraProducts:ITRA_PRODUCTS_FULL.map(p=>({id:p.id,name:p.name,prices:p.prices})),
+            islamicArt:ISLAMIC_ART_COLLECTION.map(a=>({id:a.id,title:a.title,framedPriceA4:a.framedPriceA4,unframedPriceA4:a.unframedPriceA4})),
+            gifts:SAMPLE_CARDS_AND_GIFTS.map(g=>({id:g.id,title:g.title||g.name,price:g.price})),
+          };
+          return json(res,200,{overrides,defaults});
+        }
+        if(path==='/api/studio/prices'&&method==='PUT'){
+          const data=parse(await body(req,200000));if(!(await passwordMatches(data.password)))throw new ApiError(401,'Enter your studio password to change prices.');
+          const value=validatePriceOverrides(data.overrides);db.prepare('INSERT INTO price_overrides(id,data,updated) VALUES(1,?,?) ON CONFLICT(id) DO UPDATE SET data=excluded.data,updated=excluded.updated').run(JSON.stringify(value),now());audit(null,'Price overrides updated',user.username);return json(res,200,{overrides:value});
         }
         if(path==='/api/studio/backups'&&method==='GET')return json(res,200,maintenance.status());
         if(path==='/api/studio/backups'&&method==='POST'){rate(req,'backup',3,3600000);const result=await maintenance.backup();return json(res,201,{backup:result,...maintenance.status()});}
@@ -149,7 +188,10 @@ export function createStudioService({directory=resolve('.studio-data'),productio
           const order=record.order,action=workflowRoute[2];
           if(action==='pricing'){
             if(order.payment.isPaid||db.prepare('SELECT 1 FROM attempts WHERE reference=?').get(order.reference))throw new ApiError(409,'The amount is locked because payment has started or been recorded.');
-            const subtotal=order.items.every(item=>item.price!==null&&!['studio_order','enquiry','pvc_card'].includes(item.type))?order.items.reduce((sum,item)=>sum+item.price*item.quantity,0):Number(data.itemsSubtotal);
+            if(['pickup','courier'].includes(data.deliveryMethod)){
+              order.delivery={...order.delivery,method:data.deliveryMethod,provider:data.deliveryMethod==='pickup'?'Lucknow Studio Pickup':(order.delivery.provider&&order.delivery.provider!=='Lucknow Studio Pickup'?order.delivery.provider:'Porter / Courier')};
+            }
+            const subtotal=order.items.every(item=>item.price!==null&&!(item.type==='studio_order'||item.type==='enquiry'||(item.type==='pvc_card'&&!item.configuration?.productId)))?order.items.reduce((sum,item)=>sum+item.price*item.quantity,0):Number(data.itemsSubtotal);
             const courierFee=order.delivery.method==='pickup'?0:Number(data.courierFee),packagingFee=order.delivery.method==='pickup'?0:Number(data.packagingFee),bulkDiscount=Number(data.bulkDiscount||0);
             if(![subtotal,courierFee,packagingFee,bulkDiscount].every(value=>Number.isFinite(value)&&value>=0&&value<=10000000)||subtotal<=0||bulkDiscount>subtotal)throw new ApiError(400,'Check the item quote, courier and packaging amounts.');
             if(bulkDiscount&&order.discountCode)throw new ApiError(400,'A coupon and quoted bulk discount cannot be combined.');
@@ -175,7 +217,7 @@ export function createStudioService({directory=resolve('.studio-data'),productio
           const where="WHERE (?='' OR lower(reference||' '||json_extract(data,'$.customer.name')||' '||json_extract(data,'$.customer.phone')) LIKE ?) AND (?='' OR json_extract(data,'$.status')=?)";
           const values=[query,`%${query}%`,status,status];
           const count=db.prepare(`SELECT count(*) AS count FROM orders ${where}`).get(...values).count;
-          const orders=db.prepare(`SELECT data FROM orders ${where} ORDER BY updated DESC LIMIT 50 OFFSET ?`).all(...values,offset).map(row=>{const order=JSON.parse(row.data);return {reference:order.reference,orderId:order.orderId,customer:order.customer,status:order.status,statusLabel:order.statusLabel,grandTotal:order.grandTotal,payment:order.payment,placedAt:order.placedAt,updatedAt:order.updatedAt};});
+          const orders=db.prepare(`SELECT data FROM orders ${where} ORDER BY updated DESC LIMIT 50 OFFSET ?`).all(...values,offset).map(row=>{const order=JSON.parse(row.data);return {reference:order.reference,orderId:order.orderId,customer:order.customer,status:order.status,statusLabel:order.statusLabel,grandTotal:order.grandTotal,payment:order.payment,placedAt:order.placedAt,updatedAt:order.updatedAt,deliveryMethod:order.delivery?.method||'courier',deliveryProvider:order.delivery?.provider||order.delivery?.courier||'',pricingConfirmed:Boolean(order.pricingConfirmed),artworkStatus:order.artwork?.status||'',itemSummary:order.items?.[0]?.title||'',itemCount:order.items?.length||0};});
           const counts=db.prepare("SELECT json_extract(data,'$.status') AS status,count(*) AS count FROM orders GROUP BY status").all();
           return json(res,200,{orders,count,offset,counts});
         }
@@ -215,10 +257,19 @@ export function createStudioService({directory=resolve('.studio-data'),productio
               const total=Number(data.grandTotal);if(!Number.isFinite(total)||total<1||total>10_000_000)throw new ApiError(400,'Enter a valid final amount.');
               order.grandTotal=Math.round(total*100)/100;order.pricingConfirmed=true;changed=true;
             }
+            const deliveryMethod=['pickup','courier'].includes(data.delivery?.method)?data.delivery.method:(order.delivery?.method||'courier');
+            if(data.customer&&typeof data.customer==='object'&&!Array.isArray(data.customer)){
+              const nextCustomer={...order.customer};
+              for(const field of ['address','apartment','city','state','pincode']){
+                if(data.customer[field]!==undefined)nextCustomer[field]=cleanText(data.customer[field],field==='address'?500:150);
+              }
+              if(nextCustomer.pincode&&!/^[1-9]\d{5}$/.test(nextCustomer.pincode))throw new ApiError(400,'Enter a valid six-digit PIN code.');
+              order.customer=nextCustomer;
+            }
             const note=cleanText(data.publicNote),title=STAGES.find(([id])=>id===data.status)?.[1]||'Order cancelled';
             if(data.status!==order.status||note!==order.publicNote||changed)order.history.push({status:data.status,title,note,at:now()});
             order.status=data.status;order.statusLabel=title;order.publicNote=note;order.privateNotes=cleanText(data.privateNotes,5000);
-            order.delivery={...order.delivery,courier:cleanText(data.delivery?.courier,100),awb:cleanText(data.delivery?.awb,100),trackingUrl,expectedDate};
+            order.delivery={...order.delivery,method:deliveryMethod,provider:cleanText(data.delivery?.provider,100)||order.delivery?.provider||(deliveryMethod==='pickup'?'Lucknow Studio Pickup':''),courier:cleanText(data.delivery?.courier,100),awb:cleanText(data.delivery?.awb,100),trackingUrl,expectedDate};
             if(data.recordOfflinePayment){
               if(order.payment.method==='razorpay'||db.prepare('SELECT 1 FROM attempts WHERE reference=?').get(order.reference))throw new ApiError(409,'Use Razorpay verification for this order’s online payment.');
               if(!order.grandTotal||!cleanText(data.paymentReference,200))throw new ApiError(400,'Add the final amount and an offline payment reference.');
@@ -229,7 +280,7 @@ export function createStudioService({directory=resolve('.studio-data'),productio
         }
         throw new ApiError(404,'Studio action not found.');
       }
-      if(path==='/api/checkout/preview'&&method==='POST'){rate(req,'preview',30);const data=parse(await body(req));const quote=checkoutQuote(data);return json(res,200,{quote:{subtotal:quote.subtotal,discountAmount:quote.discountAmount,discountCode:quote.discountCode,shippingFee:quote.shippingFee,grandTotal:quote.grandTotal,delivery:quote.delivery}});}
+      if(path==='/api/checkout/preview'&&method==='POST'){rate(req,'preview',30);const data=parse(await body(req));const quote=checkoutQuote(data);return json(res,200,{quote:{subtotal:quote.subtotal,discountAmount:quote.discountAmount,discountCode:quote.discountCode,shippingFee:quote.shippingFee,grandTotal:quote.grandTotal,delivery:quote.delivery,deliveryQuote:quote.deliveryQuote,pricingConfirmed:quote.pricingConfirmed}});}
       if(path==='/api/order-files/list'&&method==='POST'){
         rate(req,'file-list',120);const data=parse(await body(req,10000)),record=authenticatedOrder(data),published=new Set(record.order.artwork?.versions.flatMap(version=>version.proofIds||[])||[]);
         return json(res,200,{files:originals.list(record.order.reference).filter(file=>file.kind!=='proof'||published.has(file.id)),expectedOriginals:originalReferences(record.order.items),artwork:record.order.artwork,filesPurgedAt:record.order.filesPurgedAt});
@@ -282,27 +333,50 @@ export function createStudioService({directory=resolve('.studio-data'),productio
         if(paymentLocks.has(order.reference))throw new ApiError(409,'Payment checkout is being prepared. Please wait.');paymentLocks.add(order.reference);
         try{
           let attempt=db.prepare('SELECT * FROM attempts WHERE reference=? ORDER BY created DESC LIMIT 1').get(order.reference);
-          if(attempt&&configById(attempt.settings_id).keyId!==config.keyId)throw new ApiError(409,'Payment settings changed after checkout started. Ask the studio to verify the earlier payment before trying again.');
+          if(attempt){const prevCfg=configById(attempt.settings_id);if(prevCfg.mode!==config.mode||prevCfg.keyId!==config.keyId)throw new ApiError(409,'Payment settings changed after checkout started. Ask the studio to verify the earlier payment before trying again.');}
           const amount=Math.round(order.grandTotal*100);
+          if(config.mode==='sandbox'){
+            if(production)throw new ApiError(403,'Local test payment simulator is unavailable in production.');
+            if(!attempt){
+              const simOrderId=`order_sim_${randomBytes(6).toString('hex')}`;
+              db.prepare('INSERT INTO attempts(id,reference,amount,currency,settings_id,created) VALUES(?,?,?,?,?,?)').run(simOrderId,order.reference,amount,'INR',config.id,now());
+              attempt={id:simOrderId,amount,currency:'INR'};
+            }
+            const fresh=get(order.reference).order;if(fresh.payment.isPaid)throw new ApiError(409,'Payment is already recorded.');fresh.payment={...fresh.payment,method:'sandbox',status:'pending',label:'Test checkout pending'};save(fresh);
+            return json(res,200,{provider:'sandbox',keyId:'local_test_simulator',razorpayOrderId:attempt.id,amount:attempt.amount,currency:'INR',mode:'test',reference:order.reference,prefill:{name:order.customer.name,email:order.customer.email,contact:order.customer.phone}});
+          }
           if(!attempt){const gatewayOrder=await razorpayRequest(config,'/orders',{method:'POST',body:{amount,currency:'INR',receipt:order.reference,notes:{studio_reference:order.reference}},fetcher});
             if(!/^order_[a-zA-Z0-9]+$/.test(gatewayOrder.id||'')||gatewayOrder.amount!==amount||gatewayOrder.currency!=='INR')throw new ApiError(502,'The payment order could not be verified.');
             db.prepare('INSERT INTO attempts(id,reference,amount,currency,settings_id,created) VALUES(?,?,?,?,?,?)').run(gatewayOrder.id,order.reference,amount,'INR',config.id,now());attempt={id:gatewayOrder.id,amount,currency:'INR'};
           }
           const fresh=get(order.reference).order;if(fresh.payment.isPaid)throw new ApiError(409,'Payment is already recorded.');fresh.payment={...fresh.payment,method:'razorpay',status:'pending',label:config.mode==='test'?'Test checkout pending':'Awaiting online payment'};save(fresh);
-          return json(res,200,{keyId:config.keyId,razorpayOrderId:attempt.id,amount:attempt.amount,currency:'INR',mode:config.mode,reference:order.reference,prefill:{name:order.customer.name,email:order.customer.email,contact:order.customer.phone}});
+          return json(res,200,{provider:'razorpay',keyId:config.keyId,razorpayOrderId:attempt.id,amount:attempt.amount,currency:'INR',mode:config.mode,reference:order.reference,prefill:{name:order.customer.name,email:order.customer.email,contact:order.customer.phone}});
         }finally{paymentLocks.delete(order.reference);}
       }
       if(path==='/api/payments/verify'&&method==='POST'){
         rate(req,'verify',30);const data=parse(await body(req,20000)),record=authenticatedOrder(data),attempt=db.prepare('SELECT * FROM attempts WHERE id=? AND reference=?').get(cleanText(data.razorpay_order_id,100),record.order.reference);
         if(!attempt||!/^pay_[a-zA-Z0-9]+$/.test(data.razorpay_payment_id||''))throw new ApiError(400,'The payment reference is invalid.');
         const config=configById(attempt.settings_id);
+        if(config.mode==='sandbox')throw new ApiError(400,'Use local test checkout for sandbox orders.');
         if(!validSignature(`${attempt.id}|${data.razorpay_payment_id}`,data.razorpay_signature,config.keySecret))throw new ApiError(400,'Payment signature verification failed. No payment has been marked successful.');
         const payment=await razorpayRequest(config,`/payments/${encodeURIComponent(data.razorpay_payment_id)}`,{fetcher});await applyPayment(attempt,payment);return json(res,200,{order:publicOrder(get(record.order.reference))});
+      }
+      if(path==='/api/payments/sandbox'&&method==='POST'){
+        if(production)throw new ApiError(404,'This action is unavailable.');
+        rate(req,'verify',30);const data=parse(await body(req,20000)),record=authenticatedOrder(data),order=record.order;
+        if(order.payment.isPaid||['test_paid','refunded'].includes(order.payment.status)||order.status==='cancelled')throw new ApiError(409,'This order cannot accept another payment.');
+        const attempt=db.prepare('SELECT * FROM attempts WHERE id=? AND reference=?').get(cleanText(data.razorpay_order_id,100),order.reference);
+        if(!attempt)throw new ApiError(400,'The test payment reference is invalid.');
+        const config=configById(attempt.settings_id);
+        if(config.mode!=='sandbox')throw new ApiError(403,'This order does not use the local test simulator.');
+        const outcome=data.outcome==='failed'?'failed':'captured';
+        const payment={id:`pay_sim_${randomBytes(6).toString('hex')}`,order_id:attempt.id,amount:attempt.amount,currency:'INR',status:outcome};
+        await applyPayment(attempt,payment);return json(res,200,{order:publicOrder(get(order.reference))});
       }
       if(path==='/api/payments/recheck'&&method==='POST'){
         rate(req,'recheck',10);const data=parse(await body(req,10000)),record=authenticatedOrder(data);
         const attempts=db.prepare('SELECT * FROM attempts WHERE reference=? ORDER BY created DESC LIMIT 10').all(record.order.reference);
-        for(const attempt of attempts){const result=await razorpayRequest(configById(attempt.settings_id),`/orders/${encodeURIComponent(attempt.id)}/payments`,{fetcher});const payment=(result.items||[]).find(item=>['captured','refunded'].includes(item.status))||(result.items||[])[0];if(payment){await applyPayment(attempt,payment);if(['captured','refunded'].includes(payment.status))break;}}
+        for(const attempt of attempts){const cfg=configById(attempt.settings_id);if(cfg.mode==='sandbox')continue;const result=await razorpayRequest(cfg,`/orders/${encodeURIComponent(attempt.id)}/payments`,{fetcher});const payment=(result.items||[]).find(item=>['captured','refunded'].includes(item.status))||(result.items||[])[0];if(payment){await applyPayment(attempt,payment);if(['captured','refunded'].includes(payment.status))break;}}
         return json(res,200,{order:publicOrder(get(record.order.reference))});
       }
       throw new ApiError(404,'This action is unavailable.');

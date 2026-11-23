@@ -1,4 +1,4 @@
-import { SAMPLE_CUSTOM_PHOTOS } from './products';
+import { SAMPLE_CUSTOM_PHOTOS } from './products.js';
 
 // Keep framing demos separate from the samples used by other print products.
 export const FRAME_STUDIO_SAMPLES = [

@@ -1,6 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, Check, Ruler, Layers, Sparkles } from 'lucide-react';
+import { GALLERY_LAYOUTS } from '../data/galleryWalls';
+import { usePriceOverrides } from './BusinessRulesProvider';
+import { getGalleryLayoutPrice } from '../utils/priceRegistry';
+
+const layoutPrice = id => GALLERY_LAYOUTS.find(item => item.id === id)?.startingPrice ?? 0;
 
 export const GALLERY_WALL_DATA = [
   {
@@ -8,7 +13,7 @@ export const GALLERY_WALL_DATA = [
     name: 'The Classic Trio',
     framesCount: 3,
     framesLabel: '3 Frames',
-    startingPrice: 2499,
+    startingPrice: layoutPrice('classic-trio'),
     layoutType: 'Symmetrical Triptych',
     idealSpan: '130 – 180 cm (Above Sofa / Console)',
     dimensions: '3 × A3 (29.7 × 42.0 cm)',
@@ -21,7 +26,7 @@ export const GALLERY_WALL_DATA = [
     name: 'The Family Wall',
     framesCount: 5,
     framesLabel: '5 Frames',
-    startingPrice: 3999,
+    startingPrice: layoutPrice('family-wall'),
     layoutType: 'Balanced Focal Flank',
     idealSpan: '150 – 210 cm (Feature Wall)',
     dimensions: '1 × A2 Center + 4 × A4 Flanks',
@@ -34,7 +39,7 @@ export const GALLERY_WALL_DATA = [
     name: 'The Wedding Salon',
     framesCount: 7,
     framesLabel: '7 Frames',
-    startingPrice: 5799,
+    startingPrice: layoutPrice('wedding-salon'),
     layoutType: 'Editorial Salon Cluster',
     idealSpan: '180 – 240 cm (Bedroom / Landing)',
     dimensions: '1 × A2 + 2 × A3 + 4 × A4',
@@ -47,7 +52,7 @@ export const GALLERY_WALL_DATA = [
     name: 'The Memory Grid',
     framesCount: 9,
     framesLabel: '9 Frames',
-    startingPrice: 7499,
+    startingPrice: layoutPrice('memory-grid'),
     layoutType: 'Geometric 3×3 Grid',
     idealSpan: '160 – 220 cm (Hallway / Dining)',
     dimensions: '9 × A4 (21.0 × 29.7 cm)',
@@ -58,6 +63,7 @@ export const GALLERY_WALL_DATA = [
 ];
 
 export default function GalleryWallBundles() {
+  const priceOverrides = usePriceOverrides();
   const navigate = useNavigate();
   const [activeFilter, setActiveFilter] = useState('All');
 
@@ -334,7 +340,7 @@ export default function GalleryWallBundles() {
                     Complete Set
                   </span>
                   <span style={{ fontSize: '1.15rem', fontWeight: 700, color: '#181817' }}>
-                    From ₹{bundle.startingPrice.toLocaleString('en-IN')}
+                    From ₹{getGalleryLayoutPrice(bundle.id, priceOverrides).toLocaleString('en-IN')}
                   </span>
                 </div>
 

@@ -1,13 +1,13 @@
 {
-  "checkedAt": "2026-11-05T13:49:57.215Z",
+  "checkedAt": "2026-11-22T11:50:30.556Z",
   "passed": {
-    "routeAndSearchLinks": 88,
+    "routeAndSearchLinks": 183,
     "authoritativeItraPrices": 25,
     "invalidCartRecovery": true,
     "unknownProductProtection": true
   },
   "openLaunchFindings": [
-    "Privacy, Terms, Returns and Shipping footer links still lead to Contact. Merchant policy decisions are required.",
+    "Policy routes, business settings, private uploads and local backup/restore checks are implemented. Hosting, off-site copies and live operational checks remain pending.",
     "Final domain/hosting and real Razorpay test/live webhook confirmation remain pending.",
     "Merchant approval of legacy cards, Itra, gift bundles, materials, delivery promises and stock is required."
   ]

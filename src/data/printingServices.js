@@ -1,4 +1,4 @@
-import { PRINT_FINISHES, PRINT_SIZES } from '../utils/photoPrints';
+import { PRINT_FINISHES, PRINT_SIZES } from '../utils/photoPrints.js';
 
 export const PRINTING_SERVICES = [
   { id: 'pvc', name: 'PVC cards', title: 'PVC Card Printing', kicker: 'SMALL FORMAT. A SMART IMPRESSION.', headline: 'Your details.\nA card of your own.', description: 'Personal, membership or business cards. Tell us what belongs on the front, what goes on the back and how many you need.', short: 'Personal, membership & business cards, made around your brief.', features: ['Single or double sided', '86 × 54 mm coated PVC', 'Artwork & layout help'], prompt: 'Names or text to include, card purpose, colours and any design references…', related: null },

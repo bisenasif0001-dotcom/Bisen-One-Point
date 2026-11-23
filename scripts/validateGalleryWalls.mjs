@@ -9,6 +9,7 @@ try {
   const { GALLERY_WALL_DATA: previousBundles } = await server.ssrLoadModule('/src/components/GalleryWallBundles.jsx');
   const { FRAME_FINISHES } = await server.ssrLoadModule('/src/data/products.js');
   const { getGalleryPlan, getGalleryPrice, galleryPrintDimensions, validateGalleryOrder, createGalleryWallItem, galleryOrderDetails, swapGalleryEntries } = await server.ssrLoadModule('/src/utils/galleryWalls.js');
+  const { getStudioPrice } = await server.ssrLoadModule('/src/utils/frameStudio.js');
   const { GalleryWallArt } = await server.ssrLoadModule('/src/components/GalleryWallPreview.jsx');
   const { default: OrderPreview } = await server.ssrLoadModule('/src/components/OrderItemPreview.jsx');
   assert.equal(getGalleryLayout('unknown').id, 'family-wall');
@@ -18,8 +19,10 @@ try {
   for (const room of GALLERY_ROOMS) assert.ok(existsSync(`public${room.image}`));
   let geometryCases = 0, pairs = 0;
   for (const layout of GALLERY_LAYOUTS) {
+    const expectedBase = layout.slots.reduce((sum, s) => sum + getStudioPrice({ sizeId: s.sizeId, frameId: 'regal_aurelia', includePrint: true }).unit, 0);
+    assert.equal(layout.startingPrice, expectedBase, `Gallery layout ${layout.id} must match sum of framed + printed units`);
     const old = previousBundles.find(item => item.id === layout.id);
-    assert.equal(layout.startingPrice, old.startingPrice, 'Preserve advertised bundle base prices');
+    assert.equal(layout.startingPrice, old.startingPrice, 'Synced bundle base prices match GalleryWallBundles');
     assert.equal(layout.framesCount, old.framesCount);
     for (const frame of FRAME_FINISHES) {
       const plan = getGalleryPlan(layout.id, frame.id);
@@ -37,7 +40,7 @@ try {
       const config = { layoutId: layout.id, frameId: frame.id, roomId: 'living', photoMode: 'now', tone: 'mono' };
       assert.notEqual(validateGalleryOrder(config, {}), '', 'Samples cannot be ordered as customer photos');
       const deferred = createGalleryWallItem({ ...config, photoMode: 'later' }, {}, {}, 'test-gallery');
-      assert.equal(deferred.price, layout.startingPrice);
+      assert.equal(deferred.price, getGalleryPrice(layout.id, frame.id).total);
       assert.equal(deferred.quantity, 1, 'One gallery set is priced once');
       assert.equal(deferred.photosPending, layout.framesCount);
       const deferredPreview = renderToStaticMarkup(React.createElement(OrderPreview, { item: deferred }));
@@ -65,6 +68,8 @@ try {
     }
   }
   assert.equal(getGalleryPrice('bad', 'regal_noir'), null);
+  assert.equal(getGalleryPrice('classic-trio', 'regal_heritage', { frameSizes: { A3: 500 }, framePrintAddons: { A3: 150 }, frameFinishes: { regal_heritage: 200 } }).total, 3 * (500 + 150 + 200));
+  assert.equal(getGalleryPrice('classic-trio', 'regal_aurelia', { galleryLayouts: { 'classic-trio': 1600 } }).total, 1600);
   assert.deepEqual(swapGalleryEntries({0: 'first', 1: 'second'}, 0, 1), {0: 'second', 1: 'first'});
   assert.deepEqual(swapGalleryEntries({0: 'first'}, 0, 2), {2: 'first'});
   console.log(`Gallery walls validated: ${geometryCases} layout/finish configurations; ${pairs} frame-pair overlap checks; preserved bundle prices; upload/deferred gates; complete photo/crop order snapshots; accessible live previews.`);

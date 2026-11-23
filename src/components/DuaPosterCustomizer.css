@@ -116,6 +116,7 @@
 .dpd-icon-button{flex-shrink:0;display:flex;align-items:center;justify-content:center;width:42px;height:42px;border:1px solid #dce2d2;border-radius:50%;background:#fffefa;color:#2d4939;cursor:pointer}
 .dpd-dialog-art{height:65dvh;min-height:200px;padding:22px 30px;display:flex;align-items:center;justify-content:center;background:#e9e7dc}
 .dpd-dialog-art>:is(.dua-real-frame,.dua-unframed-art){width:100%;height:100%;object-fit:contain;filter:drop-shadow(0 8px 10px #302b1b28)}
+.dpd-art-transparent>.dua-unframed-art{filter:none}
 .dpd-dialog-note{text-align:center;font-size:10px;color:#66715f;padding:12px 18px}
 .dpd-art-dialog :is(button,summary):focus-visible{outline:2px solid #8a7652;outline-offset:3px}
 @media(min-width:1500px){.dpd-art-stage{height:clamp(380px,calc(100dvh - 410px),560px);padding:38px 50px 55px}}
@@ -162,5 +163,10 @@
 @media(max-width:350px){.dpd-size-grid small,.dpd-formats small,.dpd-frame-grid strong{font-size:9px}.dpd-size-use{font-size:8px}}
 @media(prefers-reduced-motion:reduce){.dua-product-page *{scroll-behavior:auto!important;transition:none!important}}
 .dpd-arabic-name{display:block;margin-top:5px;color:#775b37;font:500 27px/1.5 var(--font-arabic,serif);text-align:left}
-.dua-product-page .dpd-secondary-action{margin-top:8px;border-color:#c9d7c7;background:#f0f5ed;color:#294738}
+.dua-product-page .dpd-secondary-action{margin-top:8px;border-color:#c9d7c7;background:#f0f5ed;color:#294738!important}
+.dua-product-page .dpd-secondary-action:hover{background:#e3ede0}
+.dpd-price-breakdown{border-top:1px solid #d5dec7;margin-top:11px;padding-top:10px;display:grid;gap:6px;font-size:11px;line-height:1.5;color:#4a5d4e;font-variant-numeric:tabular-nums}
+.dpd-price-breakdown>div{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.dpd-price-breakdown .dpd-breakdown-total{border-top:1px dashed #c7d3b6;padding-top:7px;margin-top:2px;color:#2d4939;font-weight:600}
+.dpd-price-breakdown .dpd-breakdown-total strong{font-size:13px}
 .dua-product-page .dpd-secondary-action:hover{background:#e2eddf;color:#1e3b2a}

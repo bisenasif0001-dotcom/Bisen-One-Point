@@ -26,6 +26,7 @@ const PRODUCT_LABELS = {
   gallery_wall: 'Gallery walls',
   pvc_card: 'PVC cards',
   islamic_art: 'Islamic art',
+  dua_poster: 'Dua posters',
 };
 
 const date = value => new Date(value).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' });
@@ -252,16 +253,19 @@ export default function StudioBusinessSettings() {
         <Toggle label="Allow free pickup from the Lucknow studio" checked={rules.shipping.pickupEnabled} onChange={value => update('shipping', 'pickupEnabled', value)} />
         <div className="sb-grid">
           {number('shipping', 'pvcStarting', 'PVC card starting delivery estimate (₹)')}
-          {number('shipping', 'printsStarting', 'Photo print starting delivery estimate (₹)')}
+          {number('shipping', 'printsStarting', 'Pan-India print-only courier rate (₹)')}
+          {number('shipping', 'porterStarting', 'Lucknow Porter starting rate (₹)')}
         </div>
-        <p className="sb-note">Starting rates are estimates. Quote the actual courier and packaging charges per order.</p>
+        <p className="sb-note">Lucknow (226xxx) uses Porter local delivery automatically; outside Lucknow uses Pan-India courier slabs.</p>
       </SettingsCard>
       <SettingsCard title="Free delivery offer">
         <div className="sb-grid">
-          {number('shipping', 'freeThreshold', 'Minimum item subtotal (₹)')}
-          {number('shipping', 'freeMaxCharge', 'Maximum courier + packaging cost (₹)')}
+          {number('shipping', 'printFreeThreshold', 'Unframed prints & cards free above (₹)')}
+          {number('shipping', 'frameFreeThreshold', 'Frames (excl. A1) free above (₹)')}
+          {number('shipping', 'freeThreshold', 'Manual waiver subtotal threshold (₹)')}
+          {number('shipping', 'freeMaxCharge', 'Maximum manual waiver cost (₹)')}
         </div>
-        <p className="sb-note">Set the maximum cost to 0 to disable the offer.</p>
+        <p className="sb-note">Automatic free delivery applies at ₹799+ for print-only carts and ₹1,999+ for non-A1 frame carts.</p>
         <label className="sb-field"><span>Eligible PIN codes</span><textarea rows={2} placeholder="e.g. 226001, 226021" value={rules.shipping.freePincodes} onChange={event => update('shipping', 'freePincodes', event.target.value)} /><small>Separate six-digit PIN codes with commas or line breaks.</small></label>
         <fieldset className="sb-products"><legend>Eligible products</legend><div className="sb-toggles">
           {['pvc_card', 'photo_prints'].map(type => <Toggle key={type} label={PRODUCT_LABELS[type]} checked={rules.shipping.freeTypes.includes(type)}

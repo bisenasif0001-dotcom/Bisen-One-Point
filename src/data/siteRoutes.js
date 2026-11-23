@@ -6,7 +6,7 @@ import { FRAME_FINISHES, ISLAMIC_ART_COLLECTION } from './products.js';
 import { asmaArtworkPath } from '../utils/asmaArtwork.js';
 import { getStationeryOccasion, stationeryOccasionPath, STATIONERY_OCCASIONS, STATIONERY_TEMPLATES } from './cardStationery.js';
 
-export const SITE_DESCRIPTION = 'Photo printing and custom frames in Lucknow. Explore real frame finishes, original Dua posters, personalised cards and PVC printing at AL-NOOR.';
+export const SITE_DESCRIPTION = 'Photo printing and custom frames in Lucknow. Explore real frame finishes, original Dua posters, personalised cards and PVC printing at BISEN Studio.';
 const pages = {
   '/': ['Custom Frames & Photo Printing in Lucknow', '/'],
   '/frames-catalogue': ['The Frame Collection'], '/custom-framing': ['Custom Framing Studio'],
@@ -17,7 +17,7 @@ const pages = {
   '/cards/print-your-design': ['Print Your Own Card Design'], '/cards/custom-design': ['Custom Card & Invitation Design'],
   '/itra-perfumes': ['Itra & Fragrance'], '/size-guide': ['Frame Size Guide'],
   '/cancellation': ['Cancellation'], '/grievance': ['Grievance & Customer Care'], '/privacy': ['Privacy'], '/terms': ['Terms'], '/returns': ['Returns & Order Changes'], '/shipping': ['Shipping & Delivery'], '/original-files': ['Original Print Files'],
-  '/about': ['About the Studio'], '/contact': ['Contact AL-NOOR'],
+  '/about': ['About the Studio'], '/contact': ['Contact BISEN'],
   '/occasions': ['Gifts for Every Occasion'], '/gift-sets': ['Gift Sets'],
 };
 const aliases = {
@@ -49,7 +49,7 @@ export function routeInfo(rawPath) {
     if (collection === 'product') title = FRAME_FINISHES.find(item => item.id === id || item.legacyId === id)?.name || ISLAMIC_ART_COLLECTION.find(item => item.id === id)?.title;
   }
   const known = Boolean(title);
-  return { known, private: privatePage, title: `${title || 'Page Not Found'} | AL-NOOR Studio`, description: SITE_DESCRIPTION,
+  return { known, private: privatePage, title: `${title || 'Page Not Found'} | BISEN Studio`, description: SITE_DESCRIPTION,
     canonical: ['itra', 'fragrance'].includes(segments[0]) && segments.length === 2 ? `/itra-perfumes/${segments[1]}` : canonical,
     indexable: known && !privatePage && (Boolean(pages[canonical]) || !['product', 'card', 'cards'].includes(segments.length === 2 ? segments[0] : '')) };
 }

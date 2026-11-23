@@ -1,36 +1,56 @@
-import React, { useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
-import { 
-  ShoppingBag, Check, Droplets, Sparkles, Clock, 
-  ShieldCheck, Heart, ArrowLeft, Gift, Compass, ChevronDown, ChevronUp 
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import {
+  ArrowLeft,
+  Check,
+  Clock,
+  Compass,
+  Droplets,
+  Gift,
+  ShieldCheck,
+  ShoppingBag,
 } from 'lucide-react';
 import { ITRA_PRODUCTS } from '../data/itraProducts';
-import NotFoundPage from './NotFoundPage';
 import { ITRA_PHOTOGRAPHY_SYSTEM } from '../data/photographySystem';
+import NotFoundPage from './NotFoundPage';
 import SmartCrossSell from '../components/SmartCrossSell';
+import { usePriceOverrides } from '../components/BusinessRulesProvider';
+import { getItraProductPrice } from '../utils/priceRegistry';
+import './ItraPerfumesPage.css';
+
+const formatInr = value => `₹${Number(value || 0).toLocaleString('en-IN')}`;
 
 export default function ItraProductDetailPage({ onAddToCart }) {
   const { id } = useParams();
-  const navigate = useNavigate();
+  const priceOverrides = usePriceOverrides();
 
-  const foundProduct = ITRA_PRODUCTS.find(p => p.id === id);
+  const foundProduct = ITRA_PRODUCTS.find(item => item.id === id);
   const product = foundProduct || ITRA_PRODUCTS[0];
-  const sizeOptions = Object.entries(product.prices).map(([size, price]) => ({
-    size, price, label: size.includes('×') ? `${size} set` : `${size} Perfume Oil`,
-    desc: size.includes('×') ? 'Complete set as listed' : 'Choose your preferred bottle size'
+  const sizeOptions = Object.entries(product.prices).map(([size, defaultPrice]) => ({
+    size,
+    price:
+      priceOverrides?.itraPrices?.[product.id]?.[size] ??
+      getItraProductPrice(product.id, size) ??
+      defaultPrice,
+    label: size.includes('×') ? `${size} set` : `${size} Perfume Oil`,
   }));
+
   const [selectedSizeKey, setSelectedSizeKey] = useState(product.defaultSize);
   const selectedSize = sizeOptions.find(option => option.size === selectedSizeKey) || sizeOptions[0];
-  const setSelectedSize = option => setSelectedSizeKey(option.size);
   const [quantity, setQuantity] = useState(1);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [addedToast, setAddedToast] = useState(false);
+  const toastTimerRef = useRef(null);
 
-  // Standardized 6-Angle Itra Photography System (Prompt 28)
-  const galleryImages = ITRA_PHOTOGRAPHY_SYSTEM.map((shot) => {
-    if (shot.id === 'bottle-front') return { ...shot, url: product.image };
-    return { ...shot, url: shot.image };
-  });
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+  }, []);
+
+  if (!foundProduct) return <NotFoundPage />;
+
+  const galleryImages = ITRA_PHOTOGRAPHY_SYSTEM.map(shot =>
+    shot.id === 'bottle-front' ? { ...shot, url: product.image } : { ...shot, url: shot.image },
+  );
 
   const currentPrice = selectedSize.price * quantity;
 
@@ -38,656 +58,277 @@ export default function ItraProductDetailPage({ onAddToCart }) {
     if (!onAddToCart) return;
 
     onAddToCart({
-      id: `${product.id}-${sizeObj.size}-${Date.now()}`,
+      id: `itra-${product.id}-${sizeObj.size}`,
       type: 'itra_perfume',
       productId: product.id,
-      title: product.name,
+      title: `${product.name} (${sizeObj.size})`,
       subTitle: `${sizeObj.size} Pure Perfume Oil • ${product.family}`,
       volume: sizeObj.size,
       price: sizeObj.price,
       quantity: qty,
       image: product.image,
-      alcoholFree: true
+      alcoholFree: true,
     });
 
     setAddedToast(true);
-    setTimeout(() => setAddedToast(false), 2400);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setAddedToast(false), 2400);
   };
 
-  if (!foundProduct) return <NotFoundPage />;
-
   return (
-    <div style={{ backgroundColor: '#FAF8F5', minHeight: '100vh', paddingBottom: '6rem' }}>
-      
-      {/* Clean Minimal Breadcrumb */}
-      <div style={{ borderBottom: '1px solid #DDD9D0', backgroundColor: '#FFFFFF' }}>
-        <div className="container-custom" style={{ padding: '0.85rem 1rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem', color: '#706E68' }}>
-            <Link to="/" style={{ color: '#706E68', textDecoration: 'none' }}>Home</Link>
-            <span>/</span>
-            <Link to="/itra" style={{ color: '#706E68', textDecoration: 'none' }}>Itra & Fragrance</Link>
-            <span>/</span>
-            <span style={{ color: '#181817', fontWeight: 600 }}>{product.name}</span>
-          </div>
-        </div>
-      </div>
+    <div className="itra-pdp-page">
+      <div className="itra-container">
+        <nav className="itra-breadcrumb" aria-label="Breadcrumb">
+          <Link to="/itra-perfumes">
+            <ArrowLeft size={14} aria-hidden="true" />
+            <span>The Itra Collection</span>
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span className="itra-breadcrumb-current" aria-current="page">
+            {product.name}
+          </span>
+        </nav>
 
-      <div className="container-custom" style={{ paddingTop: 'clamp(1.5rem, 3.5vw, 2.75rem)' }}>
-
-        {/* ======================================================== */}
-        {/* DESKTOP SPLIT: LEFT EDITORIAL BOTTLE GALLERY, RIGHT INFO */}
-        {/* ======================================================== */}
-        <div className="itra-pdp-grid">
-          <style>{`
-            .itra-pdp-grid {
-              display: grid;
-              grid-template-columns: 1fr;
-              gap: 2.25rem;
-              margin-bottom: clamp(3rem, 6vw, 4.5rem);
-            }
-            @media (min-width: 992px) {
-              .itra-pdp-grid {
-                grid-template-columns: 1.05fr 1fr;
-                gap: 3.5rem;
-                align-items: start;
-              }
-            }
-          `}</style>
-
-          {/* LEFT: Large Editorial Bottle Photography & Gallery */}
-          <div style={{ position: 'sticky', top: '100px' }}>
-            
-            {/* Main Stage Image */}
-            <div 
-              style={{
-                position: 'relative',
-                borderRadius: '8px',
-                overflow: 'hidden',
-                backgroundColor: '#EDEAE4',
-                border: '1px solid #DDD9D0',
-                boxShadow: '0 12px 36px rgba(24, 24, 23, 0.05)',
-                aspectRatio: '4 / 3'
-              }}
-            >
-              <img 
-                src={galleryImages[activeImageIndex].url} 
-                alt={`${product.name} - ${galleryImages[activeImageIndex].title}`}
-                style={{
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: 'block',
-                  transition: 'transform 0.4s ease'
-                }}
+        <div className="itra-pdp-split">
+          <div className="itra-pdp-gallery">
+            <div className="itra-pdp-stage">
+              <img
+                src={galleryImages[activeImageIndex].url}
+                alt={`${product.name} - ${galleryImages[activeImageIndex].label}`}
               />
-
-              {/* Minimal Niche Tag Top Left */}
-              <div 
-                style={{
-                  position: 'absolute',
-                  top: '12px',
-                  left: '12px',
-                  backgroundColor: 'rgba(24, 24, 23, 0.88)',
-                  backdropFilter: 'blur(6px)',
-                  color: '#FFFFFF',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  letterSpacing: '0.04em'
-                }}
-              >
-                100% Pure Attar • Alcohol Free
-              </div>
-
-              {/* Sillage Tag Bottom Left */}
-              <div 
-                style={{
-                  position: 'absolute',
-                  bottom: '12px',
-                  left: '12px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.94)',
-                  backdropFilter: 'blur(6px)',
-                  color: '#181817',
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  border: '1px solid rgba(0,0,0,0.06)'
-                }}
-              >
-                <Clock size={12} color="#9B7A50" />
+              <div className="itra-pdp-badge-top">100% Pure Attar · Alcohol Free</div>
+              <div className="itra-pdp-badge-bottom">
+                <Clock size={13} aria-hidden="true" />
                 <span>18+ Hours Longevity on Skin</span>
               </div>
             </div>
 
-            {/* 6-Angle Standardized Itra Thumbnails Strip (Prompt 28) */}
-            <div 
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(6, 1fr)',
-                gap: '8px',
-                marginTop: '12px'
-              }}
-            >
-              {galleryImages.map((img, idx) => {
-                const isActive = activeImageIndex === idx;
-                return (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => setActiveImageIndex(idx)}
-                    title={img.desc}
-                    style={{
-                      border: isActive ? '2px solid #181817' : '1px solid #DDD9D0',
-                      borderRadius: '5px',
-                      overflow: 'hidden',
-                      backgroundColor: '#FFFFFF',
-                      padding: 0,
-                      cursor: 'pointer',
-                      aspectRatio: '1',
-                      position: 'relative',
-                      transition: 'border-color 0.15s ease'
-                    }}
-                  >
-                    <img 
-                      src={img.url} 
-                      alt={img.label || img.title} 
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} 
-                    />
-                    <div 
-                      style={{
-                        position: 'absolute',
-                        bottom: 0,
-                        left: 0,
-                        right: 0,
-                        backgroundColor: isActive ? '#181817' : 'rgba(24, 24, 23, 0.75)',
-                        color: '#FFFFFF',
-                        fontSize: '0.55rem',
-                        fontWeight: 600,
-                        padding: '1px 0',
-                        textAlign: 'center',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
-                      }}
-                    >
-                      {img.shortLabel || img.label}
-                    </div>
-                  </button>
-                );
-              })}
+            <div className="itra-pdp-thumbs" role="group" aria-label="Product angle views">
+              {galleryImages.map((img, idx) => (
+                <button
+                  key={img.id}
+                  type="button"
+                  className="itra-pdp-thumb"
+                  aria-pressed={activeImageIndex === idx}
+                  title={img.desc}
+                  onClick={() => setActiveImageIndex(idx)}
+                >
+                  <img src={img.url} alt={img.label} />
+                  <span>{img.shortLabel || img.label}</span>
+                </button>
+              ))}
             </div>
-
           </div>
 
-          {/* RIGHT: Fragrance Controls & Information (Prompt 26 exact specs) */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-
-            {/* 1. Fragrance Name & Olfactive Family */}
+          <div className="itra-pdp-info">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                <span 
-                  style={{
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    color: 'var(--accent-bronze)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.12em'
-                  }}
-                >
-                  {product.family}
-                </span>
-                <span style={{ color: '#DDD9D0' }}>•</span>
-                <span style={{ fontSize: '0.74rem', color: '#706E68' }}>Artisanal Extraction</span>
+              <div className="itra-pdp-meta-line">
+                <span className="itra-eyebrow">{product.family}</span>
+                <span className="itra-pdp-dot" aria-hidden="true">•</span>
+                <span className="itra-pdp-meta-sub">Artisanal Extraction</span>
               </div>
 
-              <h1 
-                style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: 'clamp(2rem, 3.2vw, 2.6rem)',
-                  fontWeight: 500,
-                  color: '#181817',
-                  lineHeight: 1.15,
-                  letterSpacing: '-0.02em',
-                  margin: '0 0 0.5rem 0'
-                }}
-              >
-                {product.name}
-              </h1>
+              <h1>{product.name}</h1>
 
-              {/* 2. Short Personality Statement (Prompt 26 requirement) */}
-              <p 
-                style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: '1.05rem',
-                  fontStyle: 'italic',
-                  color: '#42403B',
-                  lineHeight: 1.5,
-                  margin: '0 0 0.75rem 0'
-                }}
-              >
-                "{product.character} — crafted for those who value quiet distinction."
+              <p className="itra-pdp-character">
+                &ldquo;{product.character} — crafted for those who value quiet distinction.&rdquo;
               </p>
 
-              {/* 3. Price */}
-              <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '0.65rem' }}>
-                <span style={{ fontSize: '1.85rem', fontWeight: 700, color: '#181817' }}>
-                  ₹{currentPrice.toLocaleString('en-IN')}
-                </span>
+              <div className="itra-pdp-price-line">
+                <span className="itra-pdp-price-main">{formatInr(currentPrice)}</span>
                 {quantity > 1 && (
-                  <span style={{ fontSize: '0.85rem', color: '#706E68' }}>
-                    (₹{selectedSize.price} each)
-                  </span>
+                  <span className="itra-pdp-price-sub">({formatInr(selectedSize.price)} each)</span>
                 )}
-                <span style={{ fontSize: '0.74rem', color: '#706E68' }}>
-                  Includes gift box, velvet pouch & taxes
+                <span className="itra-pdp-price-sub">
+                  Includes rigid presentation box, velvet pouch &amp; taxes
                 </span>
               </div>
             </div>
 
-            {/* 4. Size Selector (Prompt 26: Size selector) */}
             <div>
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#181817', display: 'block', marginBottom: '6px' }}>
-                Select Flacon Volume: <span style={{ fontWeight: 500, color: '#706E68' }}>{selectedSize.label}</span>
-              </label>
-
-              <div className="itra-volume-selector-grid">
-                <style>{`
-                  .itra-volume-selector-grid {
-                    display: grid;
-                    grid-template-columns: repeat(3, 1fr);
-                    gap: 8px;
-                  }
-                  @media (max-width: 640px) {
-                    .itra-volume-selector-grid {
-                      grid-template-columns: 1fr !important;
-                    }
-                  }
-                `}</style>
-                {sizeOptions.map((sz) => {
-                  const isSelected = selectedSize.size === sz.size;
-                  return (
-                    <button
-                      key={sz.size}
-                      type="button"
-                      onClick={() => setSelectedSize(sz)}
-                      style={{
-                        border: isSelected ? '1.5px solid #181817' : '1px solid #DDD9D0',
-                        backgroundColor: isSelected ? '#181817' : '#FFFFFF',
-                        color: isSelected ? '#FFFFFF' : '#181817',
-                        borderRadius: '6px',
-                        padding: '10px 8px',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease'
-                      }}
-                    >
-                      <div style={{ fontSize: '0.84rem', fontWeight: 700 }}>{sz.size}</div>
-                      <div style={{ fontSize: '0.74rem', opacity: isSelected ? 0.9 : 0.7, marginTop: '2px' }}>
-                        ₹{sz.price.toLocaleString('en-IN')}
-                      </div>
-                    </button>
-                  );
-                })}
+              <span className="itra-pdp-field-label">
+                Select Flacon Volume: <span>{selectedSize.label}</span>
+              </span>
+              <div className="itra-pdp-volumes" role="group" aria-label="Select bottle volume">
+                {sizeOptions.map(sz => (
+                  <button
+                    key={sz.size}
+                    type="button"
+                    className="itra-pdp-volume-btn"
+                    aria-pressed={selectedSize.size === sz.size}
+                    onClick={() => setSelectedSizeKey(sz.size)}
+                  >
+                    <div className="itra-pdp-volume-size">{sz.size}</div>
+                    <div className="itra-pdp-volume-price">{formatInr(sz.price)}</div>
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* 5. Quantity Stepper */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: '#181817' }}>
-                Quantity:
-              </label>
-
-              <div 
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  border: '1px solid #DDD9D0',
-                  borderRadius: '6px',
-                  backgroundColor: '#FFFFFF',
-                  overflow: 'hidden'
-                }}
-              >
+            <div className="itra-pdp-qty-row">
+              <span className="itra-pdp-field-label">Quantity:</span>
+              <div className="itra-pdp-stepper">
                 <button
                   type="button"
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  style={{
-                    border: 'none',
-                    background: 'none',
-                    padding: '6px 12px',
-                    fontSize: '0.95rem',
-                    cursor: 'pointer',
-                    color: '#181817'
-                  }}
+                  aria-label="Decrease quantity"
+                  onClick={() => setQuantity(current => Math.max(1, current - 1))}
                 >
-                  -
+                  −
                 </button>
-                <span style={{ fontSize: '0.86rem', fontWeight: 700, padding: '0 8px', minWidth: '24px', textAlign: 'center' }}>
-                  {quantity}
-                </span>
+                <span>{quantity}</span>
                 <button
                   type="button"
-                  onClick={() => setQuantity(quantity + 1)}
-                  style={{
-                    border: 'none',
-                    background: 'none',
-                    padding: '6px 12px',
-                    fontSize: '0.95rem',
-                    cursor: 'pointer',
-                    color: '#181817'
-                  }}
+                  aria-label="Increase quantity"
+                  onClick={() => setQuantity(current => current + 1)}
                 >
                   +
                 </button>
               </div>
             </div>
 
-            {/* 6. Primary Action: ADD TO BAG (Prompt 26 requirement) */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <div className="itra-pdp-cta-stack">
               <button
                 type="button"
+                className={`itra-pdp-add-btn ${addedToast ? 'is-added' : ''}`}
                 onClick={() => handleAddToBag(selectedSize, quantity)}
-                style={{
-                  width: '100%',
-                  padding: '1rem',
-                  fontSize: '0.94rem',
-                  fontWeight: 600,
-                  backgroundColor: '#181817',
-                  color: '#FFFFFF',
-                  border: 'none',
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '8px',
-                  letterSpacing: '0.04em',
-                  boxShadow: '0 4px 14px rgba(0,0,0,0.1)'
-                }}
               >
-                <ShoppingBag size={17} />
-                <span>ADD TO BAG • ₹{currentPrice.toLocaleString('en-IN')}</span>
+                {addedToast ? (
+                  <>
+                    <Check size={17} aria-hidden="true" />
+                    <span>ADDED TO BAG · {formatInr(currentPrice)}</span>
+                  </>
+                ) : (
+                  <>
+                    <ShoppingBag size={17} aria-hidden="true" />
+                    <span>ADD TO BAG · {formatInr(currentPrice)}</span>
+                  </>
+                )}
               </button>
 
-              {/* Toast Feedback */}
               {addedToast && (
-                <div 
-                  style={{
-                    backgroundColor: '#EBF6EE',
-                    color: '#246B3E',
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    padding: '8px 12px',
-                    borderRadius: '6px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    border: '1px solid #D1EBD7'
-                  }}
-                >
-                  <Check size={14} /> Added to your shopping bag!
+                <div className="itra-pdp-toast" role="status">
+                  <Check size={15} aria-hidden="true" />
+                  <span>Added to your shopping bag!</span>
                 </div>
               )}
 
-              {/* Quick Sample Action if viewing full size */}
               {product.prices['3ml'] && selectedSize.size !== '3ml' && (
                 <button
                   type="button"
+                  className="itra-pdp-sample-btn"
                   onClick={() => handleAddToBag(sizeOptions[0], 1)}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem',
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    backgroundColor: '#FFFFFF',
-                    color: '#181817',
-                    border: '1px solid #DDD9D0',
-                    borderRadius: '6px',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '6px'
-                  }}
                 >
-                  <Droplets size={14} color="#9B7A50" />
-                  <span>Not sure? Add 3ml Discovery Sample (₹{sizeOptions[0].price})</span>
+                  <Droplets size={15} aria-hidden="true" />
+                  <span>Not sure? Add 3ml Discovery Sample ({formatInr(sizeOptions[0].price)})</span>
                 </button>
               )}
             </div>
 
-            {/* Micro Niche Guarantee Bar */}
-            <div 
-              className="itra-guarantee-bar-grid"
-              style={{
-                paddingTop: '12px',
-                borderTop: '1px solid #DDD9D0',
-                fontSize: '0.72rem',
-                color: '#706E68',
-                textAlign: 'center'
-              }}
-            >
-              <style>{`
-                .itra-guarantee-bar-grid {
-                  display: grid;
-                  grid-template-columns: repeat(3, 1fr);
-                  gap: 8px;
-                }
-                @media (max-width: 540px) {
-                  .itra-guarantee-bar-grid {
-                    grid-template-columns: 1fr !important;
-                    gap: 6px !important;
-                  }
-                }
-              `}</style>
-              <div>✨ 100% Pure Attar</div>
-              <div>🚫 Zero Alcohol</div>
-              <div>🎁 Presentation Box</div>
+            <div className="itra-pdp-guarantees">
+              <div>
+                <Droplets size={15} aria-hidden="true" />
+                <span>100% Pure Oil Attar</span>
+              </div>
+              <div>
+                <ShieldCheck size={15} aria-hidden="true" />
+                <span>Zero Alcohol · Undiluted</span>
+              </div>
+              <div>
+                <Gift size={15} aria-hidden="true" />
+                <span>Rigid Presentation Box</span>
+              </div>
             </div>
-
           </div>
-
         </div>
 
-        {/* ======================================================== */}
-        {/* FRAGRANCE OVERVIEW & OLFACTIVE PYRAMID (Prompt 26 exact)  */}
-        {/* Character, Notes (Top, Heart, Base), When To Wear,       */}
-        {/* How To Apply, Gifting                                    */}
-        {/* ======================================================== */}
-        <div style={{ maxWidth: '860px', margin: '0 auto' }}>
-
-          <div 
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '10px',
-              border: '1px solid #DDD9D0',
-              padding: 'clamp(1.75rem, 4vw, 2.5rem)',
-              boxShadow: '0 4px 18px rgba(0,0,0,0.02)',
-              marginBottom: '2rem'
-            }}
-          >
-            {/* Header */}
-            <div style={{ borderBottom: '1px solid #F0ECE1', paddingBottom: '1.25rem', marginBottom: '1.75rem' }}>
-              <span style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'var(--accent-bronze)', display: 'block', marginBottom: '0.25rem' }}>
-                Olfactive Composition
-              </span>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.65rem', fontWeight: 500, color: '#181817', margin: 0 }}>
-                FRAGRANCE OVERVIEW
-              </h2>
+        <div className="itra-pdp-overview-wrap">
+          <div className="itra-pdp-overview">
+            <div className="itra-pdp-overview-head">
+              <span className="itra-eyebrow">Olfactive Composition</span>
+              <h2>Fragrance Overview</h2>
             </div>
 
-            {/* 1. Character (Prompt 26: Character: Warm • Woody • Intimate) */}
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#706E68', display: 'block', marginBottom: '0.35rem' }}>
-                Character Profile
-              </label>
-              <div style={{ fontSize: '1.15rem', fontFamily: 'var(--font-serif)', color: '#181817', fontWeight: 600 }}>
-                {product.family} • {product.character}
+            <div className="itra-pdp-profile">
+              <div className="itra-pdp-section-kicker">Character Profile</div>
+              <div className="itra-pdp-profile-value">
+                {product.family} · {product.character}
               </div>
             </div>
 
-            {/* 2. Olfactive Notes Pyramid (Prompt 26: Notes: Top, Heart, Base) */}
-            <div style={{ marginBottom: '2.5rem' }}>
-              <label style={{ fontSize: '0.74rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: '#706E68', display: 'block', marginBottom: '1rem' }}>
-                Fragrance Notes
-              </label>
-
-              <div 
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-                  gap: '1rem'
-                }}
-              >
-                {/* Top Notes */}
-                <div style={{ backgroundColor: '#FAF8F5', border: '1px solid #E5E1D8', borderRadius: '8px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-bronze)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
-                    01 • Top Notes (First 30 Mins)
-                  </div>
-                  <div style={{ fontSize: '0.9rem', color: '#181817', fontWeight: 600, lineHeight: 1.4 }}>
-                    {product.topNotes}
-                  </div>
+            <div>
+              <div className="itra-pdp-section-kicker">Fragrance Notes</div>
+              <div className="itra-pdp-notes-grid">
+                <div className="itra-pdp-note-card">
+                  <div className="itra-pdp-note-step">01 · Top Notes (First 30 Mins)</div>
+                  <div className="itra-pdp-note-text">{product.topNotes}</div>
                 </div>
-
-                {/* Heart Notes */}
-                <div style={{ backgroundColor: '#FAF8F5', border: '1px solid #E5E1D8', borderRadius: '8px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-bronze)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
-                    02 • Heart Notes (2 to 8 Hours)
-                  </div>
-                  <div style={{ fontSize: '0.9rem', color: '#181817', fontWeight: 600, lineHeight: 1.4 }}>
-                    {product.heartNotes}
-                  </div>
+                <div className="itra-pdp-note-card">
+                  <div className="itra-pdp-note-step">02 · Heart Notes (2 to 8 Hours)</div>
+                  <div className="itra-pdp-note-text">{product.heartNotes}</div>
                 </div>
-
-                {/* Base Notes */}
-                <div style={{ backgroundColor: '#FAF8F5', border: '1px solid #E5E1D8', borderRadius: '8px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--accent-bronze)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '4px' }}>
-                    03 • Base Notes (8 to 18+ Hours)
-                  </div>
-                  <div style={{ fontSize: '0.9rem', color: '#181817', fontWeight: 600, lineHeight: 1.4 }}>
-                    {product.baseNotes}
-                  </div>
+                <div className="itra-pdp-note-card">
+                  <div className="itra-pdp-note-step">03 · Base Notes (8 to 18+ Hours)</div>
+                  <div className="itra-pdp-note-text">{product.baseNotes}</div>
                 </div>
               </div>
             </div>
 
-            {/* 3. Deep Dive Pillars: When To Wear, How To Apply, Gifting (Prompt 26 exact) */}
-            <div 
-              style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-                gap: '1.5rem',
-                borderTop: '1px solid #F0ECE1',
-                paddingTop: '1.75rem'
-              }}
-            >
-              {/* When To Wear */}
+            <div className="itra-pdp-pillars">
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                  <Compass size={15} color="#9B7A50" />
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#181817' }}>When To Wear</span>
+                <div className="itra-pdp-pillar-head">
+                  <Compass size={15} aria-hidden="true" />
+                  <span>When To Wear</span>
                 </div>
-                <p style={{ fontSize: '0.84rem', color: '#706E68', lineHeight: 1.55, margin: 0 }}>
-                  {product.bestFor}. Its rich warmth unfolds beautifully during cooler evenings and formal gatherings.
+                <p>
+                  {product.bestFor}. Its rich warmth unfolds beautifully during cooler evenings and
+                  formal gatherings.
                 </p>
               </div>
 
-              {/* How To Apply */}
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                  <Droplets size={15} color="#9B7A50" />
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#181817' }}>How To Apply</span>
+                <div className="itra-pdp-pillar-head">
+                  <Droplets size={15} aria-hidden="true" />
+                  <span>How To Apply</span>
                 </div>
-                <p style={{ fontSize: '0.84rem', color: '#706E68', lineHeight: 1.55, margin: 0 }}>
-                  {product.howToApply}
-                </p>
+                <p>{product.howToApply}</p>
               </div>
 
-              {/* Gifting */}
               <div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px' }}>
-                  <Gift size={15} color="#9B7A50" />
-                  <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#181817' }}>Gifting</span>
+                <div className="itra-pdp-pillar-head">
+                  <Gift size={15} aria-hidden="true" />
+                  <span>Gifting</span>
                 </div>
-                <p style={{ fontSize: '0.84rem', color: '#706E68', lineHeight: 1.55, margin: 0 }}>
-                  Arrives in a rigid presentation hard-box with a soft plush velvet travel pouch. An exquisite standalone gift or paired alongside a custom frame.
+                <p>
+                  Arrives in a rigid presentation hard-box with a soft velvet travel pouch. An
+                  exquisite standalone gift or paired alongside a custom frame.
                 </p>
               </div>
             </div>
-
           </div>
 
-          {/* Smart Cross-Sell Section (Prompt 17 contextual) */}
-          <div style={{ marginTop: '3.5rem', borderTop: '1px solid #DDD9D0', paddingTop: '2.5rem' }}>
-            <SmartCrossSell 
-              sourceContext="itra" 
-              onAddToCart={onAddToCart}
-            />
+          <div className="itra-pdp-cross-sell">
+            <SmartCrossSell sourceContext="itra" onAddToCart={onAddToCart} />
           </div>
-
         </div>
-
       </div>
 
-      {/* ======================================================== */}
-      {/* MOBILE STICKY BOTTOM PURCHASE BAR                        */}
-      {/* ======================================================== */}
-      <div className="mobile-sticky-purchase-bar">
-        <style>{`
-          .mobile-sticky-purchase-bar {
-            display: none;
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: #FFFFFF;
-            border-top: 1px solid #DDD9D0;
-            padding: 10px 16px;
-            box-shadow: 0 -4px 16px rgba(0,0,0,0.08);
-            z-index: 99;
-            align-items: center;
-            justify-content: space-between;
-          }
-          @media (max-width: 767px) {
-            .mobile-sticky-purchase-bar {
-              display: flex !important;
-            }
-          }
-        `}</style>
+      <div className="itra-pdp-mobile-bar">
         <div>
-          <div style={{ fontSize: '1.15rem', fontWeight: 700, color: '#181817' }}>
-            ₹{currentPrice.toLocaleString('en-IN')}
-          </div>
-          <div style={{ fontSize: '0.72rem', color: '#706E68' }}>
-            {product.name.split(' ')[0]} • {selectedSize.size}
+          <div className="itra-pdp-mobile-price">{formatInr(currentPrice)}</div>
+          <div className="itra-pdp-mobile-meta">
+            {product.name.split(' ')[0]} · {selectedSize.size}
           </div>
         </div>
 
         <button
           type="button"
+          className="itra-pdp-mobile-cta"
           onClick={() => handleAddToBag(selectedSize, quantity)}
-          style={{
-            padding: '10px 20px',
-            fontSize: '0.88rem',
-            fontWeight: 600,
-            backgroundColor: '#181817',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: '6px',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '6px'
-          }}
         >
-          <ShoppingBag size={15} />
+          <ShoppingBag size={15} aria-hidden="true" />
           <span>ADD TO BAG</span>
         </button>
       </div>
-
     </div>
   );
 }

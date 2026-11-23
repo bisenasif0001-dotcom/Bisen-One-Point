@@ -1,5 +1,13 @@
 export const DUA_PRINT_SPEC = '250 GSM glossy';
-// A-series paper doubles in area at each larger size; round up to whole rupees.
-export const DUA_PRINT_PRICES = Object.fromEntries(
-  ['A5', 'A4', 'A3', 'A2', 'A1'].map((size, index) => [size, Math.ceil(85 * 2 ** (index - 2))])
-);
+export const DUA_PRINT_PRICES = {
+  A5: 49,
+  A4: 79,
+  A3: 149,
+  '12x18': 179,
+  '13x19': 199,
+  '15x21': 279,
+  '16x22': 299,
+  A2: 329,
+  A1: 549,
+};
+

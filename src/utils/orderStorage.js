@@ -106,5 +106,5 @@ export function findOrder(query) { return findOrders(query)[0] || null; }
 export function buildOrderStatusMessage(reference = '') {
   const parsed = parseOrderSearch(reference);
   const identifier = parsed.type === 'id' ? `Order reference: #${parsed.value}` : parsed.type === 'phone' ? `Checkout mobile: ${parsed.value}` : '';
-  return ['Hello AL-NOOR! Please share an update on my order.', identifier, '', 'Please confirm the current status, payment verification and the expected collection or dispatch date. If dispatched, please share the courier tracking link.'].filter((line,index) => line || index > 1).join('\n');
+  return ['Hello BISEN! Please share an update on my order.', identifier, '', 'Please confirm the current status, payment verification and the expected collection or dispatch date. If dispatched, please share the courier tracking link.'].filter((line,index) => line || index > 1).join('\n');
 }

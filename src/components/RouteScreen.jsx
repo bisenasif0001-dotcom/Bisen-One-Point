@@ -12,7 +12,7 @@ class RouteBoundary extends Component {
       <h1 style={{ fontSize: '2rem' }}>Let’s open that again.</h1>
       <p style={{ margin: '1rem 0' }}>This page could not load. Check your connection and try again.</p>
       <button type="button" className="btn-primary" onClick={() => window.location.reload()}>Reload page</button>
-      <a href="/" style={{ display: 'block', marginTop: '1.5rem' }}>Return home</a>
+      <a href={import.meta.env.BASE_URL || '/'} style={{ display: 'block', marginTop: '1.5rem' }}>Return home</a>
     </div>;
   }
 }

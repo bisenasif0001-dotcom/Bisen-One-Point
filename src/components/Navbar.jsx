@@ -82,9 +82,9 @@ export default function Navbar({ cartCount = 0, onOpenCart }) {
     return () => breakpoint.removeEventListener('change', reset);
   }, []);
   useEffect(() => {
-    if (location.pathname === '/pvc-cards' && location.state?.preservePvcScroll) return;
+    if (location.state?.preserveScroll || (location.pathname === '/pvc-cards' && location.state?.preservePvcScroll)) return;
     window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-  }, [location.pathname, location.search, location.state?.preservePvcScroll]);
+  }, [location.pathname, location.search, location.state?.preserveScroll, location.state?.preservePvcScroll]);
   useLayoutEffect(() => {
     if (!active && !mobile) return;
     const measure = () => {

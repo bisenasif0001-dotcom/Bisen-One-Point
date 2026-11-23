@@ -192,7 +192,7 @@ export const ITRA_PRODUCTS = [
     bestFor: 'Couples Gifting, Weddings & Anniversaries',
     topNotes: 'His: Dehn Al Oud Royale (6ml) • Hers: Kashmiri White Musk (6ml)',
     heartNotes: 'Two synchronized scents designed to harmonize beautifully in proximity',
-    baseNotes: 'Packaged in signature AL-NOOR ivory rigid box with custom gift note',
+    baseNotes: 'Packaged in signature BISEN ivory rigid box with custom gift note',
     howToApply: 'Each partner applies to wrists and collarbones before evening celebrations.'
   }
 ];

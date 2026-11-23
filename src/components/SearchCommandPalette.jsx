@@ -4,8 +4,10 @@ import { ITRA_PRODUCTS } from '../data/itraProducts';
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { DUA_POSTERS } from '../data/duaPosters';
-import { DUA_PRINT_PRICES } from '../data/duaPricing';
+import { GALLERY_LAYOUTS } from '../data/galleryWalls';
 import { PVC_PRODUCTS, PVC_CARD_TYPES, pvcProductPath } from '../data/pvcCards';
+import { usePriceOverrides } from './BusinessRulesProvider';
+import { getDuaPosterPrice, getGalleryLayoutPrice, getItraProductPrice, getMinPrintPrice, getPvcPrice } from '../utils/priceRegistry';
 import { 
   Search, X, ArrowRight, CornerDownLeft, Sparkles, 
   Image as ImageIcon, Printer, Frame, Gift, Heart, 
@@ -16,126 +18,136 @@ import {
  * AL-NOOR COMPREHENSIVE SEARCH DATABASE (PROMPT 29)
  * Grouped into: PRODUCTS, SERVICES, COLLECTIONS, OCCASIONS
  */
-export const SEARCH_INDEX = [
-  ...PVC_PRODUCTS.map(product => ({
-    id: `pvc-${product.id}`, group: 'SERVICES', title: product.title,
-    subtitle: `${product.use} · Single / both sides · Design & accessories`, badge: 'PVC Card',
-    link: pvcProductPath(product.id),
-    keywords: ['pvc', 'plastic', 'card', product.title.toLowerCase(), ...PVC_CARD_TYPES.filter(type => type.productId === product.id).map(type => type.label.toLowerCase())]
-  })),
-  ...DUA_POSTERS.map(poster => ({
-    id: `dua-${poster.id}`,
-    group: 'PRODUCTS',
-    title: poster.title,
-    subtitle: `${poster.category} · 250 GSM glossy · With or without frame`,
-    price: `Print from ₹${DUA_PRINT_PRICES.A5} + delivery`,
-    badge: 'Dua Poster',
-    thumbnail: poster.thumbnail,
-    link: `/dua-posters/${poster.id}`,
-    keywords: ['dua', 'poster', 'islamic', 'glossy', '250gsm', 'prayer', poster.title.toLowerCase(), poster.category.toLowerCase()]
-  })),
-  ...FRAME_FINISHES.map(frame => ({
-    id: `frame-${frame.id}`, group: 'PRODUCTS', title: `${frame.name} Photo Frame`,
-    subtitle: `${frame.finish} · Portrait or landscape · Live photo preview`,
-    price: `From ₹${getStudioPrice({ sizeId: 'A5', frameId: frame.id, glassId: 'crystal_acrylic' }).unit}`,
-    badge: 'Custom frame', thumbnail: frame.frontImage,
-    link: `/custom-framing?frame=${frame.id}`,
-    keywords: ['frame', 'photo frame', 'custom', frame.name.toLowerCase(), frame.finish.toLowerCase()]
-  })),
-  ...ITRA_PRODUCTS.map(product => ({
-    id: `itra-${product.id}`, group: 'PRODUCTS', title: product.name,
-    subtitle: product.family, badge: 'Itra', thumbnail: product.image,
-    price: `₹${product.prices[product.defaultSize]} (${product.defaultSize})`,
-    link: `/itra/${product.id}`,
-    keywords: ['itra', 'attar', 'perfume', product.name.toLowerCase(), product.family.toLowerCase()]
-  })),
-  { id: 'birthday-studio', group: 'SERVICES', title: 'Personalised Birthday Cards',
-    subtitle: 'Choose a design, add a photograph and write your own message',
-    badge: 'Card studio', link: '/birthday-cards',
-    keywords: ['card', 'birthday', 'photo card', 'greeting', 'personalised', 'botanical'] },
-  { id: 'names-art', group: 'COLLECTIONS', title: 'Names of Allah Calligraphy',
-    subtitle: 'Explore the available Asma-ul-Husna designs', badge: 'Calligraphy',
-    thumbnail: '/islamic-calligraphy/001 Ya Allah.png', link: '/islamic-art?tab=names',
-    keywords: ['allah', '99 names', 'asma', 'husna', 'names', 'arabic'] },
+export function buildSearchIndex(overrides) {
+  const pvcSingle = getPvcPrice('single_card', overrides);
+  const duaA5 = getDuaPosterPrice('A5', overrides);
+  const minPrint = getMinPrintPrice(overrides);
+  const minGallery = Math.min(...GALLERY_LAYOUTS.map(layout => getGalleryLayoutPrice(layout.id, overrides)));
+  return [
+    ...PVC_PRODUCTS.map(product => ({
+      id: `pvc-${product.id}`, group: 'SERVICES', title: product.title,
+      subtitle: `${product.use} · Single / both sides · Design & accessories`, badge: 'PVC Card',
+      price: `From ₹${pvcSingle} / card`,
+      link: pvcProductPath(product.id),
+      keywords: ['pvc', 'plastic', 'card', product.title.toLowerCase(), ...PVC_CARD_TYPES.filter(type => type.productId === product.id).map(type => type.label.toLowerCase())]
+    })),
+    ...DUA_POSTERS.map(poster => ({
+      id: `dua-${poster.id}`,
+      group: 'PRODUCTS',
+      title: poster.title,
+      subtitle: `${poster.category} · 250 GSM glossy · With or without frame`,
+      price: `Print from ₹${duaA5} + delivery`,
+      badge: 'Dua Poster',
+      thumbnail: poster.thumbnail,
+      link: `/dua-posters/${poster.id}`,
+      keywords: ['dua', 'poster', 'islamic', 'glossy', '250gsm', 'prayer', poster.title.toLowerCase(), poster.category.toLowerCase()]
+    })),
+    ...FRAME_FINISHES.map(frame => {
+      const emptyPrice = getStudioPrice({ sizeId: 'A5', frameId: frame.id, glassId: 'crystal_acrylic', includePrint: false, overrides }).unit;
+      const withPrintPrice = getStudioPrice({ sizeId: 'A5', frameId: frame.id, glassId: 'crystal_acrylic', includePrint: true, overrides }).unit;
+      return {
+        id: `frame-${frame.id}`, group: 'PRODUCTS', title: `${frame.name} Photo Frame`,
+        subtitle: `${frame.finish} · Portrait or landscape · Live photo preview`,
+        price: `From ₹${emptyPrice} empty · ₹${withPrintPrice} framed`,
+        badge: 'Custom frame', thumbnail: frame.frontImage,
+        link: `/custom-framing?frame=${frame.id}`,
+        keywords: ['frame', 'photo frame', 'custom', frame.name.toLowerCase(), frame.finish.toLowerCase()]
+      };
+    }),
+    ...ITRA_PRODUCTS.map(product => ({
+      id: `itra-${product.id}`, group: 'PRODUCTS', title: product.name,
+      subtitle: product.family, badge: 'Itra', thumbnail: product.image,
+      price: `₹${getItraProductPrice(product.id, product.defaultSize, overrides)} (${product.defaultSize})`,
+      link: `/itra/${product.id}`,
+      keywords: ['itra', 'attar', 'perfume', product.name.toLowerCase(), product.family.toLowerCase()]
+    })),
+    { id: 'birthday-studio', group: 'SERVICES', title: 'Personalised Birthday Cards',
+      subtitle: 'Choose a design, add a photograph and write your own message',
+      badge: 'Card studio', link: '/birthday-cards',
+      keywords: ['card', 'birthday', 'photo card', 'greeting', 'personalised', 'botanical'] },
+    { id: 'names-art', group: 'COLLECTIONS', title: 'Names of Allah Calligraphy',
+      subtitle: 'Explore the available Asma-ul-Husna designs', badge: 'Calligraphy',
+      thumbnail: '/islamic-calligraphy/001 Ya Allah.png', link: '/islamic-art?tab=names',
+      keywords: ['allah', '99 names', 'asma', 'husna', 'names', 'arabic'] },
 
-  // 2. SERVICES
-  {
-    id: 'serv-print-photos',
-    group: 'SERVICES',
-    title: 'Print Photos (Photo Lab)',
-    subtitle: 'Professional 6-Colour Epson photo prints from 4x6" to 12x18" on 260 GSM Lustre & Matte',
-    badge: 'Print Lab',
-    link: '/photo-prints',
-    keywords: ['print', 'print photos', 'lab', 'epson', 'lustre', 'matte', 'printing', 'digital photo', '4x6', '5x7', '8x10']
-  },
-  {
-    id: 'serv-frame-my-photo',
-    group: 'SERVICES',
-    title: 'Frame My Photo (Upload & Frame)',
-    subtitle: 'Upload any digital photo, pick from 7 frame finishes with instant preview',
-    badge: 'Custom Studio',
-    link: '/custom-framing',
-    keywords: ['frame my photo', 'upload', 'custom frame', 'frame photo', 'customise', 'customizer', 'picture frame', 'hang']
-  },
-  {
-    id: 'serv-photo-diagnostic',
-    group: 'SERVICES',
-    title: 'Photo Quality Diagnostic Checker',
-    subtitle: 'Instant pre-flight check analyzing your image resolution, pixel dimensions & print DPI',
-    badge: 'Diagnostic Tool',
-    link: '/custom-framing',
-    keywords: ['diagnostic', 'dpi', 'resolution', 'quality check', 'photo check', 'megapixels', 'sharpness']
-  },
-  {
-    id: 'serv-size-guide',
-    group: 'SERVICES',
-    title: 'Visual Size Comparison Guide',
-    subtitle: 'Interactive living room, bedroom, and desk scale visualizer across A4, A3, A2 & A1 sizes',
-    badge: 'Interactive Guide',
-    link: '/size-guide',
-    keywords: ['size', 'size guide', 'dimensions', 'compare', 'scale', 'room view', 'a4', 'a3', 'a2', 'a1']
-  },
-  {
-    id: 'serv-gallery-wall-builder',
-    group: 'SERVICES',
-    title: 'Build A Gallery Wall',
-    subtitle: 'Curated 3, 5, 7, and 9 frame wall layouts with true-to-scale 1:1 paper hanging templates',
-    badge: 'Wall Builder',
-    link: '/gallery-walls',
-    keywords: ['gallery wall', 'wall art', 'wall layout', '3 frames', '5 frames', 'templates', 'bundle']
-  },
+    // 2. SERVICES
+    {
+      id: 'serv-print-photos',
+      group: 'SERVICES',
+      title: 'Print Photos (Photo Lab)',
+      subtitle: `Professional 6-Colour Epson photo prints from 4×6" to A3 on 260 GSM Lustre & Matte · From ₹${minPrint}/print`,
+      badge: 'Print Lab',
+      link: '/photo-prints',
+      keywords: ['print', 'print photos', 'lab', 'epson', 'lustre', 'matte', 'printing', 'digital photo', '4x6', '5x7', '8x10']
+    },
+    {
+      id: 'serv-frame-my-photo',
+      group: 'SERVICES',
+      title: 'Frame My Photo (Upload & Frame)',
+      subtitle: 'Upload any digital photo, pick from 7 frame finishes with instant preview',
+      badge: 'Custom Studio',
+      link: '/custom-framing',
+      keywords: ['frame my photo', 'upload', 'custom frame', 'frame photo', 'customise', 'customizer', 'picture frame', 'hang']
+    },
+    {
+      id: 'serv-photo-diagnostic',
+      group: 'SERVICES',
+      title: 'Photo Quality Diagnostic Checker',
+      subtitle: 'Instant pre-flight check analyzing your image resolution, pixel dimensions & print DPI',
+      badge: 'Diagnostic Tool',
+      link: '/custom-framing',
+      keywords: ['diagnostic', 'dpi', 'resolution', 'quality check', 'photo check', 'megapixels', 'sharpness']
+    },
+    {
+      id: 'serv-size-guide',
+      group: 'SERVICES',
+      title: 'Visual Size Comparison Guide',
+      subtitle: 'Interactive living room, bedroom, and desk scale visualizer across A5, A4, A3, A2 & A1 sizes',
+      badge: 'Interactive Guide',
+      link: '/size-guide',
+      keywords: ['size', 'size guide', 'dimensions', 'compare', 'scale', 'room view', 'a4', 'a3', 'a2', 'a1']
+    },
+    {
+      id: 'serv-gallery-wall-builder',
+      group: 'SERVICES',
+      title: 'Build A Gallery Wall',
+      subtitle: `Curated 3, 5, 7, and 9 frame wall layouts with paper hanging templates · From ₹${minGallery.toLocaleString('en-IN')}`,
+      badge: 'Wall Builder',
+      link: '/gallery-walls',
+      keywords: ['gallery wall', 'wall art', 'wall layout', '3 frames', '5 frames', 'templates', 'bundle']
+    },
 
-  // 3. COLLECTIONS
-  {
-    id: 'col-birthday-gifts',
-    group: 'COLLECTIONS',
-    title: 'Birthday Gifts & Keepsakes',
-    subtitle: 'Bespoke photo frames, milestone typography cards, and curated gift boxes',
-    badge: 'Curated Edit',
-    thumbnail: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=300&q=80',
-    link: '/occasions/birthday',
-    keywords: ['birthday', 'birthday gifts', 'birthday cards', 'gifts', 'celebration', 'presents']
-  },
-  {
-    id: 'col-islamic-wall-art',
-    group: 'COLLECTIONS',
-    title: 'Islamic Sacred Wall Art',
-    subtitle: 'Original Dua posters, Quranic verses and Arabic calligraphy',
-    badge: 'Sacred Art',
-    thumbnail: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=300&q=80',
-    link: '/islamic-art',
-    keywords: ['islamic', 'islamic wall art', 'calligraphy', 'quranic', 'arabic art', 'ayat ul kursi', 'surah', 'allah']
-  },
-  {
-    id: 'col-gallery-walls',
-    group: 'COLLECTIONS',
-    title: 'Curated Gallery Wall Bundles',
-    subtitle: 'The Classic Trio, The Family Wall, and The Wedding Salon with 1:1 paper hanging guides',
-    badge: 'Wall Sets',
-    thumbnail: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=300&q=80',
-    link: '/gallery-walls',
-    keywords: ['gallery wall', 'gallery', 'trio', 'family wall', 'wall bundles', 'salon', 'multi frame']
-  },
+    // 3. COLLECTIONS
+    {
+      id: 'col-birthday-gifts',
+      group: 'COLLECTIONS',
+      title: 'Birthday Gifts & Keepsakes',
+      subtitle: 'Bespoke photo frames, milestone typography cards, and curated gift boxes',
+      badge: 'Curated Edit',
+      thumbnail: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=300&q=80',
+      link: '/occasions/birthday',
+      keywords: ['birthday', 'birthday gifts', 'birthday cards', 'gifts', 'celebration', 'presents']
+    },
+    {
+      id: 'col-islamic-wall-art',
+      group: 'COLLECTIONS',
+      title: 'Islamic Sacred Wall Art',
+      subtitle: 'Original Dua posters, Quranic verses and Arabic calligraphy',
+      badge: 'Sacred Art',
+      thumbnail: 'https://images.unsplash.com/photo-1584551246679-0daf3d275d0f?auto=format&fit=crop&w=300&q=80',
+      link: '/islamic-art',
+      keywords: ['islamic', 'islamic wall art', 'calligraphy', 'quranic', 'arabic art', 'ayat ul kursi', 'surah', 'allah']
+    },
+    {
+      id: 'col-gallery-walls',
+      group: 'COLLECTIONS',
+      title: 'Curated Gallery Wall Bundles',
+      subtitle: `The Classic Trio, The Family Wall, and The Wedding Salon · From ₹${minGallery.toLocaleString('en-IN')}`,
+      badge: 'Wall Sets',
+      thumbnail: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=300&q=80',
+      link: '/gallery-walls',
+      keywords: ['gallery wall', 'gallery', 'trio', 'family wall', 'wall bundles', 'salon', 'multi frame']
+    },
   {
     id: 'col-greeting-cards',
     group: 'COLLECTIONS',
@@ -223,6 +235,9 @@ export const SEARCH_INDEX = [
     keywords: ['eid', 'ramadan', 'mubarak', 'islamic', 'festive', 'celebration']
   }
 ];
+}
+
+export const SEARCH_INDEX = buildSearchIndex();
 
 const POPULAR_SEARCH_CHIPS = [
   'Regal Noir Frame',
@@ -236,12 +251,14 @@ const POPULAR_SEARCH_CHIPS = [
 ];
 
 export default function SearchCommandPalette({ isOpen, onClose }) {
+  const priceOverrides = usePriceOverrides();
   const [query, setQuery] = useState('');
   const [activeCategoryFilter, setActiveCategoryFilter] = useState('ALL');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const inputRef = useRef(null);
   const dialogRef = useRef(null);
   const navigate = useNavigate();
+  const searchIndex = useMemo(() => buildSearchIndex(priceOverrides), [priceOverrides]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -275,7 +292,7 @@ export default function SearchCommandPalette({ isOpen, onClose }) {
   const filteredResults = useMemo(() => {
     const trimmed = query.trim().toLowerCase();
     
-    let items = SEARCH_INDEX;
+    let items = searchIndex;
     if (activeCategoryFilter !== 'ALL') {
       items = items.filter(i => i.group === activeCategoryFilter);
     }
@@ -291,7 +308,7 @@ export default function SearchCommandPalette({ isOpen, onClose }) {
       const matchKeywords = item.keywords.some(k => k.toLowerCase().includes(trimmed));
       return matchTitle || matchSubtitle || matchGroup || matchKeywords;
     });
-  }, [query, activeCategoryFilter]);
+  }, [query, activeCategoryFilter, searchIndex]);
 
   // Grouped by the 4 required pillars: PRODUCTS, SERVICES, COLLECTIONS, OCCASIONS
   const groupedResults = useMemo(() => {
@@ -1132,7 +1149,7 @@ export default function SearchCommandPalette({ isOpen, onClose }) {
           </div>
 
           <div style={{ fontWeight: 500, color: '#8A8780' }}>
-            AL-NOOR Studio Catalogue
+            BISEN Studio Catalogue
           </div>
         </div>
       </div>

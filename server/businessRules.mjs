@@ -9,10 +9,13 @@ export function validateBusinessRules(value) {
   const rules = structuredClone(DEFAULT_BUSINESS_RULES);
   const number = (object, key, min, max) => { const n = Number(object?.[key]); if (!Number.isSafeInteger(n) || n < min || n > max) throw new ApiError(400, `Check ${key}.`); return n; };
   for (const key of ['pvcStarting', 'printsStarting', 'freeThreshold', 'freeMaxCharge']) rules.shipping[key] = number(value.shipping, key, 0, 100000);
+  for (const key of ['porterStarting', 'printFreeThreshold', 'frameFreeThreshold']) {
+    if (value.shipping?.[key] !== undefined && value.shipping?.[key] !== '') rules.shipping[key] = number(value.shipping, key, 0, 100000);
+  }
   rules.shipping.pickupEnabled = Boolean(value.shipping.pickupEnabled);
   rules.shipping.freePincodes = [...new Set(value.shipping.freePincodes || [])];
   if (rules.shipping.freePincodes.length > 10000 || rules.shipping.freePincodes.some(pin => !/^[1-9]\d{5}$/.test(pin))) throw new ApiError(400, 'Use valid six-digit eligible PIN codes.');
-  rules.shipping.freeTypes = (value.shipping.freeTypes || []).filter(type => ['pvc_card', 'photo_prints'].includes(type));
+  rules.shipping.freeTypes = (value.shipping.freeTypes || []).filter(type => ['pvc_card', 'photo_prints', 'dua_poster', 'islamic_art'].includes(type));
   rules.production.dispatchMinDays = number(value.production, 'dispatchMinDays', 1, 90);
   rules.production.dispatchMaxDays = number(value.production, 'dispatchMaxDays', rules.production.dispatchMinDays, 180);
   rules.refunds.initiateBusinessDays = number(value.refunds, 'initiateBusinessDays', 1, 30);

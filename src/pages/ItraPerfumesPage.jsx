@@ -1,50 +1,117 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { 
-  Sparkles, 
-  Droplet, 
-  ShoppingBag, 
-  Check, 
-  ShieldCheck, 
-  Eye, 
-  X, 
-  Compass, 
-  Clock, 
-  ArrowRight,
-  Plus,
-  Heart
+import {
+  ArrowLeft,
+  ArrowUpRight,
+  Check,
+  Droplet,
+  Eye,
+  Gift,
+  MessageCircle,
+  Search,
+  ShoppingBag,
+  Sparkles,
+  X,
 } from 'lucide-react';
-
+import { getWhatsAppUrl } from '../data/businessConfig';
 import { ITRA_CATEGORIES, ITRA_PRODUCTS } from '../data/itraProducts';
-export { ITRA_CATEGORIES, ITRA_PRODUCTS } from '../data/itraProducts';
+import { usePriceOverrides } from '../components/BusinessRulesProvider';
+import { getItraProductPrice } from '../utils/priceRegistry';
+import './ItraPerfumesPage.css';
+
+const formatInr = value => `₹${Number(value || 0).toLocaleString('en-IN')}`;
 
 export default function ItraPerfumesPage({ onAddToCart }) {
+  const priceOverrides = usePriceOverrides();
   const [activeCategory, setActiveCategory] = useState('All Itra');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('collection');
+  const [cardSizes, setCardSizes] = useState({});
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [modalSelectedSize, setModalSelectedSize] = useState('6ml');
   const [addedToastId, setAddedToastId] = useState(null);
+  const toastTimerRef = useRef(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    return () => {
+      if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    };
   }, []);
 
-  // Filtered Products
-  const filteredProducts = activeCategory === 'All Itra'
-    ? ITRA_PRODUCTS
-    : ITRA_PRODUCTS.filter(p => p.category === activeCategory);
+  useEffect(() => {
+    if (!selectedProduct) return undefined;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = event => {
+      if (event.key === 'Escape') setSelectedProduct(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedProduct]);
 
-  const openProductModal = (product) => {
+  const itraPrice = (product, volume) =>
+    priceOverrides?.itraPrices?.[product.id]?.[volume] ??
+    getItraProductPrice(product.id, volume) ??
+    product.prices?.[volume] ??
+    product.price;
+
+  const getActiveCardSize = product =>
+    cardSizes[product.id] || product.defaultSize || Object.keys(product.prices)[0];
+
+  const categoryCount = cat =>
+    cat === 'All Itra'
+      ? ITRA_PRODUCTS.length
+      : ITRA_PRODUCTS.filter(item => item.category === cat).length;
+
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredProducts = ITRA_PRODUCTS.filter(product => {
+    const matchesCategory = activeCategory === 'All Itra' || product.category === activeCategory;
+    if (!matchesCategory) return false;
+    if (!normalizedQuery) return true;
+    const haystack = [
+      product.name,
+      product.family,
+      product.character,
+      product.bestFor,
+      product.topNotes,
+      product.heartNotes,
+      product.baseNotes,
+    ]
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(normalizedQuery);
+  });
+
+  const sortedProducts = sortBy === 'collection'
+    ? filteredProducts
+    : [...filteredProducts].sort((a, b) => {
+        const priceA = itraPrice(a, a.defaultSize || Object.keys(a.prices)[0]);
+        const priceB = itraPrice(b, b.defaultSize || Object.keys(b.prices)[0]);
+        return sortBy === 'price-asc' ? priceA - priceB : priceB - priceA;
+      });
+
+  const openProductModal = product => {
     setSelectedProduct(product);
-    setModalSelectedSize(product.defaultSize || Object.keys(product.prices)[0]);
+    setModalSelectedSize(getActiveCardSize(product));
   };
 
-  const handleQuickAdd = (product, sizeKey = null) => {
-    if (!onAddToCart) return;
-    const targetSize = sizeKey || product.defaultSize || Object.keys(product.prices)[0];
-    const targetPrice = product.prices[targetSize] || product.price;
+  const triggerAddedFeedback = productId => {
+    setAddedToastId(productId);
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    toastTimerRef.current = setTimeout(() => setAddedToastId(null), 2400);
+  };
 
-    const cartPayload = {
-      id: `${product.id}-${targetSize}-${Date.now()}`,
+  const handleQuickAdd = product => {
+    if (!onAddToCart) return;
+    const targetSize = getActiveCardSize(product);
+    const targetPrice = itraPrice(product, targetSize);
+
+    onAddToCart({
+      id: `itra-${product.id}-${targetSize}`,
       type: 'itra_perfume',
       productId: product.id,
       title: `${product.name} (${targetSize})`,
@@ -53,706 +120,397 @@ export default function ItraPerfumesPage({ onAddToCart }) {
       price: targetPrice,
       quantity: 1,
       image: product.image,
-      alcoholFree: true
-    };
+      alcoholFree: true,
+    });
 
-    onAddToCart(cartPayload);
-    setAddedToastId(product.id);
-    setTimeout(() => setAddedToastId(null), 2500);
+    triggerAddedFeedback(product.id);
   };
 
   const handleModalAdd = (isSample = false) => {
     if (!selectedProduct || !onAddToCart) return;
     const size = isSample ? '3ml' : modalSelectedSize;
-    const price = isSample ? selectedProduct.samplePrice : selectedProduct.prices[size];
+    const price = isSample
+      ? (itraPrice(selectedProduct, '3ml') ?? selectedProduct.samplePrice)
+      : itraPrice(selectedProduct, size);
 
-    const cartPayload = {
-      id: `${selectedProduct.id}-${size}-${Date.now()}`,
+    onAddToCart({
+      id: `itra-${selectedProduct.id}-${size}`,
       type: 'itra_perfume',
       productId: selectedProduct.id,
       title: `${selectedProduct.name} (${size})`,
       subTitle: selectedProduct.family,
       volume: size,
-      price: price,
+      price,
       quantity: 1,
       image: selectedProduct.image,
-      alcoholFree: true
-    };
+      alcoholFree: true,
+    });
 
-    onAddToCart(cartPayload);
-    setAddedToastId(selectedProduct.id);
+    triggerAddedFeedback(selectedProduct.id);
     setSelectedProduct(null);
   };
 
   return (
-    <div style={{ backgroundColor: '#F5F3EE', minHeight: '100vh', color: '#181817' }}>
+    <div className="itra-page">
+      <div className="itra-container">
+        <nav className="itra-breadcrumb" aria-label="Breadcrumb">
+          <Link to="/">
+            <ArrowLeft size={14} aria-hidden="true" />
+            <span>The studio</span>
+          </Link>
+          <span aria-hidden="true">/</span>
+          <span className="itra-breadcrumb-current" aria-current="page">
+            The Itra House
+          </span>
+        </nav>
 
-      {/* Modern Niche Fragrance Boutique Hero */}
-      <section 
-        style={{
-          padding: 'clamp(4.5rem, 7vw, 6.5rem) 0 clamp(2.5rem, 4vw, 3.5rem) 0',
-          borderBottom: '1px solid #DDD9D0',
-          backgroundColor: '#20201E', // Modern dark brown/olive tone
-          color: '#F5F3ED',
-          textAlign: 'center',
-          position: 'relative'
-        }}
-      >
-        <div className="container-custom">
-          
-          <div 
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.45rem',
-              fontSize: '0.72rem',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              color: 'var(--accent-bronze)',
-              fontWeight: 700,
-              marginBottom: '0.75rem',
-              backgroundColor: 'rgba(255, 255, 255, 0.08)',
-              padding: '4px 12px',
-              borderRadius: '100px',
-              border: '1px solid rgba(255, 255, 255, 0.12)'
-            }}
-          >
-            <Droplet size={13} />
-            <span>AL-NOOR • Artisanal Perfume House</span>
+        <header className="itra-header">
+          <div className="itra-header-main">
+            <span className="itra-eyebrow">
+              <Droplet size={13} aria-hidden="true" />
+              <span>THE ITRA HOUSE / BISEN</span>
+            </span>
+            <h1>
+              Pure oils distilled for <em>memory.</em>
+            </h1>
+            <p className="itra-intro-copy">
+              Traditional concentrated perfume oils distilled in Kannauj, Taif, and Assam. 100%
+              uncut and free from alcohol or synthetic fillers — bottled in cut crystal with glass
+              applicators.
+            </p>
           </div>
 
-          <h1 
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontSize: 'clamp(2.4rem, 4.5vw, 3.8rem)',
-              fontWeight: 500,
-              lineHeight: 1.15,
-              letterSpacing: '-0.02em',
-              color: '#F5F3ED',
-              margin: '0 0 1rem 0'
-            }}
-          >
-            The Itra Collection
-          </h1>
+          <aside className="itra-intro-note">
+            <div className="itra-intro-note-head">
+              <Sparkles size={17} aria-hidden="true" />
+              <span>Atelier Craft &amp; Sampling</span>
+            </div>
+            <ul className="itra-intro-facts">
+              <li>100% pure alcohol-free attar oils</li>
+              <li>3ml discovery flacons &amp; velvety gift coffrets</li>
+              <li>Rigid presentation box included with every order</li>
+            </ul>
+            <Link to="/gift-sets" className="itra-intro-link">
+              <Gift size={14} aria-hidden="true" />
+              <span>Explore curated gift sets</span>
+              <ArrowUpRight size={14} aria-hidden="true" />
+            </Link>
+          </aside>
+        </header>
 
-          <p 
-            style={{
-              fontFamily: 'var(--font-sans)',
-              fontSize: 'clamp(0.96rem, 1.2vw, 1.1rem)',
-              color: 'rgba(245, 243, 237, 0.82)',
-              maxWidth: '620px',
-              margin: '0 auto 1.75rem auto',
-              lineHeight: 1.6
-            }}
-          >
-            Traditional pure perfume oils distilled in Kannauj, Taif, and Assam. 100% concentrated, free from alcohol and synthetic fillers — crafted for skin, prayer, and enduring memory.
-          </p>
-
-          {/* Value Pills Bar */}
-          <div 
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              justifyContent: 'center',
-              gap: '1.25rem',
-              fontSize: '0.78rem',
-              color: '#D8CEBE',
-              letterSpacing: '0.04em'
-            }}
-          >
-            <span>• 100% Pure Alcohol-Free Oil</span>
-            <span>• Hand-Cut Crystal Applicators</span>
-            <span>• 18+ Hours Skin Longevity</span>
-            <span>• 3ml Discovery Samples Available</span>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Category Filter Pills (Prompt 19: All Itra, Men, Women, Unisex, Discovery Sets, Gift Sets) */}
-      <section 
-        style={{
-          position: 'sticky',
-          top: '72px',
-          zIndex: 40,
-          backgroundColor: 'rgba(245, 243, 238, 0.95)',
-          backdropFilter: 'blur(10px)',
-          borderBottom: '1px solid #DDD9D0',
-          padding: '0.85rem 0'
-        }}
-      >
-        <div className="container-custom">
-          <div 
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              gap: '0.5rem',
-              overflowX: 'auto',
-              scrollbarWidth: 'none',
-              paddingBottom: '2px'
-            }}
-          >
-            {ITRA_CATEGORIES.map((cat) => {
-              const isActive = activeCategory === cat;
+        <div className="itra-controls">
+          <div className="itra-filter-pills" role="group" aria-label="Filter fragrances by category">
+            {ITRA_CATEGORIES.map(category => {
+              const isActive = activeCategory === category;
               return (
                 <button
-                  key={cat}
-                  onClick={() => setActiveCategory(cat)}
-                  style={{
-                    padding: '0.5rem 1.15rem',
-                    borderRadius: '100px',
-                    fontSize: '0.8rem',
-                    fontWeight: isActive ? 600 : 500,
-                    letterSpacing: '0.04em',
-                    backgroundColor: isActive ? '#181817' : '#FFFFFF',
-                    color: isActive ? '#FFFFFF' : '#706E68',
-                    border: isActive ? '1px solid #181817' : '1px solid #DDD9D0',
-                    cursor: 'pointer',
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.1)' : 'none'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.borderColor = '#181817';
-                      e.currentTarget.style.color = '#181817';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isActive) {
-                      e.currentTarget.style.borderColor = '#DDD9D0';
-                      e.currentTarget.style.color = '#706E68';
-                    }
-                  }}
+                  key={category}
+                  type="button"
+                  aria-pressed={isActive}
+                  onClick={() => setActiveCategory(category)}
                 >
-                  {cat}
+                  <span>{category}</span>
+                  <span>{categoryCount(category)}</span>
                 </button>
               );
             })}
           </div>
-        </div>
-      </section>
 
-      {/* Products Grid (Prompt 19: Large bottle image, Name, Short fragrance family, Size, Price) */}
-      <section style={{ padding: 'clamp(3.5rem, 6vw, 5.5rem) 0' }}>
-        <div className="container-custom">
-
-          <div 
-            style={{ 
-              display: 'flex', 
-              justifyContent: 'space-between', 
-              alignItems: 'baseline', 
-              marginBottom: '2rem',
-              borderBottom: '1px solid #EAE6DC',
-              paddingBottom: '0.75rem'
-            }}
-          >
-            <div>
-              <span style={{ fontSize: '0.72rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#706E68', fontWeight: 600 }}>
-                Showing {filteredProducts.length} Fragrances
-              </span>
-            </div>
-            <div style={{ fontSize: '0.76rem', color: '#9B7A50', fontWeight: 600 }}>
-              All formulations 100% uncut & alcohol-free
-            </div>
-          </div>
-
-          {/* Cards Grid (3-4 col desktop, 2-col tablet, 1-col mobile) */}
-          <div className="itra-boutique-grid">
-            <style>{`
-              .itra-boutique-grid {
-                display: grid;
-                grid-template-columns: repeat(1, 1fr);
-                gap: 1.75rem;
-              }
-              @media (min-width: 600px) {
-                .itra-boutique-grid {
-                  grid-template-columns: repeat(2, 1fr);
-                  gap: 1.75rem;
-                }
-              }
-              @media (min-width: 992px) {
-                .itra-boutique-grid {
-                  grid-template-columns: repeat(3, 1fr);
-                  gap: 2rem;
-                }
-              }
-              @media (min-width: 1200px) {
-                .itra-boutique-grid {
-                  grid-template-columns: repeat(4, 1fr);
-                  gap: 2rem;
-                }
-              }
-            `}</style>
-
-            {filteredProducts.map((product) => {
-              const isToast = addedToastId === product.id;
-
-              return (
-                <div
-                  key={product.id}
-                  style={{
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: '8px',
-                    border: '1px solid #DDD9D0',
-                    overflow: 'hidden',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    boxShadow: '0 4px 18px rgba(24, 24, 23, 0.04)',
-                    transition: 'transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease, border-color 0.3s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                    e.currentTarget.style.boxShadow = '0 14px 32px rgba(24, 24, 23, 0.1)';
-                    e.currentTarget.style.borderColor = '#C5BFB2';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 18px rgba(24, 24, 23, 0.04)';
-                    e.currentTarget.style.borderColor = '#DDD9D0';
-                  }}
+          <div className="itra-toolbar">
+            <label className="itra-search">
+              <Search size={16} aria-hidden="true" />
+              <input
+                type="search"
+                aria-label="Search fragrances, notes or occasions"
+                placeholder="Search oud, rose, musk, or gifting…"
+                value={searchQuery}
+                onChange={event => setSearchQuery(event.target.value)}
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  aria-label="Clear fragrance search"
+                  onClick={() => setSearchQuery('')}
                 >
-                  {/* Large Bottle Image (~75% proportion) */}
-                  <div 
-                    onClick={() => openProductModal(product)}
-                    style={{
-                      position: 'relative',
-                      aspectRatio: '1 / 1.15',
-                      backgroundColor: '#EDEAE4',
-                      overflow: 'hidden',
-                      cursor: 'pointer'
-                    }}
-                  >
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      loading="lazy"
-                      style={{
-                        width: '100%',
-                        height: '100%',
-                        objectFit: 'cover',
-                        display: 'block',
-                        transition: 'transform 0.5s cubic-bezier(0.22, 1, 0.36, 1)'
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.05)'}
-                      onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-                    />
+                  <X size={13} aria-hidden="true" />
+                </button>
+              )}
+            </label>
 
-                    {/* Category Tag Top Left */}
-                    <span 
-                      style={{
-                        position: 'absolute',
-                        top: '10px',
-                        left: '10px',
-                        fontSize: '0.62rem',
-                        fontWeight: 700,
-                        letterSpacing: '0.1em',
-                        textTransform: 'uppercase',
-                        backgroundColor: '#20201E',
-                        color: '#FFFFFF',
-                        padding: '3px 8px',
-                        borderRadius: '4px'
-                      }}
-                    >
-                      {product.category}
-                    </span>
+            <span className="itra-result-count" role="status">
+              Showing {sortedProducts.length}{' '}
+              {sortedProducts.length === 1 ? 'fragrance' : 'fragrances'}
+            </span>
 
-                    {/* Quick View Button on Hover */}
-                    <div 
-                      style={{
-                        position: 'absolute',
-                        bottom: '10px',
-                        right: '10px',
-                        backgroundColor: 'rgba(255, 255, 255, 0.92)',
-                        backdropFilter: 'blur(4px)',
-                        color: '#181817',
-                        padding: '5px 10px',
-                        borderRadius: '100px',
-                        fontSize: '0.7rem',
-                        fontWeight: 600,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px',
-                        border: '1px solid #DDD9D0'
-                      }}
-                    >
-                      <Eye size={12} />
-                      <span>Details</span>
-                    </div>
-                  </div>
-
-                  {/* Card Content: Name, Short fragrance family, Size, Price */}
-                  <div style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', flex: 1 }}>
-                    
-                    <h3 
-                      onClick={() => openProductModal(product)}
-                      style={{
-                        fontFamily: 'var(--font-serif)',
-                        fontSize: '1.18rem',
-                        fontWeight: 500,
-                        color: '#181817',
-                        lineHeight: 1.25,
-                        margin: '0 0 0.35rem 0',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {product.name}
-                    </h3>
-
-                    {/* Short Fragrance Family (Prompt 19 requirement) */}
-                    <div 
-                      style={{
-                        fontSize: '0.74rem',
-                        color: '#9B7A50', // Bronze accent
-                        fontWeight: 600,
-                        letterSpacing: '0.04em',
-                        marginBottom: '0.75rem',
-                        lineHeight: 1.3
-                      }}
-                    >
-                      {product.family}
-                    </div>
-
-                    <div style={{ flex: 1 }} />
-
-                    {/* Size & Starting Price Row */}
-                    <div 
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'baseline',
-                        paddingTop: '0.75rem',
-                        borderTop: '1px solid #F0ECE1',
-                        marginBottom: '0.85rem'
-                      }}
-                    >
-                      <span style={{ fontSize: '0.74rem', color: '#706E68' }}>
-                        Size: <strong>{product.defaultSize}</strong>
-                      </span>
-                      <span style={{ fontSize: '1.05rem', fontWeight: 700, color: '#181817' }}>
-                        ₹{product.price.toLocaleString('en-IN')}
-                      </span>
-                    </div>
-
-                    {/* Action: ADD TO BAG */}
-                    <button
-                      onClick={() => handleQuickAdd(product)}
-                      style={{
-                        width: '100%',
-                        padding: '0.65rem 0.85rem',
-                        backgroundColor: isToast ? '#27AE60' : '#181817',
-                        color: '#FFFFFF',
-                        border: 'none',
-                        borderRadius: '4px',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        letterSpacing: '0.08em',
-                        textTransform: 'uppercase',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '6px',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                      onMouseEnter={(e) => {
-                        if (!isToast) e.currentTarget.style.backgroundColor = '#9B7A50';
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isToast) e.currentTarget.style.backgroundColor = '#181817';
-                      }}
-                    >
-                      {isToast ? (
-                        <>
-                          <Check size={14} />
-                          <span>Added To Bag</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShoppingBag size={14} />
-                          <span>ADD TO BAG</span>
-                        </>
-                      )}
-                    </button>
-
-                  </div>
-
-                </div>
-              );
-            })}
+            <label className="itra-sort">
+              <span>Sort:</span>
+              <select
+                aria-label="Sort fragrances"
+                value={sortBy}
+                onChange={event => setSortBy(event.target.value)}
+              >
+                <option value="collection">Collection order</option>
+                <option value="price-asc">Price: low to high</option>
+                <option value="price-desc">Price: high to low</option>
+              </select>
+            </label>
           </div>
-
         </div>
-      </section>
 
-      {/* Product Details Modal (Prompt 19: Top Notes, Heart Notes, Base Notes, Character, Best For, Size, How To Apply, ADD TO BAG & ADD SAMPLE) */}
+        {sortedProducts.length ? (
+          <section aria-label="Itra collection">
+            <div className="itra-grid">
+              {sortedProducts.map(product => {
+                const activeSize = getActiveCardSize(product);
+                const livePrice = itraPrice(product, activeSize);
+                const sizeKeys = Object.keys(product.prices);
+                const isAdded = addedToastId === product.id;
+
+                return (
+                  <article className="itra-card" key={product.id}>
+                    <div className="itra-card-media">
+                      <Link
+                        to={`/itra-perfumes/${product.id}`}
+                        className="itra-card-image-link"
+                        aria-label={`View ${product.name}`}
+                      >
+                        <img src={product.image} alt={product.name} loading="lazy" />
+                      </Link>
+                      <span className="itra-cat-badge">{product.category}</span>
+                      <button
+                        type="button"
+                        className="itra-quick-pill"
+                        onClick={() => openProductModal(product)}
+                        aria-label={`Quick view notes for ${product.name}`}
+                      >
+                        <Eye size={13} aria-hidden="true" />
+                        <span>Notes &amp; details</span>
+                      </button>
+                    </div>
+
+                    <div className="itra-card-body">
+                      <div className="itra-card-family">{product.family}</div>
+                      <h3 className="itra-card-title">
+                        <Link to={`/itra-perfumes/${product.id}`}>{product.name}</Link>
+                      </h3>
+                      <p className="itra-card-character">{product.character}</p>
+
+                      <div
+                        className="itra-size-pills"
+                        role="group"
+                        aria-label={`Select volume for ${product.name}`}
+                      >
+                        {sizeKeys.map(sizeKey => (
+                          <button
+                            key={sizeKey}
+                            type="button"
+                            aria-pressed={activeSize === sizeKey}
+                            onClick={() =>
+                              setCardSizes(prev => ({ ...prev, [product.id]: sizeKey }))
+                            }
+                          >
+                            {sizeKey}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="itra-card-footer">
+                        <div className="itra-card-price-row">
+                          <span className="itra-card-vol-label">Volume: {activeSize}</span>
+                          <span className="itra-card-price">{formatInr(livePrice)}</span>
+                        </div>
+
+                        <div className="itra-card-actions">
+                          <button
+                            type="button"
+                            className={`itra-add-btn ${isAdded ? 'is-added' : ''}`}
+                            onClick={() => handleQuickAdd(product)}
+                          >
+                            {isAdded ? (
+                              <>
+                                <Check size={15} aria-hidden="true" />
+                                <span>Added to bag</span>
+                              </>
+                            ) : (
+                              <>
+                                <ShoppingBag size={15} aria-hidden="true" />
+                                <span>Add to bag</span>
+                              </>
+                            )}
+                          </button>
+
+                          <Link
+                            to={`/itra-perfumes/${product.id}`}
+                            className="itra-detail-link"
+                            aria-label={`Open full fragrance page for ${product.name}`}
+                            title="Full fragrance page"
+                          >
+                            <ArrowUpRight size={16} aria-hidden="true" />
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        ) : (
+          <div className="itra-empty">
+            <h3>No fragrances match your selection.</h3>
+            <p>Try searching by note (oud, rose, musk) or clear your active filter.</p>
+            <button
+              type="button"
+              onClick={() => {
+                setSearchQuery('');
+                setActiveCategory('All Itra');
+              }}
+            >
+              Show all {ITRA_PRODUCTS.length} fragrances
+            </button>
+          </div>
+        )}
+
+        <aside className="itra-atelier-banner" aria-label="Custom fragrance gifting">
+          <div className="itra-atelier-copy">
+            <span className="itra-eyebrow">BESPOKE WEDDING &amp; FESTIVE COFFRETS</span>
+            <h2>Curating favours, Nikah hampers or custom scent pairings?</h2>
+            <p>
+              Pair crystal itra flacons with personalised framing or brass-foiled milestone cards.
+              Message our Lucknow workshop for custom gift boxing and bulk quantities.
+            </p>
+          </div>
+          <div className="itra-atelier-actions">
+            <a
+              href={getWhatsAppUrl('Hello! I would like to enquire about custom itra gift hampers.')}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="itra-btn-evergreen"
+            >
+              <MessageCircle size={16} aria-hidden="true" />
+              <span>WhatsApp Studio</span>
+            </a>
+            <Link to="/gift-sets" className="itra-btn-outline">
+              <span>Explore Gift Sets</span>
+              <ArrowUpRight size={16} aria-hidden="true" />
+            </Link>
+          </div>
+        </aside>
+      </div>
+
       {selectedProduct && (
         <div
+          className="itra-modal-backdrop"
           role="dialog"
           aria-modal="true"
+          aria-labelledby="itra-modal-title"
           onClick={() => setSelectedProduct(null)}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            backgroundColor: 'rgba(24, 24, 23, 0.65)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '1rem',
-            animation: 'fadeIn 0.25s ease'
-          }}
         >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            style={{
-              backgroundColor: '#FFFFFF',
-              borderRadius: '12px',
-              maxWidth: '880px',
-              width: '100%',
-              maxHeight: '92vh',
-              overflowY: 'auto',
-              boxShadow: '0 24px 60px rgba(0, 0, 0, 0.25)',
-              border: '1px solid #DDD9D0',
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'
-            }}
-          >
-            {/* Modal Left: Flacon Image */}
-            <div style={{ position: 'relative', minHeight: '360px', backgroundColor: '#EDEAE4' }}>
-              <img 
-                src={selectedProduct.image} 
-                alt={selectedProduct.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-              />
-              <div 
-                style={{
-                  position: 'absolute',
-                  top: '1.25rem',
-                  left: '1.25rem',
-                  backgroundColor: '#20201E',
-                  color: '#FFFFFF',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.12em',
-                  textTransform: 'uppercase',
-                  padding: '4px 10px',
-                  borderRadius: '4px'
-                }}
-              >
-                {selectedProduct.category}
-              </div>
+          <div className="itra-modal" onClick={event => event.stopPropagation()}>
+            <div className="itra-modal-media">
+              <img src={selectedProduct.image} alt={selectedProduct.name} />
+              <span className="itra-cat-badge">{selectedProduct.category}</span>
             </div>
 
-            {/* Modal Right: Olfactory Breakdown */}
-            <div style={{ padding: 'clamp(1.75rem, 3.5vw, 2.5rem)', display: 'flex', flexDirection: 'column' }}>
-              
-              {/* Close Button Top Right */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.72rem', letterSpacing: '0.14em', textTransform: 'uppercase', color: '#9B7A50', fontWeight: 700 }}>
-                  {selectedProduct.family}
-                </span>
-
+            <div className="itra-modal-body">
+              <div className="itra-modal-top">
+                <span className="itra-eyebrow">{selectedProduct.family}</span>
                 <button
+                  type="button"
+                  className="itra-modal-close"
+                  aria-label="Close fragrance details"
                   onClick={() => setSelectedProduct(null)}
-                  aria-label="Close modal"
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    backgroundColor: '#F5F3EE',
-                    border: '1px solid #DDD9D0',
-                    color: '#181817',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    cursor: 'pointer'
-                  }}
                 >
-                  <X size={16} />
+                  <X size={16} aria-hidden="true" />
                 </button>
               </div>
 
-              <h2 
-                style={{
-                  fontFamily: 'var(--font-serif)',
-                  fontSize: '1.65rem',
-                  fontWeight: 500,
-                  color: '#181817',
-                  margin: '0 0 0.4rem 0',
-                  lineHeight: 1.2
-                }}
-              >
-                {selectedProduct.name}
-              </h2>
+              <h2 id="itra-modal-title">{selectedProduct.name}</h2>
 
-              {/* Character & Best For */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1.25rem', fontSize: '0.82rem' }}>
+              <div className="itra-modal-facts">
                 <div>
-                  <span style={{ fontWeight: 600, color: '#181817' }}>Character: </span>
-                  <span style={{ color: '#706E68' }}>{selectedProduct.character}</span>
+                  <strong>Character:</strong> {selectedProduct.character}
                 </div>
                 <div>
-                  <span style={{ fontWeight: 600, color: '#181817' }}>Best For: </span>
-                  <span style={{ color: '#706E68' }}>{selectedProduct.bestFor}</span>
+                  <strong>Best for:</strong> {selectedProduct.bestFor}
                 </div>
               </div>
 
-              {/* Olfactory Pyramid (Prompt 19 requirement) */}
-              <div 
-                style={{
-                  backgroundColor: '#F9F8F5',
-                  border: '1px solid #EAE6DC',
-                  borderRadius: '6px',
-                  padding: '1rem',
-                  marginBottom: '1.25rem'
-                }}
-              >
-                <div style={{ fontSize: '0.68rem', letterSpacing: '0.12em', textTransform: 'uppercase', color: '#706E68', fontWeight: 700, marginBottom: '0.65rem' }}>
-                  Olfactory Notes
-                </div>
-
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.8rem' }}>
+              <div className="itra-modal-pyramid">
+                <div className="itra-modal-pyramid-label">Olfactory Notes</div>
+                <div className="itra-modal-pyramid-list">
                   <div>
-                    <strong style={{ color: '#181817' }}>Top Notes: </strong>
-                    <span style={{ color: '#706E68' }}>{selectedProduct.topNotes}</span>
+                    <strong>Top:</strong> {selectedProduct.topNotes}
                   </div>
                   <div>
-                    <strong style={{ color: '#181817' }}>Heart Notes: </strong>
-                    <span style={{ color: '#706E68' }}>{selectedProduct.heartNotes}</span>
+                    <strong>Heart:</strong> {selectedProduct.heartNotes}
                   </div>
                   <div>
-                    <strong style={{ color: '#181817' }}>Base Notes: </strong>
-                    <span style={{ color: '#706E68' }}>{selectedProduct.baseNotes}</span>
+                    <strong>Base:</strong> {selectedProduct.baseNotes}
                   </div>
                 </div>
               </div>
 
-              {/* How To Apply (Prompt 19 requirement) */}
-              <div style={{ marginBottom: '1.25rem', fontSize: '0.8rem', color: '#706E68', lineHeight: 1.45 }}>
-                <strong style={{ color: '#181817' }}>How To Apply: </strong>
-                {selectedProduct.howToApply}
-              </div>
+              <p className="itra-modal-apply">
+                <strong>How to apply:</strong> {selectedProduct.howToApply}
+              </p>
 
-              {/* Size Selector */}
-              <div style={{ marginBottom: '1.5rem' }}>
-                <div style={{ fontSize: '0.72rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#706E68', fontWeight: 700, marginBottom: '0.5rem' }}>
-                  Choose Volume:
-                </div>
-
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                  {Object.keys(selectedProduct.prices).map((sz) => {
-                    const isSelected = modalSelectedSize === sz;
-                    return (
-                      <button
-                        key={sz}
-                        onClick={() => setModalSelectedSize(sz)}
-                        style={{
-                          padding: '0.5rem 0.85rem',
-                          borderRadius: '4px',
-                          border: isSelected ? '2px solid #181817' : '1px solid #DDD9D0',
-                          backgroundColor: isSelected ? '#181817' : '#FFFFFF',
-                          color: isSelected ? '#FFFFFF' : '#181817',
-                          fontSize: '0.78rem',
-                          fontWeight: isSelected ? 600 : 500,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {sz} — ₹{selectedProduct.prices[sz]}
-                      </button>
-                    );
-                  })}
+              <div>
+                <div className="itra-modal-sizes-label">Choose volume</div>
+                <div className="itra-modal-sizes" role="group" aria-label="Choose bottle volume">
+                  {Object.keys(selectedProduct.prices).map(sizeKey => (
+                    <button
+                      key={sizeKey}
+                      type="button"
+                      aria-pressed={modalSelectedSize === sizeKey}
+                      onClick={() => setModalSelectedSize(sizeKey)}
+                    >
+                      {sizeKey} — {formatInr(itraPrice(selectedProduct, sizeKey))}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              <div style={{ flex: 1 }} />
-
-              {/* Action Buttons: ADD TO BAG & optional ADD SAMPLE / DISCOVERY SIZE */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                
+              <div className="itra-modal-actions">
                 <button
+                  type="button"
+                  className="itra-modal-primary"
                   onClick={() => handleModalAdd(false)}
-                  style={{
-                    width: '100%',
-                    padding: '0.85rem',
-                    backgroundColor: '#181817',
-                    color: '#FFFFFF',
-                    border: 'none',
-                    borderRadius: '4px',
-                    fontSize: '0.82rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#9B7A50'}
-                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#181817'}
                 >
-                  <ShoppingBag size={16} />
-                  <span>ADD TO BAG — ₹{selectedProduct.prices[modalSelectedSize]}</span>
+                  <ShoppingBag size={16} aria-hidden="true" />
+                  <span>
+                    ADD TO BAG — {formatInr(itraPrice(selectedProduct, modalSelectedSize))}
+                  </span>
                 </button>
 
                 {selectedProduct.samplePrice && (
                   <button
+                    type="button"
+                    className="itra-modal-secondary"
                     onClick={() => handleModalAdd(true)}
-                    style={{
-                      width: '100%',
-                      padding: '0.75rem',
-                      backgroundColor: 'transparent',
-                      color: '#181817',
-                      border: '1px solid #181817',
-                      borderRadius: '4px',
-                      fontSize: '0.78rem',
-                      fontWeight: 600,
-                      letterSpacing: '0.06em',
-                      textTransform: 'uppercase',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      transition: 'all 0.2s ease'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#F5F3EE';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'transparent';
-                    }}
                   >
-                    <Droplet size={14} color="#9B7A50" />
-                    <span>ADD SAMPLE / DISCOVERY SIZE (3ml — ₹{selectedProduct.samplePrice})</span>
+                    <Droplet size={15} aria-hidden="true" />
+                    <span>
+                      ADD DISCOVERY SAMPLE (3ml —{' '}
+                      {formatInr(itraPrice(selectedProduct, '3ml') ?? selectedProduct.samplePrice)}
+                      )
+                    </span>
                   </button>
                 )}
 
                 <Link
-                  to={`/itra/${selectedProduct.id}`}
-                  style={{
-                    display: 'block',
-                    textAlign: 'center',
-                    fontSize: '0.76rem',
-                    color: '#706E68',
-                    textDecoration: 'underline',
-                    marginTop: '6px'
-                  }}
+                  to={`/itra-perfumes/${selectedProduct.id}`}
+                  className="itra-modal-link"
+                  onClick={() => setSelectedProduct(null)}
                 >
-                  View Full Fragrance Editorial Page & Notes →
+                  <span>View full fragrance page &amp; notes</span>
+                  <ArrowUpRight size={14} aria-hidden="true" />
                 </Link>
-
               </div>
-
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

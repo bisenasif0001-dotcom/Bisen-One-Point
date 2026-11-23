@@ -8,6 +8,9 @@ import { PRINTING_OPTIONS, PRINTING_SERVICES, PRINTING_SIZES, createPrintingDraf
 import { buildPrintingMessage, isPrintCount, localPrintingDate, printingEnquiryRows, printingQuantity, printingSizeLabel, validatePrintingEnquiry } from '../utils/printingEnquiry';
 import PrintingServiceArt from '../components/PrintingServiceArt';
 import StudioEnquiryReceipt from '../components/StudioEnquiryReceipt';
+import { usePriceOverrides } from '../components/BusinessRulesProvider';
+import { PRINT_SIZES } from '../data/printSizes';
+import { getPrintSizePrice } from '../utils/priceRegistry';
 import './PrintingServicesPage.css';
 
 const SERVICE_ICONS = { pvc: CreditCard, posters: Image, dua: Sparkles, bulk: Layers, design: Palette };
@@ -26,7 +29,7 @@ function PrintingHub({ unknownService }) {
 }
 
 function PrintingContact() {
-  return <aside className="prs-contact"><div><span className="prs-kicker">YOUR LOCAL PRINTING STUDIO / LUCKNOW</span><h2>Still finding the right format?</h2><p>Tell us what you have in mind. We’ll help you find a starting point.</p><a href={BUSINESS_CONFIG.location.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="prs-address"><MapPin size={14} />{BUSINESS_CONFIG.location.workshopAddress}</a></div><a className="prs-primary" href={getWhatsAppUrl('Hello AL-NOOR! Please help me choose a printing service for my project.')} target="_blank" rel="noopener noreferrer"><MessageCircle size={16} /> Ask the print studio <ArrowUpRight size={15} /></a></aside>;
+  return <aside className="prs-contact"><div><span className="prs-kicker">YOUR LOCAL PRINTING STUDIO / LUCKNOW</span><h2>Still finding the right format?</h2><p>Tell us what you have in mind. We’ll help you find a starting point.</p><a href={BUSINESS_CONFIG.location.googleMapsUrl} target="_blank" rel="noopener noreferrer" className="prs-address"><MapPin size={14} />{BUSINESS_CONFIG.location.workshopAddress}</a></div><a className="prs-primary" href={getWhatsAppUrl('Hello BISEN! Please help me choose a printing service for my project.')} target="_blank" rel="noopener noreferrer"><MessageCircle size={16} /> Ask the print studio <ArrowUpRight size={15} /></a></aside>;
 }
 
 function InputField({ id, label, value, onChange, error, helper, type = 'text', maxLength, numeric = false, min, autoComplete }) {
@@ -38,6 +41,7 @@ function SelectField({ id, label, value, options, onChange, helper, error }) {
 }
 
 function ServiceDetail({ service, draft, onChange }) {
+  const priceOverrides = usePriceOverrides();
   const navigate=useNavigate();
   const [step,setStep]=useState(0), [errors,setErrors]=useState({}), [exampleOpen,setExampleOpen]=useState(false);
   const formRef=useRef(null), panelRef=useRef(null), errorRef=useRef(null), headingRef=useRef(null);
@@ -53,7 +57,12 @@ function ServiceDetail({ service, draft, onChange }) {
   const sizeOptions=[{value:'advise',label:'Help me choose'},...PRINTING_SIZES[service.id].map(size=>({value:size.id,label:printingSizeLabel(service,{...draft,sizeId:size.id})})),{value:'custom',label:'Request a custom size'}];
   const count=printingQuantity(service,draft);
   const message=step===1 ? buildPrintingMessage(service,draft) : '';
-  const related=service.id==='dua' && draft.duaSource==='collection' && draft.designId ? { ...service.related,to:`/dua-posters/${draft.designId}`,label:'See this design’s print & frame options'} : service.related;
+  const minPrintPrice = getPrintSizePrice(PRINT_SIZES[0].id, priceOverrides);
+  const related = service.id==='dua' && draft.duaSource==='collection' && draft.designId
+    ? { ...service.related, to:`/dua-posters/${draft.designId}`, label:'See this design’s print & frame options' }
+    : service.id === 'bulk' && service.related
+      ? { ...service.related, note: `For standard orders, choose your photos and see prices from ₹${minPrintPrice} per print.` }
+      : service.related;
 
   return <div className="prs-wrap"><div className="prs-breadcrumb"><Link to="/printing-services"><ArrowLeft size={12} /> Print & design</Link><span>/</span><span>{service.title}</span></div><nav className="prs-service-navigation" aria-label="Printing services">{PRINTING_SERVICES.map(item=><Link key={item.id} to={printingServicePath(item)} aria-current={service.id===item.id?'page':undefined}>{item.name}</Link>)}</nav><label className="prs-mobile-service-switch"><span>Printing service</span><div><select aria-label="Choose printing service" value={service.id} onChange={event=>{const item=getPrintingService(event.target.value);navigate(printingServicePath(item));}}>{PRINTING_SERVICES.map(item=><option key={item.id} value={item.id}>{item.title}</option>)}</select><ChevronDown size={15} /></div></label>
     <header className="prs-detail-intro"><span className="prs-kicker"><Icon size={14} /> {service.kicker}</span><h1>{service.title}</h1><p>{service.description}</p></header>

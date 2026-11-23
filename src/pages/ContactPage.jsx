@@ -98,7 +98,7 @@ export default function ContactPage() {
                   <div>
                     <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>WhatsApp Direct Desk</div>
                     <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Ask about your order, artwork or a custom quote</div>
-                    <a href={getWhatsAppUrl('Hello AL-NOOR Studio! I have an inquiry.')} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-bronze)', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', display: 'inline-block', marginTop: '3px' }}>
+                    <a href={getWhatsAppUrl('Hello BISEN Studio! I have an inquiry.')} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent-bronze)', fontSize: '0.82rem', fontWeight: 600, textDecoration: 'none', display: 'inline-block', marginTop: '3px' }}>
                       Chat Now ({BUSINESS_CONFIG.contact.whatsappFormatted}) →
                     </a>
                   </div>

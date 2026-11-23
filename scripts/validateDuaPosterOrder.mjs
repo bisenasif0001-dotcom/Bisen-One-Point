@@ -36,23 +36,35 @@ assert.ok(buildDuaEnquiry({ poster, order: custom }).includes('Size: Custom (12.
 assert.equal(getDuaOrderDetails({ ...base, sizeId: 'bad-size' }).valid, false);
 assert.equal(getDuaOrderDetails({ ...base, format: 'bad-format' }).valid, false);
 const frame = { id: 'regal_heritage', name: 'Regal Heritage', finish: 'Walnut Brown & Gold' };
-const framed = getDuaOrderDetails({ ...base, format: 'framed' });
-assert.equal(framed.unitPrice, null, 'A print price must never be presented as a framed price');
-assert.ok(buildDuaEnquiry({ poster, order: framed, frame }).includes('Frame: Regal Heritage (regal_heritage)'));
+const framedWithoutFrame = getDuaOrderDetails({ ...base, format: 'framed' });
+assert.equal(framedWithoutFrame.unitPrice, null, 'A print price must never be presented as a framed price without a frame');
+const framed = getDuaOrderDetails({ ...base, format: 'framed', frameId: frame.id });
+assert.equal(framed.printPrice, 149);
+assert.equal(framed.framePrice, 599);
+assert.equal(framed.unitPrice, 748);
+assert.equal(framed.subtotal, 1496);
+const framedMessage = buildDuaEnquiry({ poster, order: framed, frame });
+assert.ok(framedMessage.includes('Frame: Regal Heritage (regal_heritage)'));
+assert.ok(framedMessage.includes('Poster print price: Rs 149'));
+assert.ok(framedMessage.includes('Frame price: Rs 599'));
+assert.ok(framedMessage.includes('Combined unit price: Rs 748'));
 
 const server = await createServer({ server: { middlewareMode: true, hmr: false } });
 try {
   const { default: Customizer } = await server.ssrLoadModule('/src/components/DuaPosterCustomizer.jsx');
   const render = props => renderToStaticMarkup(React.createElement(MemoryRouter, null, React.createElement(Customizer, { poster, ...props })));
-  const framedPage = render({ initialFrame: 'regal_heritage' });
+  const framedPage = render({ initialFrame: 'regal_heritage', onAddToCart: () => {} });
   assert.equal((framedPage.match(/<h1>/g) || []).length, 1);
   assert.ok(framedPage.includes('regal-heritage/front.png'));
-  assert.ok(framedPage.includes('Get quote on WhatsApp'));
+  assert.ok(framedPage.includes('Add to Bag · ₹558'));
+  assert.ok(framedPage.includes('Poster print'));
+  assert.ok(framedPage.includes('Order on WhatsApp'));
   assert.ok(framedPage.includes('Poster preview view'));
-  assert.ok(framedPage.includes('Price on request'));
+  const a3FramedPage = render({ initialFrame: 'regal_heritage', initialSize: 'A3', onAddToCart: () => {} });
+  assert.ok(a3FramedPage.includes('Add to Bag · ₹748'));
   const printPage = render({ initialFormat: 'print' });
   assert.ok(printPage.includes('Order on WhatsApp'));
-  assert.ok(printPage.includes('₹43'));
+  assert.ok(printPage.includes('₹79'));
   assert.ok(!printPage.includes('dpd-frame-grid'), 'Print-only orders hide frame controls');
   assert.ok(!printPage.includes('<svg class="dua-real-frame'), 'Print-only preview is unframed');
   assert.ok(render({ initialFrame: 'invalid-frame' }).includes('regal-noir/front.png'));
@@ -60,5 +72,5 @@ try {
     const html = renderToStaticMarkup(React.createElement(MemoryRouter, null, React.createElement(Customizer, { poster: design })));
     assert.ok(html.includes(`href="${design.image}"`), design.title);
   }
-  console.log('Passed: all 5 print prices and quantities, custom dimensions, invalid-order protection, quote messages, frame/print presets and all 22 product pages.');
+  console.log('Passed: all 9 print prices and quantities, custom dimensions, invalid-order protection, quote messages, frame/print presets and all 22 product pages.');
 } finally { await server.close(); }

@@ -19,7 +19,7 @@ await keepRecoveryCopy();
 const maintenanceTimer=setInterval(()=>{if(!api.maintenance.busy())api.maintenance.cleanup().then(keepRecoveryCopy).catch(()=>console.error('Studio retention check failed. Review maintenance in the studio panel.'));},3600000);
 maintenanceTimer.unref();
 const server=createServer((req,res)=>api.handler(req,res,()=>serve(req,res)));
-server.listen(Number(process.env.PORT)||3000,process.env.HOST||'127.0.0.1',()=>console.log(`AL-NOOR studio server ready on port ${Number(process.env.PORT)||3000}`));
+server.listen(Number(process.env.PORT)||3000,process.env.HOST||'127.0.0.1',()=>console.log(`BISEN studio server ready on port ${Number(process.env.PORT)||3000}`));
 let stopping=false;
 function close(){if(stopping)return;stopping=true;clearInterval(maintenanceTimer);server.close(async()=>{await api.maintenance.idle();api.close();process.exit(0);});}
 process.on('SIGTERM',close);process.on('SIGINT',close);

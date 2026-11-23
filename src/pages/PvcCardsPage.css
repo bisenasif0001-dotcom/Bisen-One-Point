@@ -9,3 +9,46 @@
 @media(prefers-reduced-motion:reduce){.pvc-page *{scroll-behavior:auto!important;transition:none!important}}
 .pvc-page section{padding:0!important}.pvc-page .pvc-type-directory{padding:38px 0!important}.pvc-page .pvc-bulk-banner{padding:29px!important}
 @media(max-width:600px){.pvc-page .pvc-type-directory{padding:28px 0!important}.pvc-page .pvc-bulk-banner{padding:24px 21px!important}}
+
+/* Live PVC Card Pricing & Add-to-Bag UI */
+.pvc-spec-strip{grid-template-columns:repeat(4,1fr)}
+.pvc-product-price{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin-top:auto;margin-bottom:10px}
+.pvc-product-price strong{font-size:16px;font-weight:700;color:var(--pvc-ink)}
+.pvc-product-price strong span{font-size:10px;font-weight:500;color:var(--pvc-muted);margin-left:2px}
+.pvc-product-price small{font-size:9px;font-weight:600;color:#4a6b3e;background:#eef3e4;padding:2px 7px;border-radius:999px}
+.pvc-product-copy>span{margin-top:0}
+
+.pvc-preview-price{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 20px 10px;padding:10px 12px;background:#f4f7ec;border:1px solid #d9e2cb;border-radius:5px}
+.pvc-preview-price strong{display:block;font-size:19px;font-weight:700;color:var(--pvc-ink);line-height:1.15}
+.pvc-preview-price small{display:block;font-size:10px;color:#5c6e50;margin-top:2px}
+.pvc-price-badge{font-size:10px;font-weight:700;color:#274736;background:#dfe8d0;border:1px solid #c5d4af;padding:4px 9px;border-radius:999px;white-space:nowrap}
+
+.pvc-price-box{border:1px solid #d9e2cc;background:#f7f9f1;border-radius:6px;padding:15px 16px;margin-top:4px;display:flex;flex-direction:column;gap:10px}
+.pvc-price-row{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;font-size:12px;color:#485d46}
+.pvc-price-row small{display:block;font-size:10px;color:#728268;margin-top:2px}
+.pvc-price-row small s{color:#919c87;margin-right:4px}
+.pvc-price-row strong{font-size:12px;font-weight:650;color:#294536;white-space:nowrap}
+.pvc-price-row.is-savings,.pvc-price-row.is-savings strong{color:#2f6c41}
+.pvc-price-total{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;border-top:1px solid #dce3cf;padding-top:11px;margin-top:2px}
+.pvc-price-total span{font-size:12px;font-weight:650;color:#294536}
+.pvc-price-total span small{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:400;color:#708065;margin-top:3px}
+.pvc-price-total strong{font-size:21px;font-weight:700;color:#294536;white-space:nowrap}
+
+.pvc-action-buttons{display:flex;align-items:center;flex-wrap:wrap;gap:10px}
+.pvc-page .pvc-secondary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:49px;padding:12px 16px;border:1px solid #c6d0b9;background:#fffefa;color:#2e4b3d;border-radius:5px;font-size:12px;font-weight:600;line-height:1.4;transition:background .18s,border-color .18s}
+.pvc-page .pvc-secondary:hover{background:#f1f4ea;border-color:#8da07c}
+.pvc-page .pvc-primary:disabled{opacity:.55;cursor:not-allowed;box-shadow:none}
+.pvc-mobile-buttons{display:flex;align-items:center;gap:7px;flex-shrink:0}
+.pvc-mobile-action .pvc-secondary{min-height:44px;padding:10px 12px;font-size:11px}
+
+@media(max-width:800px){
+  .pvc-spec-strip{grid-template-columns:repeat(2,1fr);gap:14px 8px}
+  .pvc-spec-strip>span:nth-child(odd){border-left:0}
+}
+@media(max-width:600px){
+  .pvc-preview-price{margin:0 14px 8px;padding:9px 11px}
+  .pvc-price-box{padding:13px}
+  .pvc-action-buttons{width:100%;flex-direction:column}
+  .pvc-config form .pvc-action-buttons>.pvc-primary,.pvc-config form .pvc-action-buttons>.pvc-secondary{width:100%}
+  .pvc-config form .pvc-config-actions>.pvc-primary{width:auto}
+}

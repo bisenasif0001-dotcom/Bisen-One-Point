@@ -3,8 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { X, Star, ShoppingBag, MessageCircle, Check, ArrowRight, ShieldCheck } from 'lucide-react';
 import { FRAME_SIZES, FRAME_FINISHES } from '../data/products';
 import { getWhatsAppUrl } from '../data/businessConfig';
+import { usePriceOverrides } from './BusinessRulesProvider';
+import { getStudioPrice } from '../utils/frameStudio';
+import { getDuaPosterPrice } from '../utils/priceRegistry';
 
 export default function ProductDetailModal({ item, isOpen, onClose, onAddToCart }) {
+  const priceOverrides = usePriceOverrides();
   const navigate = useNavigate();
   const [selectedFormat, setSelectedFormat] = useState('framed');
   const [selectedSize, setSelectedSize] = useState('A4');
@@ -16,13 +20,17 @@ export default function ProductDetailModal({ item, isOpen, onClose, onAddToCart 
   const sizeObj = FRAME_SIZES.find(s => s.id === selectedSize) || FRAME_SIZES[1];
 
   const calculatePrice = () => {
-    const base = item.framedPriceA4 || item.basePrice || 599;
-    const multiplier = sizeObj.multiplier || 1.35;
-    const finishDiff = selectedFinish.extraPrice || 0;
+    const isArtItem = item.unframedPriceA4 !== undefined || String(item.id || '').startsWith('art-') || String(item.id || '').startsWith('asma-');
+    const printPrice = getDuaPosterPrice(selectedSize, priceOverrides) ?? Math.round((item.unframedPriceA4 || 79) * (sizeObj.multiplier || 1.35) / 1.35);
     if (selectedFormat === 'unframed') {
-      return Math.round((item.unframedPriceA4 || base * 0.7) * (multiplier / 1.35));
+      return printPrice;
     }
-    return Math.round((base * (multiplier / 1.35)) + (finishDiff * 0.5));
+    if (isArtItem) {
+      const frameOnly = getStudioPrice({ sizeId: selectedSize, frameId: selectedFinish.id, includePrint: false, overrides: priceOverrides })?.unit ?? 0;
+      return printPrice + frameOnly;
+    }
+    return getStudioPrice({ sizeId: selectedSize, frameId: selectedFinish.id, includePrint: true, overrides: priceOverrides })?.unit
+      ?? Math.round(sizeObj.basePrice + (sizeObj.printAddon || 0) + (selectedFinish.extraPrice || 0));
   };
 
   const price = calculatePrice();
@@ -167,29 +175,60 @@ export default function ProductDetailModal({ item, isOpen, onClose, onAddToCart 
               </div>
             </div>
 
+            {/* Format Selector */}
+            <div>
+              <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#171717', display: 'block', marginBottom: '4px' }}>
+                Format
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
+                {[
+                  ['framed', 'With Frame'],
+                  ['unframed', 'Without Frame (Print Only)'],
+                ].map(([val, label]) => (
+                  <button
+                    key={val}
+                    type="button"
+                    onClick={() => setSelectedFormat(val)}
+                    style={{
+                      padding: '6px 8px',
+                      border: selectedFormat === val ? '1.5px solid #171717' : '1px solid #ECE7DE',
+                      backgroundColor: selectedFormat === val ? '#171717' : '#FAF9F6',
+                      color: selectedFormat === val ? '#FFFFFF' : '#171717',
+                      borderRadius: '4px',
+                      fontSize: '0.76rem',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             {/* Size Selector */}
             <div>
               <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#171717', display: 'block', marginBottom: '4px' }}>
                 Size: {sizeObj.name}
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px' }}>
-                {['A5', 'A4', 'A3', 'A2', 'A1'].map((sz) => (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(64px, 1fr))', gap: '4px' }}>
+                {FRAME_SIZES.map((sz) => (
                   <button
-                    key={sz}
+                    key={sz.id}
                     type="button"
-                    onClick={() => setSelectedSize(sz)}
+                    onClick={() => setSelectedSize(sz.id)}
                     style={{
                       padding: '6px 2px',
-                      border: selectedSize === sz ? '1.5px solid #171717' : '1px solid #ECE7DE',
-                      backgroundColor: selectedSize === sz ? '#171717' : '#FAF9F6',
-                      color: selectedSize === sz ? '#FFFFFF' : '#171717',
+                      border: selectedSize === sz.id ? '1.5px solid #171717' : '1px solid #ECE7DE',
+                      backgroundColor: selectedSize === sz.id ? '#171717' : '#FAF9F6',
+                      color: selectedSize === sz.id ? '#FFFFFF' : '#171717',
                       borderRadius: '4px',
-                      fontSize: '0.8rem',
+                      fontSize: '0.78rem',
                       fontWeight: 600,
                       cursor: 'pointer'
                     }}
                   >
-                    {sz}
+                    {sz.id.replace('x', '×')}
                   </button>
                 ))}
               </div>

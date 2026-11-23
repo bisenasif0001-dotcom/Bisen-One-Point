@@ -77,8 +77,8 @@ try {
     path: '/islamic-art/:id', element: React.createElement(AsmaArtworkDetailPage, { onAddToCart() {} }),
   })), asmaArtworkPath(sample));
   for (const label of ['Al-Mu&#x27;min', 'Print only', 'With frame', 'Custom size', 'Quantity', 'Add to Bag', 'estimated subtotal', 'Get quote on WhatsApp']) assert.ok(nameDetail.includes(label), label);
-  assert.equal(asmaArtworkPrice(sample, 'print', 'A4'), 399);
-  assert.equal(asmaArtworkPrice(sample, 'framed', 'A4', FRAME_FINISHES[1]), 849);
+  assert.equal(asmaArtworkPrice(sample, 'print', 'A4'), 79);
+  assert.equal(asmaArtworkPrice(sample, 'framed', 'A4', FRAME_FINISHES[1]), 408);
   assert.equal(asmaArtworkPrice(sample, 'framed', 'Custom'), null);
   assert.equal(routeInfo('/islamic-art/not-a-design').known, false);
   for(const format of ['framed','print']) {

@@ -1,6 +1,7 @@
-import { FRAME_FINISHES, FRAME_SIZES } from '../data/products';
-import { GALLERY_LAYOUTS, getGalleryLayout } from '../data/galleryWalls';
-import { homeFrame } from '../data/homeStudio';
+import { FRAME_FINISHES, FRAME_SIZES } from '../data/products.js';
+import { GALLERY_LAYOUTS, getGalleryLayout } from '../data/galleryWalls.js';
+import { homeFrame } from '../data/homeStudio.js';
+import { getActivePriceOverrides, getFrameFinishExtraPrice, getGalleryLayoutAutoBasePrice } from './priceRegistry.js';
 
 export function galleryPrintDimensions(slot) {
   const size = FRAME_SIZES.find(item => item.id === slot.sizeId);
@@ -43,12 +44,24 @@ export function getGalleryPlan(layoutId, frameId = 'regal_aurelia') {
   return { slots: slots.map(slot => ({ ...slot, x: slot.x - slot.width / 2 - left, y: slot.y - slot.height / 2 - top })), width: right - left, height: bottom - top, gap };
 }
 
-export function getGalleryPrice(layoutId, frameId) {
+export function getGalleryPrice(layoutId, frameId, overrides) {
   const layout = GALLERY_LAYOUTS.find(item => item.id === layoutId);
   const frame = FRAME_FINISHES.find(item => item.id === frameId);
   if (!layout || !frame) return null;
-  // Existing gallery bundles include the chosen catalogue finish at the advertised set price.
-  return { base: layout.startingPrice, finishPerFrame: 0, finishUpgrade: 0, total: layout.startingPrice };
+  const src = overrides !== undefined ? overrides : getActivePriceOverrides();
+  const autoBase = getGalleryLayoutAutoBasePrice(layoutId, overrides);
+  const manualBase = src?.galleryLayouts?.[layoutId];
+  const base = manualBase !== undefined ? manualBase : autoBase;
+  const finishPerFrame = getFrameFinishExtraPrice(frameId, overrides);
+  const finishUpgrade = finishPerFrame * layout.framesCount;
+  return {
+    base,
+    autoBase,
+    isCustomOverride: manualBase !== undefined,
+    finishPerFrame,
+    finishUpgrade,
+    total: base + finishUpgrade,
+  };
 }
 
 export function swapGalleryEntries(entries, from, to) {
@@ -67,12 +80,12 @@ export function validateGalleryOrder(config, photos) {
   return '';
 }
 
-export function createGalleryWallItem(config, photos, settings, id = `gallery-wall-${Date.now()}`) {
+export function createGalleryWallItem(config, photos, settings, id = `gallery-wall-${Date.now()}`, overrides) {
   const problem = validateGalleryOrder(config, photos);
   if (problem) throw new Error(problem);
   const layout = getGalleryLayout(config.layoutId);
   const frame = FRAME_FINISHES.find(item => item.id === config.frameId);
-  const price = getGalleryPrice(config.layoutId, config.frameId);
+  const price = getGalleryPrice(config.layoutId, config.frameId, overrides);
   const slots = layout.slots.map((slot, index) => ({ ...slot, index, fit: settings[index]?.fit || 'cover', panX: settings[index]?.panX ?? 50, panY: settings[index]?.panY ?? 20,
     photo: photos[index] && !photos[index].isSample ? { url: photos[index].url, name: photos[index].name, width: photos[index].width, height: photos[index].height, originalId: photos[index].id } : null,
   }));

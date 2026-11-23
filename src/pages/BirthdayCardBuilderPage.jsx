@@ -9,6 +9,8 @@ import { savePrintOriginals } from '../utils/printPhotoStorage';
 import { getWhatsAppUrl } from '../data/businessConfig';
 import { getStationeryOccasion, stationeryOccasionPath } from '../data/cardStationery';
 import { StationeryRequestLinks } from './CardsInvitationsPage';
+import { usePriceOverrides } from '../components/BusinessRulesProvider';
+import { getCardSizePrice } from '../utils/priceRegistry';
 import './BirthdayCardBuilderPage.css';
 
 const money = value => `₹${value.toLocaleString('en-IN')}`;
@@ -76,6 +78,7 @@ export default function BirthdayCardBuilderPage({ onAddToCart, preset }) {
 }
 
 function CardEditor({ onAddToCart, occasion, initialTemplate }) {
+  const priceOverrides = usePriceOverrides();
   const birthday = occasion.id === 'birthday';
   const [step, setStep] = useState(0), [category, setCategory] = useState('All');
   const [config, setConfig] = useState(() => ({
@@ -94,7 +97,8 @@ function CardEditor({ onAddToCart, occasion, initialTemplate }) {
   const template = CARD_TEMPLATES.find(item => item.id === config.templateId);
   const palette = getCardPalette(config.templateId, config.paletteId);
   const size = CARD_SIZES.find(item => item.id === config.sizeId);
-  const pricing = getCardPricing(config.sizeId, config.cardCount);
+  const currentUnitPrice = priceOverrides?.cardSizes?.[config.sizeId] ?? getCardSizePrice(config.sizeId);
+  const pricing = getCardPricing(config.sizeId, config.cardCount, priceOverrides);
   const previewPhoto = photo || { ...CARD_DEMO_PHOTO, isSample: true };
   const orderedTemplates = [initialTemplate, ...CARD_TEMPLATES.filter(item => item.id !== initialTemplate.id)];
   const filtered = orderedTemplates.filter(item => category === 'All' || item.category === category);
@@ -135,7 +139,7 @@ function CardEditor({ onAddToCart, occasion, initialTemplate }) {
       // Keep the exact vector design in the order, with a compact photo preview. Originals stay on this device.
       const svg = frontRef.current.querySelector('svg').outerHTML;
       const image = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
-      const item = createBirthdayCardItem(config, photo, image);
+      const item = createBirthdayCardItem(config, photo, image, undefined, priceOverrides);
       if (config.includePhoto) await savePrintOriginals([photo]);
       onAddToCart(item);
     } catch (problem) { showError(problem.message || 'Your card could not be added. Please try again.'); }
@@ -151,7 +155,7 @@ function CardEditor({ onAddToCart, occasion, initialTemplate }) {
   return <div className="bday-page">
     <div className="bday-wrap cs-shell">
       <nav className="cs-breadcrumb" aria-label="Breadcrumb"><Link to="/cards"><ArrowLeft size={15} /> Cards & invitations</Link><span aria-hidden="true">/</span><Link to={stationeryOccasionPath(occasion.id)}>{occasion.name}</Link></nav>
-      <div className="bday-intro"><div><span className="bday-eyebrow"><Heart size={13} /> BISEN CARD EDITOR</span><h1>{occasion.label} <em>card editor</em></h1><p>Choose a design and colour palette, then personalise the cover and inside message.</p></div><aside><div><span>PAPER & ENVELOPE</span><p>350 GSM textured board<br />A matching envelope with every card</p><strong>From ₹149 <small>/ personalised card</small></strong></div></aside></div>
+      <div className="bday-intro"><div><span className="bday-eyebrow"><Heart size={13} /> BISEN CARD EDITOR</span><h1>{occasion.label} <em>card editor</em></h1><p>Choose a design and colour palette, then personalise the cover and inside message.</p></div><aside><div><span>PAPER & ENVELOPE</span><p>350 GSM textured board<br />A matching envelope with every card</p><strong>From {money(Math.min(...CARD_SIZES.map(item => priceOverrides?.cardSizes?.[item.id] ?? getCardSizePrice(item.id))))} <small>/ personalised card</small></strong></div></aside></div>
       <nav className="bday-steps" aria-label="Card designer steps">{STEPS.map((item, index) => <button type="button" key={item.title} aria-current={step === index ? 'step' : undefined} onClick={() => goTo(index)}><span className="bday-step-number">{index < step ? <Check size={16} /> : `0${index + 1}`}</span><span><strong>{item.title}</strong><small>{item.detail}</small></span><ChevronRight size={17} /></button>)}</nav>
       <div className={`bday-studio bday-step-${step}`}>
         <aside className="bday-preview" aria-label="Live card preview"><div className="bday-preview-top"><span className="bday-eyebrow"><i /> YOUR CARD, COMING TO LIFE</span><button type="button" className="bday-icon" aria-label="Enlarge card preview" onClick={openPreview}><Maximize2 size={17} /></button></div>
@@ -194,10 +198,10 @@ function CardEditor({ onAddToCart, occasion, initialTemplate }) {
             <label>From you<input value={config.signoff} maxLength={64} placeholder="With love, Zaid & family" onChange={e => update('signoff', e.target.value)} onFocus={() => setView('inside')} /><span className="bday-field-help"><span>Your name or a personal sign-off.</span><span>{config.signoff.length}/64</span></span></label></>}
           </div>}
           {step === 2 && <div className="bday-review">
-            <fieldset><legend>The size of your sentiment <small>Dimensions when folded</small></legend><div className="bday-size-options">{CARD_SIZES.map(item => <button type="button" key={item.id} aria-pressed={config.sizeId === item.id} onClick={() => update('sizeId', item.id)}><span className={`bday-size-symbol bday-size-${item.id}`} /><strong>{item.name}</strong><small>{item.dimensionsCm}</small><span>{item.label}</span><b>{money(item.unitPrice)} <small>/ card</small></b>{item.id === config.sizeId && <Check size={13} />}</button>)}</div></fieldset>
+            <fieldset><legend>The size of your sentiment <small>Dimensions when folded</small></legend><div className="bday-size-options">{CARD_SIZES.map(item => { const unit = priceOverrides?.cardSizes?.[item.id] ?? getCardSizePrice(item.id); return <button type="button" key={item.id} aria-pressed={config.sizeId === item.id} onClick={() => update('sizeId', item.id)}><span className={`bday-size-symbol bday-size-${item.id}`} /><strong>{item.name}</strong><small>{item.dimensionsCm}</small><span>{item.label}</span><b>{money(unit)} <small>/ card</small></b>{item.id === config.sizeId && <Check size={13} />}</button>; })}</div></fieldset>
             <fieldset><legend>How many cards? <small>Same design & message in each set</small></legend><div className="bday-quantity-options">{QUANTITY_DISCOUNTS.map(item => <button type="button" key={item.qty} aria-pressed={config.cardCount === item.qty} onClick={() => update('cardCount', item.qty)}><strong>{item.qty}</strong><small>{item.qty === 1 ? 'card' : 'cards'}</small>{item.discountPercent > 0 && <span>−{item.discountPercent}%</span>}</button>)}</div></fieldset>
             <div className="bday-order-review"><div className="bday-review-title"><span><Check size={16} /> YOUR CARD AT A GLANCE</span><button type="button" className="bday-text-button" onClick={() => goTo(1)}>Edit details <ArrowUpRight size={13} /></button></div><dl><div><dt>Design</dt><dd>{template.name}</dd></div><div><dt>For</dt><dd>{config.recipientName || 'Add their name'}</dd></div><div><dt>Cover</dt><dd>{config.headline}</dd></div><div><dt>Colour palette</dt><dd>{palette.name}</dd></div>{config.coverDetail.trim() && <div><dt>Cover detail</dt><dd>{config.coverDetail.trim()}</dd></div>}<div><dt>Photograph</dt><dd>{config.includePhoto ? photo?.name || 'Upload your photo' : 'Without photo'}</dd></div></dl><p className="bday-review-message">{config.blankInside ? 'Blank inside for handwriting' : config.message || 'Add your personal message in step 2.'}</p>{!config.blankInside && <p className="bday-review-signoff">{config.signoff || 'Add your sign-off in step 2.'}</p>}<button type="button" className="bday-text-button" onClick={event => { setView('inside'); openPreview(event); }}>Check the open card <BookOpen size={14} /></button></div>
-            <div className="bday-price-summary"><div><span>{config.cardCount} {config.cardCount === 1 ? 'card' : 'cards'} × {money(size.unitPrice)}</span><span>{money(pricing.baseTotal)}</span></div>{pricing.savings > 0 && <div className="bday-saving"><span>Set saving · {pricing.percent}%</span><span>−{money(pricing.savings)}</span></div>}<div className="bday-order-total"><span>Card total<small>Envelope included with every card</small></span><strong>{money(pricing.total)}</strong></div><p>The studio confirms courier charges before payment.</p></div>
+            <div className="bday-price-summary"><div><span>{config.cardCount} {config.cardCount === 1 ? 'card' : 'cards'} × {money(currentUnitPrice)}</span><span>{money(pricing.baseTotal)}</span></div>{pricing.savings > 0 && <div className="bday-saving"><span>Set saving · {pricing.percent}%</span><span>−{money(pricing.savings)}</span></div>}<div className="bday-order-total"><span>Card total<small>Envelope included with every card</small></span><strong>{money(pricing.total)}</strong></div><p>The studio confirms courier charges before payment.</p></div>
             <p className="bday-proof-note"><Heart size={16} /><span>Please check names, spelling and photo placement. Your selected design and full message are saved with your order.</span></p>
           </div>}
           {error && <p className="bday-error" ref={errorRef} tabIndex={-1} role="alert">{error}</p>}
