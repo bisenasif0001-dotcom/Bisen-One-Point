@@ -127,7 +127,7 @@ function BackupPanel({ maintenance, snapshot, operation }) {
   </SettingsCard>;
 }
 
-export default function StudioBusinessSettings() {
+export default function StudioBusinessSettings({ onChanged }) {
   const [rules, setRules] = useState(null);
   const [savedRules, setSavedRules] = useState(null);
   const [snapshot, setSnapshot] = useState(null);
@@ -203,6 +203,7 @@ export default function StudioBusinessSettings() {
       setSavedRules(editable);
       setPassword('');
       await refresh();
+      onChanged?.();
       setMessage('Business rules saved. New checkout requests use these settings. Existing quotes retain their recorded amounts.');
     } catch (cause) {
       setError(cause.message);
@@ -219,6 +220,7 @@ export default function StudioBusinessSettings() {
     try {
       const result = await studioRequest(path, { method: 'POST', body });
       setSnapshot(result);
+      onChanged?.();
       setMessage(result.result?.restored ? 'Restore check passed on a separate temporary copy.' :
         result.backup ? 'Private backup created and checksum-verified.' : 'Retention check completed.');
     } catch (cause) {

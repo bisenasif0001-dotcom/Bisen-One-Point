@@ -35,6 +35,16 @@ try {
   assert.ok(html.includes('href="/pvc-cards"'));
   assert.ok(html.includes('href="/printing-services"'));
   assert.ok(html.includes('aria-label="Pause slideshow"'));
+  assert.equal((html.match(/class="studio-hero-carousel__story-card/g) || []).length, 3, 'Three story dock cards');
+  assert.ok(html.includes('aria-label="Preview frame size and live price"'), 'Live size/price pills');
+  for (const sizeId of ['A5', 'A4', 'A3', 'A2']) {
+    const price = getStudioPrice({ sizeId, frameId: 'regal_aurelia', glassId: 'crystal_acrylic', includePrint: true }).unit;
+    assert.ok(html.includes(`₹${price}`), `Hero size price ${sizeId}`);
+  }
+  assert.ok(html.includes('class="studio-hero__arch-svg"'), 'Architectural room silhouette is rendered');
+  assert.ok(html.includes('aria-label="Choose salon backdrop mood"'));
+  assert.ok(html.includes('aria-label="Switch live PVC card style"'));
+  assert.ok(html.includes('href="/gallery-walls?layout=family-wall&amp;frame=regal_aurelia"'));
   assert.equal((html.match(/class="home-category home-category-/g) || []).length, 6);
   assert.equal((html.match(/class="home-frame-card"/g) || []).length, 7);
   assert.equal((html.match(/class="home-dua-feature"/g) || []).length, 1);

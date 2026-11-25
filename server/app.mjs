@@ -29,6 +29,65 @@ const now=()=>new Date().toISOString();
 const defaultPayment=()=>({status:'unpaid',label:'Awaiting payment',method:'studio',isPaid:false});
 const allowedStatus=value=>STAGES.some(([id])=>id===value)||value==='cancelled';
 const loopback=address=>['::1','127.0.0.1','::ffff:127.0.0.1'].includes(address);
+const countOverrideLeaves=obj=>{if(!obj||typeof obj!=='object')return 0;let n=0;for(const val of Object.values(obj)){if(val!==null&&typeof val==='object'&&!Array.isArray(val))n+=countOverrideLeaves(val);else if(val!==''&&val!==undefined&&val!==null&&Number.isFinite(Number(val)))n++;}return n;};
+const isClosedOrder=order=>order.status==='delivered'||order.status==='cancelled';
+const isPaidOrTest=order=>Boolean(order.payment?.isPaid||order.payment?.status==='test_paid');
+const hasOpenCustomerRequest=order=>Boolean(order.requests?.some(r=>!['resolved','declined'].includes(r.status)));
+const isQuotePendingOrder=order=>!isClosedOrder(order)&&!order.pricingConfirmed;
+const isUnpaidOrder=order=>!isClosedOrder(order)&&Boolean(order.pricingConfirmed)&&!isPaidOrTest(order);
+const isProofPendingOrder=order=>!isClosedOrder(order)&&Boolean(order.artwork?.required&&order.artwork?.status!=='approved');
+const isAttentionOrder=order=>!isClosedOrder(order)&&(order.status==='received'||!order.pricingConfirmed||!isPaidOrTest(order)||Boolean(order.artwork?.required&&order.artwork?.status!=='approved')||hasOpenCustomerRequest(order));
+function matchesOrderFilter(order,statusFilter){
+  if(!statusFilter)return true;
+  if(statusFilter==='group:attention')return isAttentionOrder(order);
+  if(statusFilter==='group:quote_pending')return isQuotePendingOrder(order);
+  if(statusFilter==='group:unpaid')return isUnpaidOrder(order);
+  if(statusFilter==='group:proof_pending')return isProofPendingOrder(order);
+  if(statusFilter==='group:production')return ['confirmed','design_approved','printing'].includes(order.status);
+  if(statusFilter==='group:fulfillment')return ['ready','dispatched'].includes(order.status);
+  if(statusFilter.includes(',')){const set=statusFilter.split(',').map(s=>s.trim()).filter(allowedStatus);return set.length>0&&set.includes(order.status);}
+  return order.status===statusFilter;
+}
+function summarizeOrders(orders){
+  const byStatus=new Map();
+  let activeOrders=0,paidRevenue=0,testPaidTotal=0,attentionCount=0,quotePendingCount=0,unpaidCount=0,proofPendingCount=0;
+  for(const order of orders){
+    byStatus.set(order.status,(byStatus.get(order.status)||0)+1);
+    if(!isClosedOrder(order))activeOrders++;
+    if(order.status!=='cancelled'&&Number.isFinite(Number(order.grandTotal))){
+      if(order.payment?.isPaid)paidRevenue+=Number(order.grandTotal);
+      else if(order.payment?.status==='test_paid')testPaidTotal+=Number(order.grandTotal);
+    }
+    if(isAttentionOrder(order))attentionCount++;
+    if(isQuotePendingOrder(order))quotePendingCount++;
+    if(isUnpaidOrder(order))unpaidCount++;
+    if(isProofPendingOrder(order))proofPendingCount++;
+  }
+  const c=id=>byStatus.get(id)||0;
+  return {
+    counts:[...byStatus.entries()].map(([status,count])=>({status,count})),
+    summary:{
+      totalOrders:orders.length,
+      activeOrders,
+      deliveredCount:c('delivered'),
+      cancelledCount:c('cancelled'),
+      paidRevenue:Math.round(paidRevenue*100)/100,
+      testPaidTotal:Math.round(testPaidTotal*100)/100,
+      attentionCount,
+      receivedCount:c('received'),
+      quotePendingCount,
+      unpaidCount,
+      proofPendingCount,
+      productionCount:c('confirmed')+c('design_approved')+c('printing'),
+      confirmedCount:c('confirmed'),
+      designApprovedCount:c('design_approved'),
+      printingCount:c('printing'),
+      fulfillmentCount:c('ready')+c('dispatched'),
+      readyCount:c('ready'),
+      dispatchedCount:c('dispatched'),
+    },
+  };
+}
 
 export function createStudioService({directory=resolve('.studio-data'),production=process.env.NODE_ENV==='production',publicOrigin=process.env.PUBLIC_ORIGIN||'http://localhost:5173',bootstrapToken=process.env.STUDIO_BOOTSTRAP_TOKEN||'',backupDirectory,fetcher=fetch}={}){
   const store=openStore(directory),{db,encrypt,decrypt,get,save,audit,transaction}=store;
@@ -211,15 +270,32 @@ export function createStudioService({directory=resolve('.studio-data'),productio
           }
           save(order);audit(order.reference,`Studio ${action} updated`,user.username);return json(res,200,{order:fullOrder(get(order.reference))});
         }
+        if(path==='/api/studio/overview'&&method==='GET'){
+          const allOrders=db.prepare('SELECT data FROM orders ORDER BY updated DESC').all().map(row=>JSON.parse(row.data));
+          const {summary}=summarizeOrders(allOrders);
+          const bk=maintenance.status();
+          return json(res,200,{
+            orders:summary,
+            prices:{customCount:countOverrideLeaves(readPriceOverrides(db))},
+            payments:settingsSummary(),
+            backups:{count:bk.backups.length,latestAt:bk.backups[0]?.createdAt||null,verifiedAt:bk.lastRestoreCheck?.verifiedAt||null},
+            couponsCount:(rules().coupons||[]).filter(c=>c.enabled).length,
+          });
+        }
         if(path==='/api/studio/orders'&&method==='GET'){
-          const query=cleanText(url.searchParams.get('q'),100).toLowerCase(),status=cleanText(url.searchParams.get('status'),40);
+          const query=cleanText(url.searchParams.get('q'),100).toLowerCase(),status=cleanText(url.searchParams.get('status'),80);
           const offset=Math.max(0,Math.min(100000,Number(url.searchParams.get('offset'))||0));
-          const where="WHERE (?='' OR lower(reference||' '||json_extract(data,'$.customer.name')||' '||json_extract(data,'$.customer.phone')) LIKE ?) AND (?='' OR json_extract(data,'$.status')=?)";
-          const values=[query,`%${query}%`,status,status];
-          const count=db.prepare(`SELECT count(*) AS count FROM orders ${where}`).get(...values).count;
-          const orders=db.prepare(`SELECT data FROM orders ${where} ORDER BY updated DESC LIMIT 50 OFFSET ?`).all(...values,offset).map(row=>{const order=JSON.parse(row.data);return {reference:order.reference,orderId:order.orderId,customer:order.customer,status:order.status,statusLabel:order.statusLabel,grandTotal:order.grandTotal,payment:order.payment,placedAt:order.placedAt,updatedAt:order.updatedAt,deliveryMethod:order.delivery?.method||'courier',deliveryProvider:order.delivery?.provider||order.delivery?.courier||'',pricingConfirmed:Boolean(order.pricingConfirmed),artworkStatus:order.artwork?.status||'',itemSummary:order.items?.[0]?.title||'',itemCount:order.items?.length||0};});
-          const counts=db.prepare("SELECT json_extract(data,'$.status') AS status,count(*) AS count FROM orders GROUP BY status").all();
-          return json(res,200,{orders,count,offset,counts});
+          const allOrders=db.prepare('SELECT data FROM orders ORDER BY updated DESC').all().map(row=>JSON.parse(row.data));
+          const {counts,summary}=summarizeOrders(allOrders);
+          const matched=allOrders.filter(order=>{
+            if(!matchesOrderFilter(order,status))return false;
+            if(!query)return true;
+            const text=[order.reference,order.orderId,order.customer?.name,order.customer?.phone,...(order.items||[]).map(i=>i.title)].filter(Boolean).join(' ').toLowerCase();
+            return text.includes(query);
+          });
+          const count=matched.length;
+          const orders=matched.slice(offset,offset+50).map(order=>({reference:order.reference,orderId:order.orderId,customer:order.customer,status:order.status,statusLabel:order.statusLabel,grandTotal:order.grandTotal,payment:order.payment,placedAt:order.placedAt,updatedAt:order.updatedAt,deliveryMethod:order.delivery?.method||'courier',deliveryProvider:order.delivery?.provider||order.delivery?.courier||'',pricingConfirmed:Boolean(order.pricingConfirmed),artworkRequired:Boolean(order.artwork?.required),artworkStatus:order.artwork?.status||'',hasOpenRequest:hasOpenCustomerRequest(order),itemSummary:order.items?.[0]?.title||'',itemCount:order.items?.length||0}));
+          return json(res,200,{orders,count,offset,counts,summary});
         }
         if(path==='/api/studio/orders'&&method==='POST'){
           const data=parse(await body(req,100000)),customer=validateCustomer(data.customer),quantity=Number(data.quantity);

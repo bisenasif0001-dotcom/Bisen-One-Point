@@ -1,3 +1,7 @@
+import { openSandboxCheckout } from './sandboxCheckout';
+import { readPrintOriginals } from './printPhotoStorage';
+import { ORDER_FILE_RULES } from '../data/orderFiles';
+
 export async function studioRequest(path,{method='GET',body,headers={},signal}={}){
   let response;
   try{response=await fetch(`/api${path}`,{method,credentials:'same-origin',headers:{'Content-Type':'application/json','X-Studio-Request':'1',...headers},...(body!==undefined?{body:JSON.stringify(body)}:{}),signal});}
@@ -12,8 +16,6 @@ export function rememberStudioOrder(order){
   try{const previous=JSON.parse(localStorage.getItem('alnoor_server_orders')||'[]');localStorage.setItem('alnoor_server_orders',JSON.stringify([{reference:order.reference,trackingToken:order.trackingToken,placedAt:order.placedAt},...(Array.isArray(previous)?previous.filter(item=>item.reference!==order.reference):[])].slice(0,30)));}catch{/* Server order remains accessible by reference + mobile. */}
 }
 export function rememberedStudioOrders(){try{const items=JSON.parse(localStorage.getItem('alnoor_server_orders')||'[]');return Array.isArray(items)?items.filter(item=>/^ALN-[A-Z0-9-]+$/.test(item.reference)&&typeof item.trackingToken==='string'):[];}catch{return [];}}
-
-import { openSandboxCheckout } from './sandboxCheckout';
 
 let checkoutScript;
 function loadRazorpay(){
@@ -48,6 +50,44 @@ export async function payStudioOrder(order){
     }});
     checkout.open();
   });
+}
+
+/** Automatically attach full-resolution originals saved in IndexedDB right as the order is placed. */
+export async function autoSyncOrderOriginals(order){
+  if(!order?.reference||!order?.trackingToken)return {uploaded:0,expected:0};
+  try{
+    const info=await studioRequest('/order-files/list',{method:'POST',body:{reference:order.reference,token:order.trackingToken}});
+    const expected=info?.expectedOriginals||[];
+    if(!expected.length)return {uploaded:0,expected:0};
+    const uploadedIds=new Set((info.files||[]).filter(f=>f.kind==='original'&&!f.purgedAt&&f.sourceId).map(f=>f.sourceId));
+    const missing=expected.filter(ref=>!uploadedIds.has(ref.id));
+    if(!missing.length)return {uploaded:expected.length,expected:expected.length};
+    const stored=await readPrintOriginals(missing.map(ref=>ref.id));
+    let uploaded=expected.length-missing.length;
+    for(const entry of stored){
+      if(!entry?.file?.size||entry.file.size>ORDER_FILE_RULES.maxFileBytes)continue;
+      const ref=missing.find(r=>r.id===entry.id);
+      const res=await fetch('/api/order-files/upload',{
+        method:'POST',
+        credentials:'same-origin',
+        headers:{
+          'Content-Type':'application/octet-stream',
+          'X-Studio-Request':'1',
+          'X-Order-Reference':order.reference,
+          'X-Order-Token':order.trackingToken,
+          'X-File-Name':encodeURIComponent(entry.name||entry.file.name||'original.jpg'),
+          'X-File-Label':encodeURIComponent(ref?.label||''),
+          'X-File-Source':encodeURIComponent(entry.id),
+          'X-File-Kind':'original',
+        },
+        body:entry.file,
+      });
+      if(res.ok)uploaded+=1;
+    }
+    return {uploaded,expected:expected.length};
+  }catch{
+    return {uploaded:0,expected:0};
+  }
 }
 
 async function smallPreview(value){

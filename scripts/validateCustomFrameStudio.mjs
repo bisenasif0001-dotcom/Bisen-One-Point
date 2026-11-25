@@ -55,14 +55,17 @@ try {
     for (const size of FRAME_SIZES) assert.ok(getStudioPrice({ sizeId: size.id, frameId: frame.id, glassId: 'crystal_acrylic' }).unit > 0);
   }
   const studio = renderToStaticMarkup(React.createElement(MemoryRouter, null, React.createElement(Studio, { preselectedFrameId: 'regal_heritage' })));
-  assert.equal((studio.match(/class="fs-step-number"/g) || []).length, 3);
+  assert.equal((studio.match(/class="fs-step-number"/g) || []).length, 2);
   assert.equal((studio.match(/<h1>/g) || []).length, 1);
   assert.ok(studio.includes('regal-heritage/front.png')); assert.ok(studio.includes('SAMPLE PHOTO'));
   assert.ok(studio.includes('preserveAspectRatio="xMidYMid slice"'), 'Default custom photo framing fills opening without white sidebars');
   assert.ok(studio.includes('Keep full photo')); assert.ok(studio.includes('20 MB')); assert.ok(studio.includes('₹579'));
+  assert.ok(studio.includes('View price breakdown')); assert.ok(studio.includes('Buy now'));
   assert.ok(studio.includes('aria-label="Preview frame orientation"'));
   assert.equal((studio.match(/class="fs-sample-caption"/g) || []).length, 4);
   assert.ok(studio.includes('href="/hero/wedding-bride.jpg"'), 'Portrait frame starts with a portrait sample');
+  const fastTrackStudio = renderToStaticMarkup(React.createElement(MemoryRouter, null, React.createElement(Studio, { preselectedFrameId: 'regal_heritage', fromCatalogue: true })));
+  assert.ok(fastTrackStudio.includes('Selected:'));
   const landscapeStudio = renderToStaticMarkup(React.createElement(MemoryRouter, null, React.createElement(Studio, { initialOrientation: 'landscape' })));
   assert.ok(landscapeStudio.includes('fs-framed-art fs-orientation-landscape'));
   assert.ok(landscapeStudio.includes(`href="${FRAME_STUDIO_SAMPLES[0].url.replaceAll('&', '&amp;')}"`));
@@ -71,5 +74,6 @@ try {
   assert.ok(thumbnail.includes('regal-noir/front.png')); assert.ok(thumbnail.includes('1402 1122')); assert.ok(thumbnail.includes('grayscale(1)'));
   const drawer = renderToStaticMarkup(React.createElement(MemoryRouter, null, React.createElement(CartDrawer, { isOpen: true, cartItems: [item], discountPercent: 0, discountCode: '' })));
   assert.ok(drawer.includes('regal-noir/front.png')); assert.ok(drawer.includes('landscape'));
-  console.log(`Passed: ${layouts} photo-fit/pan layouts, 7 real frames in both orientations, 2 landscape + 2 portrait samples, matching initial preview, always-visible orientation control, all size prices, upload validation, quality checks, 3-step studio and cart previews.`);
+  assert.ok(drawer.includes('Edit frame')); assert.ok(drawer.includes('Proceed to Checkout'));
+  console.log(`Passed: ${layouts} photo-fit/pan layouts, 7 real frames in both orientations, 2 landscape + 2 portrait samples, matching initial preview, always-visible orientation control, all size prices, upload validation, quality checks, 2-step fast-track studio and cart previews.`);
 } finally { await server.close(); }

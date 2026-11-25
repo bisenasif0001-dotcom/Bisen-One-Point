@@ -17,6 +17,7 @@ import {
   Tag,
   Check,
   Eye,
+  PenLine,
   Sparkles,
   Lock,
   Truck,
@@ -366,6 +367,17 @@ export default function CartDrawer({
                               <Eye size={12} />
                               <span>View Customisation</span>
                             </button>
+                            {item.type === 'custom_frame' && (
+                              <Link
+                                to="/custom-framing"
+                                state={{ editItem: item }}
+                                onClick={onClose}
+                                className="cart-customisation-btn cart-edit-btn"
+                              >
+                                <PenLine size={12} />
+                                <span>Edit frame</span>
+                              </Link>
+                            )}
                           </div>
                         )}
                       </div>
@@ -518,26 +530,25 @@ export default function CartDrawer({
               </div>
             </div>
 
-            {/* Refined Dual Checkout Action Buttons */}
-            <div className="cart-cta-grid">
-              <button
-                type="button"
-                className="cart-btn-studio"
-                onClick={() => onProceedCheckout('whatsapp')}
-              >
-                <MessageCircle size={16} />
-                <span>Confirm with studio</span>
-              </button>
+            {/* Single Express Primary CTA + Optional Studio Assist Link */}
+            <button
+              type="button"
+              className="cart-btn-checkout cart-btn-checkout--full"
+              onClick={() => onProceedCheckout('online')}
+            >
+              <CreditCard size={16} />
+              <span>Proceed to Checkout · {formatINR(finalTotal)}</span>
+              <ArrowRight size={15} />
+            </button>
 
-              <button
-                type="button"
-                className="cart-btn-checkout"
-                onClick={() => onProceedCheckout('online')}
-              >
-                <CreditCard size={16} />
-                <span>Proceed to checkout</span>
-              </button>
-            </div>
+            <button
+              type="button"
+              className="cart-studio-assist-link"
+              onClick={() => onProceedCheckout('whatsapp')}
+            >
+              <MessageCircle size={13} />
+              <span>Prefer studio quote / manual UPI confirmation?</span>
+            </button>
 
             <div className="cart-security-note">
               <Lock size={12} />

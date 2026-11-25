@@ -80,8 +80,16 @@ export default function App() {
   }, []);
 
   // Cart Handlers
-  const handleAddToCart = (item) => {
+  const handleAddToCart = (item, options = {}) => {
     setCartItems(prev => {
+      if (options.replaceId) {
+        const replaceIdx = prev.findIndex(i => i.id === options.replaceId);
+        if (replaceIdx > -1) {
+          const updated = [...prev];
+          updated[replaceIdx] = { ...item, id: options.replaceId };
+          return updated;
+        }
+      }
       const existingIdx = prev.findIndex(i => i.id === item.id);
       if (existingIdx > -1) {
         const updated = [...prev];
@@ -90,7 +98,13 @@ export default function App() {
       }
       return [item, ...prev];
     });
-    setIsCartOpen(true);
+    if (options.buyNow) {
+      setCheckoutInitialTab('online');
+      setIsCartOpen(false);
+      setIsCheckoutOpen(true);
+    } else {
+      setIsCartOpen(true);
+    }
   };
 
   const handleUpdateQuantity = (id, newQty) => {
@@ -249,11 +263,11 @@ export default function App() {
             />
             <Route 
               path="/frames-catalogue" 
-              element={<FrameCataloguePage />} 
+              element={<FrameCataloguePage onAddToCart={handleAddToCart} />} 
             />
             <Route 
               path="/shop" 
-              element={<FrameCataloguePage />} 
+              element={<FrameCataloguePage onAddToCart={handleAddToCart} />} 
             />
             <Route path="/islamic-art" element={<IslamicArtPage />} />
             <Route path="/islamic-art/:id" element={<AsmaArtworkDetailPage onAddToCart={handleAddToCart} />} />

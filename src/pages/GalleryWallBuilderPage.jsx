@@ -58,7 +58,8 @@ export default function GalleryWallBuilderPage({ onAddToCart }) {
   const priceOverrides = usePriceOverrides();
   const [searchParams, setSearchParams] = useSearchParams();
   const layout = getGalleryLayout(searchParams.get('layout'));
-  const [step, setStep] = useState(0), [config, setConfig] = useState(GALLERY_DEFAULTS);
+  const initialFrameId = FRAME_FINISHES.some(f => f.id === searchParams.get('frame')) ? searchParams.get('frame') : GALLERY_DEFAULTS.frameId;
+  const [step, setStep] = useState(0), [config, setConfig] = useState(() => ({ ...GALLERY_DEFAULTS, frameId: initialFrameId }));
   const [photos, setPhotos] = useState({}), [settings, setSettings] = useState({}), [activePhoto, setActivePhoto] = useState(0);
   const [mode, setMode] = useState('room'), [previewOpen, setPreviewOpen] = useState(false);
   const [error, setError] = useState(''), [uploading, setUploading] = useState(false), [saving, setSaving] = useState(false);

@@ -2,8 +2,9 @@ import StudioBusinessSettings from '../components/StudioBusinessSettings';
 import StudioPriceManager from '../components/StudioPriceManager';
 import { QuoteEditor, StudioArtwork } from '../components/StudioOrderWorkflow';
 import OrderItemPreview from '../components/OrderItemPreview';
-import React, { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useBusinessRules } from '../components/BusinessRulesProvider';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
   AlertCircle, ArrowLeft, ArrowRight, Check, CheckCircle2, ChevronDown, Clock3, Copy,
   CreditCard, ExternalLink, FolderOpen, Link2, LockKeyhole, LogOut, MapPin, MessageCircle,
@@ -118,7 +119,7 @@ export function StudioAccess({ session, onAuthenticated }) {
   return <div className="sp-access"><StudioBrand to="/" /><div className="sp-access-card"><span className="sp-icon-circle"><LockKeyhole size={25} strokeWidth={1.4} /></span><span className="sp-kicker">PRIVATE STUDIO ACCESS</span><h1>{setup ? 'Make this desk yours.' : 'Welcome to your studio.'}</h1><p>{setup ? 'Create your own login to manage orders, update customer tracking and connect Razorpay.' : 'Sign in to manage your orders and keep your customers up to date.'}</p><form onSubmit={submit}><Field id="sp-username" label="Studio username"><input id="sp-username" required autoComplete="username" minLength={3} maxLength={100} value={form.username} onChange={event => update('username', event.target.value)} /></Field><Field id="sp-password" label="Password"><input id="sp-password" type="password" required minLength={setup ? 12 : 1} maxLength={200} autoComplete={setup ? 'new-password' : 'current-password'} value={form.password} onChange={event => update('password', event.target.value)} />{setup && <small>Use at least 12 characters. Keep this login private.</small>}</Field>{setup && <><Field id="sp-confirm" label="Confirm password"><input id="sp-confirm" type="password" autoComplete="new-password" required value={form.confirm} onChange={event => update('confirm', event.target.value)} /></Field>{!session.localSetup && <Field id="sp-setup-token" label="Deployment setup code"><input id="sp-setup-token" type="password" autoComplete="off" required value={form.setupToken} onChange={event => update('setupToken', event.target.value)} /><small>Use the one-time setup code from your hosting environment.</small></Field>}</>}<ErrorBox error={error} /><button className="sp-primary" disabled={busy}>{busy ? 'Please wait…' : setup ? 'Create studio access' : 'Sign in'}<ArrowRight size={16} /></button></form></div><Link className="sp-back" to="/"><ArrowLeft size={14} /> Back to the website</Link></div>;
 }
 
-export function PaymentSettings() {
+export function PaymentSettings({ onSaved }) {
   const [settings, setSettings] = useState(null);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -150,6 +151,7 @@ export function PaymentSettings() {
       setSettings(result);
       setForm(current => ({ ...current, keyId: '', keySecret: '', webhookSecret: '', password: '' }));
       setSaved(true);
+      onSaved?.(result);
     } catch (cause) {
       setError(cause.message);
     } finally {
@@ -1021,58 +1023,236 @@ export function StudioOrderEditor({ order, onSaved, onBack }) {
   </section>;
 }
 
+const PIPELINE_GROUPS = [
+  ['group:attention', 'Needs action (New / Quote / Unpaid / Proof)'],
+  ['group:quote_pending', 'Quote pending'],
+  ['group:unpaid', 'Awaiting payment (quoted)'],
+  ['group:production', 'In production (Confirmed → Printing)'],
+  ['group:fulfillment', 'Ready & Dispatched'],
+];
+
+const FILTER_LABELS = Object.fromEntries([...PIPELINE_GROUPS, ...STUDIO_STATUSES]);
+
+function countOverrideItems(obj) {
+  if (!obj || typeof obj !== 'object') return 0;
+  let total = 0;
+  for (const val of Object.values(obj)) {
+    if (val !== null && typeof val === 'object' && !Array.isArray(val)) {
+      total += countOverrideItems(val);
+    } else if (val !== '' && val !== undefined && val !== null && Number.isFinite(Number(val))) {
+      total += 1;
+    }
+  }
+  return total;
+}
+
 function StudioDesk({ onLogout }) {
-  const [view, setView] = useState('orders');
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { priceOverrides } = useBusinessRules();
+
+  const subPath = location.pathname.replace(/^\/studio\/?/, '').replace(/\/+$/, '');
+  const view = subPath === 'prices'
+    ? 'prices'
+    : subPath === 'payments'
+      ? 'payments'
+      : subPath === 'business'
+        ? 'business'
+        : 'orders';
+  const adding = subPath === 'new';
+  const orderMatch = subPath.match(/^orders\/(ALN-[A-Z0-9-]+)$/i);
+  const routeOrderRef = orderMatch ? orderMatch[1].toUpperCase() : '';
+
   const [query, setQuery] = useState('');
   const [filter, setFilter] = useState('');
   const [offset, setOffset] = useState(0);
   const [list, setList] = useState(null);
+  const [overview, setOverview] = useState(null);
   const [order, setOrder] = useState(null);
-  const [adding, setAdding] = useState(false);
   const [busy, setBusy] = useState(true);
   const [error, setError] = useState('');
   const [version, setVersion] = useState(0);
   const detailSequence = useRef(0);
+
+  const loadOverview = useCallback(signal => {
+    studioRequest('/studio/overview', signal ? { signal } : {})
+      .then(setOverview)
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
-    if (view !== 'orders' || order || adding) return;
+    const controller = new AbortController();
+    loadOverview(controller.signal);
+    return () => controller.abort();
+  }, [loadOverview, version, location.pathname]);
+
+  useEffect(() => {
+    const onKeyDown = event => {
+      if (!event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const routes = { '1': '/studio', '2': '/studio/prices', '3': '/studio/payments', '4': '/studio/business' };
+      const target = routes[event.key];
+      if (target) {
+        event.preventDefault();
+        setError('');
+        navigate(target);
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [navigate]);
+
+  useEffect(() => {
+    if (!routeOrderRef || order?.reference === routeOrderRef) return undefined;
+    const seq = ++detailSequence.current;
+    const controller = new AbortController();
+    studioRequest(`/studio/orders/${routeOrderRef}`, { signal: controller.signal })
+      .then(result => {
+        if (seq === detailSequence.current) setOrder(result.order);
+      })
+      .catch(cause => {
+        if (cause.name !== 'AbortError') setError(cause.message);
+      });
+    return () => controller.abort();
+  }, [routeOrderRef, order?.reference]);
+
+  useEffect(() => {
+    if (view !== 'orders' || routeOrderRef || adding) return undefined;
     const controller = new AbortController();
     const timer = setTimeout(() => {
       setBusy(true);
-      studioRequest(`/studio/orders?q=${encodeURIComponent(query)}&status=${filter}&offset=${offset}`, { signal: controller.signal })
+      studioRequest(`/studio/orders?q=${encodeURIComponent(query)}&status=${encodeURIComponent(filter)}&offset=${offset}`, { signal: controller.signal })
         .then(setList)
         .catch(cause => { if (cause.name !== 'AbortError') setError(cause.message); })
         .finally(() => { if (!controller.signal.aborted) setBusy(false); });
-    }, 250);
+    }, 200);
     return () => { clearTimeout(timer); controller.abort(); };
-  }, [view, query, filter, offset, version, order, adding]);
+  }, [view, query, filter, offset, version, routeOrderRef, adding]);
 
-  const open = async reference => {
-    setBusy(true);
+  const goSection = path => {
     setError('');
-    const seq = ++detailSequence.current;
+    navigate(path);
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  };
+
+  const toggleFilter = target => {
+    setFilter(current => (current === target ? '' : target));
+    setOffset(0);
+  };
+
+  const resetFilters = () => {
+    setQuery('');
+    setFilter('');
+    setOffset(0);
+  };
+
+  const logout = async () => {
     try {
-      const result = await studioRequest(`/studio/orders/${reference}`);
-      if (seq === detailSequence.current) setOrder(result.order);
+      await studioRequest('/studio/logout', { method: 'POST' });
+      onLogout();
     } catch (cause) {
       setError(cause.message);
-    } finally {
-      setBusy(false);
     }
   };
-  const logout = async () => { try { await studioRequest('/studio/logout', { method: 'POST' }); onLogout(); } catch (cause) { setError(cause.message); } };
-  const count = id => list?.counts?.find(item => item.status === id)?.count || 0;
-  const totalOrders = list ? list.counts.reduce((total, item) => total + item.count, 0) : '—';
-  const productionCount = list ? count('confirmed') + count('design_approved') + count('printing') : '—';
-  const dispatchCount = list ? count('ready') + count('dispatched') : '—';
+
+  const activeOrder = routeOrderRef && order?.reference === routeOrderRef ? order : null;
+  const s = list?.summary || overview?.orders || null;
+  const pct = n => (s && s.totalOrders > 0 ? Math.min(100, Math.round((n / s.totalOrders) * 100)) : 0);
+
+  const liveOverridesCount = countOverrideItems(priceOverrides) || overview?.prices?.customCount || 0;
+  const payMeta = overview?.payments;
+  const backupMeta = overview?.backups;
+
+  const isAllCardActive = filter === '' || filter === 'delivered';
+  const isAttentionCardActive = ['group:attention', 'received', 'group:quote_pending', 'group:unpaid'].includes(filter);
+  const isProductionCardActive = ['group:production', 'confirmed', 'design_approved', 'printing'].includes(filter);
+  const isFulfillmentCardActive = ['group:fulfillment', 'ready', 'dispatched'].includes(filter);
 
   return <>
     <header className="sp-topbar">
       <StudioBrand to="/studio" />
-      <nav aria-label="Studio sections">
-        <button aria-current={view === 'orders' ? 'page' : undefined} onClick={() => { setView('orders'); setOrder(null); setAdding(false); }}><Package size={16} /> Orders</button>
-        <button aria-current={view === 'prices' ? 'page' : undefined} onClick={() => { setView('prices'); setOrder(null); setAdding(false); }}><Tag size={16} /> Prices</button>
-        <button aria-current={view === 'payments' ? 'page' : undefined} onClick={() => { setView('payments'); setOrder(null); setAdding(false); }}><Settings2 size={16} /> Payments</button>
-        <button aria-current={view === 'business' ? 'page' : undefined} onClick={() => { setView('business'); setOrder(null); setAdding(false); }}><ShieldCheck size={16} /> Business &amp; backups</button>
+      <nav className="sp-nav-dock" aria-label="Studio sections">
+        <button
+          type="button"
+          title="Orders desk (Alt+1)"
+          aria-current={view === 'orders' ? 'page' : undefined}
+          onClick={() => goSection('/studio')}
+        >
+          <Package size={15} />
+          <span>Orders</span>
+          {s && (
+            s.attentionCount > 0 ? (
+              <em className="sp-nav-badge" data-tone="amber" title={`${s.attentionCount} order(s) need attention`}>
+                {s.attentionCount}
+              </em>
+            ) : (
+              <em className="sp-nav-badge" data-tone="muted">{s.totalOrders}</em>
+            )
+          )}
+        </button>
+
+        <button
+          type="button"
+          title="Catalogue prices (Alt+2)"
+          aria-current={view === 'prices' ? 'page' : undefined}
+          onClick={() => goSection('/studio/prices')}
+        >
+          <Tag size={15} />
+          <span>Prices</span>
+          {liveOverridesCount > 0 && (
+            <em className="sp-nav-badge" data-tone="gold" title={`${liveOverridesCount} custom price overrides active`}>
+              {liveOverridesCount} custom
+            </em>
+          )}
+        </button>
+
+        <button
+          type="button"
+          title="Payment gateway (Alt+3)"
+          aria-current={view === 'payments' ? 'page' : undefined}
+          onClick={() => goSection('/studio/payments')}
+        >
+          <CreditCard size={15} />
+          <span>Payments</span>
+          {payMeta && (
+            payMeta.enabled ? (
+              <em
+                className="sp-nav-badge"
+                data-tone={payMeta.mode === 'live' ? 'green' : payMeta.mode === 'sandbox' ? 'teal' : 'amber'}
+              >
+                <i aria-hidden="true" />
+                {payMeta.mode === 'live' ? 'Live' : payMeta.mode === 'sandbox' ? 'Sim' : 'Test'}
+              </em>
+            ) : (
+              <em className="sp-nav-badge" data-tone="muted">
+                <i aria-hidden="true" />
+                Off
+              </em>
+            )
+          )}
+        </button>
+
+        <button
+          type="button"
+          title="Business rules & backups (Alt+4)"
+          aria-current={view === 'business' ? 'page' : undefined}
+          onClick={() => goSection('/studio/business')}
+        >
+          <ShieldCheck size={15} />
+          <span>Business &amp; backups</span>
+          {backupMeta && (
+            backupMeta.count > 0 ? (
+              <em className="sp-nav-badge" data-tone="green" title={`${backupMeta.count} private backup snapshot(s)`}>
+                <i aria-hidden="true" />
+                {backupMeta.count} bkp
+              </em>
+            ) : (
+              <em className="sp-nav-badge" data-tone="amber" title="No backup snapshot created yet">
+                <i aria-hidden="true" />
+                Backup
+              </em>
+            )
+          )}
+        </button>
       </nav>
       <div>
         <Link to="/" className="sp-website">View website <ExternalLink size={13} /></Link>
@@ -1081,29 +1261,277 @@ function StudioDesk({ onLogout }) {
     </header>
     <div className="sp-desk">
       <ErrorBox error={error} />
-      {view === 'prices' ? <StudioPriceManager /> : view === 'business' ? <StudioBusinessSettings /> : view === 'payments' ? <PaymentSettings /> : adding ? <NewStudioOrder onCancel={() => setAdding(false)} onCreated={value => { setAdding(false); setOrder(value); setVersion(v => v + 1); }} /> : order ? <StudioOrderEditor key={order.reference} order={order} onBack={() => { setOrder(null); setVersion(v => v + 1); }} onSaved={setOrder} /> : <>
+      {view === 'prices' ? (
+        <StudioPriceManager />
+      ) : view === 'business' ? (
+        <StudioBusinessSettings onChanged={() => loadOverview()} />
+      ) : view === 'payments' ? (
+        <PaymentSettings onSaved={() => loadOverview()} />
+      ) : adding ? (
+        <NewStudioOrder
+          onCancel={() => navigate('/studio')}
+          onCreated={value => {
+            setOrder(value);
+            setVersion(v => v + 1);
+            navigate(`/studio/orders/${value.reference}`, { replace: true });
+          }}
+        />
+      ) : routeOrderRef ? (
+        activeOrder ? (
+          <StudioOrderEditor
+            key={activeOrder.reference}
+            order={activeOrder}
+            onBack={() => {
+              setVersion(v => v + 1);
+              navigate('/studio');
+            }}
+            onSaved={updated => {
+              setOrder(updated);
+              loadOverview();
+            }}
+          />
+        ) : (
+          <div className="sp-card" role="status">Opening order #{routeOrderRef}…</div>
+        )
+      ) : <>
         <div className="sp-section-heading">
           <div><span className="sp-kicker">A CLEAR VIEW OF YOUR WORKSHOP</span><h1>Your orders, together.</h1><p>Website orders arrive here. Add WhatsApp and walk-in orders to give every customer a tracking reference.</p></div>
-          <button className="sp-primary" onClick={() => setAdding(true)}><Plus size={16} /> Add an order</button>
+          <button className="sp-primary" onClick={() => navigate('/studio/new')}><Plus size={16} /> Add an order</button>
         </div>
-        <div className="sp-stats">
-          <button type="button" className="sp-stat-btn" aria-pressed={filter === ''} onClick={() => { setFilter(''); setOffset(0); }}><span>Total orders</span><strong>{totalOrders}</strong><Package size={19} /></button>
-          <button type="button" className="sp-stat-btn" aria-pressed={filter === 'received'} onClick={() => { setFilter(f => (f === 'received' ? '' : 'received')); setOffset(0); }}><span>New / Quote check</span><strong>{list ? count('received') : '—'}</strong><Clock3 size={19} /></button>
-          <button type="button" className="sp-stat-btn" aria-pressed={filter === 'printing'} onClick={() => { setFilter(f => (f === 'printing' ? '' : 'printing')); setOffset(0); }}><span>In production</span><strong>{productionCount}</strong><Settings2 size={19} /></button>
-          <button type="button" className="sp-stat-btn" aria-pressed={filter === 'ready' || filter === 'dispatched'} onClick={() => { setFilter(f => (f === 'ready' ? 'dispatched' : f === 'dispatched' ? '' : 'ready')); setOffset(0); }}><span>Ready / Dispatched</span><strong>{dispatchCount}</strong><Truck size={19} /></button>
+
+        <div className="sp-kpi-grid" role="region" aria-label="Workshop pipeline overview">
+          <div className="sp-kpi-card" data-tone="evergreen" data-active={isAllCardActive}>
+            <button
+              type="button"
+              className="sp-kpi-main"
+              aria-pressed={filter === ''}
+              onClick={() => { setFilter(''); setOffset(0); }}
+            >
+              <div className="sp-kpi-head">
+                <span className="sp-kpi-label">All studio orders</span>
+                <span className="sp-kpi-icon" aria-hidden="true"><Package size={18} /></span>
+              </div>
+              <div className="sp-kpi-metric">
+                <strong>{s ? s.totalOrders : '—'}</strong>
+                <span className="sp-kpi-sub">{s ? `${s.activeOrders} active in desk` : 'Loading…'}</span>
+              </div>
+            </button>
+            <div className="sp-kpi-chips">
+              <span className="sp-kpi-meta-pill" title="Verified paid revenue across orders">
+                {s
+                  ? s.paidRevenue > 0
+                    ? `Paid ${money(s.paidRevenue)}`
+                    : s.testPaidTotal > 0
+                      ? `Test ${money(s.testPaidTotal)}`
+                      : '₹0 paid'
+                  : '…'}
+              </span>
+              <button
+                type="button"
+                className="sp-kpi-chip"
+                aria-pressed={filter === 'delivered'}
+                onClick={() => toggleFilter('delivered')}
+              >
+                Delivered · {s ? s.deliveredCount : 0}
+              </button>
+            </div>
+            <div className="sp-kpi-meter" aria-hidden="true">
+              <span style={{ width: s && s.totalOrders > 0 ? '100%' : '0%' }} />
+            </div>
+          </div>
+
+          <div
+            className="sp-kpi-card"
+            data-tone={s?.attentionCount > 0 ? 'amber' : 'neutral'}
+            data-active={isAttentionCardActive}
+          >
+            <button
+              type="button"
+              className="sp-kpi-main"
+              aria-pressed={filter === 'group:attention'}
+              onClick={() => toggleFilter('group:attention')}
+            >
+              <div className="sp-kpi-head">
+                <span className="sp-kpi-label">Needs action / New</span>
+                <span className="sp-kpi-icon" aria-hidden="true"><Clock3 size={18} /></span>
+              </div>
+              <div className="sp-kpi-metric">
+                <strong>{s ? s.attentionCount : '—'}</strong>
+                <span className="sp-kpi-sub">
+                  {s ? (s.attentionCount > 0 ? 'Quote, payment or proof' : 'All caught up') : 'Loading…'}
+                </span>
+              </div>
+            </button>
+            <div className="sp-kpi-chips">
+              <button
+                type="button"
+                className="sp-kpi-chip"
+                aria-pressed={filter === 'received'}
+                onClick={() => toggleFilter('received')}
+              >
+                New · {s ? s.receivedCount : 0}
+              </button>
+              <button
+                type="button"
+                className="sp-kpi-chip"
+                aria-pressed={filter === 'group:quote_pending'}
+                onClick={() => toggleFilter('group:quote_pending')}
+              >
+                Quote · {s ? s.quotePendingCount : 0}
+              </button>
+              <button
+                type="button"
+                className="sp-kpi-chip"
+                aria-pressed={filter === 'group:unpaid'}
+                onClick={() => toggleFilter('group:unpaid')}
+              >
+                Unpaid · {s ? s.unpaidCount : 0}
+              </button>
+            </div>
+            <div className="sp-kpi-meter" aria-hidden="true">
+              <span style={{ width: `${pct(s?.attentionCount || 0)}%` }} />
+            </div>
+          </div>
+
+          <div className="sp-kpi-card" data-tone="teal" data-active={isProductionCardActive}>
+            <button
+              type="button"
+              className="sp-kpi-main"
+              aria-pressed={filter === 'group:production'}
+              onClick={() => toggleFilter('group:production')}
+            >
+              <div className="sp-kpi-head">
+                <span className="sp-kpi-label">In production</span>
+                <span className="sp-kpi-icon" aria-hidden="true"><Settings2 size={18} /></span>
+              </div>
+              <div className="sp-kpi-metric">
+                <strong>{s ? s.productionCount : '—'}</strong>
+                <span className="sp-kpi-sub">Confirmed → Making</span>
+              </div>
+            </button>
+            <div className="sp-kpi-chips">
+              <button
+                type="button"
+                className="sp-kpi-chip"
+                aria-pressed={filter === 'confirmed'}
+                onClick={() => toggleFilter('confirmed')}
+              >
+                Confirmed · {s ? s.confirmedCount : 0}
+              </button>
+              <button
+                type="button"
+                className="sp-kpi-chip"
+                aria-pressed={filter === 'design_approved'}
+                onClick={() => toggleFilter('design_approved')}
+              >
+                Design OK · {s ? s.designApprovedCount : 0}
+              </button>
+              <button
+                type="button"
+                className="sp-kpi-chip"
+                aria-pressed={filter === 'printing'}
+                onClick={() => toggleFilter('printing')}
+              >
+                Printing · {s ? s.printingCount : 0}
+              </button>
+            </div>
+            <div className="sp-kpi-meter" aria-hidden="true">
+              <span style={{ width: `${pct(s?.productionCount || 0)}%` }} />
+            </div>
+          </div>
+
+          <div className="sp-kpi-card" data-tone="emerald" data-active={isFulfillmentCardActive}>
+            <button
+              type="button"
+              className="sp-kpi-main"
+              aria-pressed={filter === 'group:fulfillment'}
+              onClick={() => toggleFilter('group:fulfillment')}
+            >
+              <div className="sp-kpi-head">
+                <span className="sp-kpi-label">Ready &amp; Dispatched</span>
+                <span className="sp-kpi-icon" aria-hidden="true"><Truck size={18} /></span>
+              </div>
+              <div className="sp-kpi-metric">
+                <strong>{s ? s.fulfillmentCount : '—'}</strong>
+                <span className="sp-kpi-sub">Pickup or in transit</span>
+              </div>
+            </button>
+            <div className="sp-kpi-chips">
+              <button
+                type="button"
+                className="sp-kpi-chip"
+                aria-pressed={filter === 'ready'}
+                onClick={() => toggleFilter('ready')}
+              >
+                Ready · {s ? s.readyCount : 0}
+              </button>
+              <button
+                type="button"
+                className="sp-kpi-chip"
+                aria-pressed={filter === 'dispatched'}
+                onClick={() => toggleFilter('dispatched')}
+              >
+                Dispatched · {s ? s.dispatchedCount : 0}
+              </button>
+            </div>
+            <div className="sp-kpi-meter" aria-hidden="true">
+              <span style={{ width: `${pct(s?.fulfillmentCount || 0)}%` }} />
+            </div>
+          </div>
         </div>
+
         <div className="sp-order-tools">
-          <div className="sp-search"><Search size={17} /><input aria-label="Search studio orders" placeholder="Order reference, customer or mobile…" value={query} onChange={event => { setQuery(event.target.value); setOffset(0); }} /></div>
+          <div className="sp-search">
+            <Search size={17} />
+            <input
+              aria-label="Search studio orders"
+              placeholder="Order reference, customer, mobile or product…"
+              value={query}
+              onChange={event => { setQuery(event.target.value); setOffset(0); }}
+            />
+            {query && (
+              <button type="button" className="sp-icon-button" style={{ width: 26, minHeight: 26, border: 0 }} aria-label="Clear search" onClick={() => { setQuery(''); setOffset(0); }}>
+                <X size={14} />
+              </button>
+            )}
+          </div>
           <select aria-label="Filter order status" value={filter} onChange={event => { setFilter(event.target.value); setOffset(0); }}>
             <option value="">All statuses</option>
-            {STUDIO_STATUSES.map(([id, label]) => <option value={id} key={id}>{label}</option>)}
+            <optgroup label="Pipeline Views">
+              {PIPELINE_GROUPS.map(([id, label]) => <option value={id} key={id}>{label}</option>)}
+            </optgroup>
+            <optgroup label="Individual Statuses">
+              {STUDIO_STATUSES.map(([id, label]) => <option value={id} key={id}>{label}</option>)}
+            </optgroup>
           </select>
-          <button className="sp-secondary" aria-label="Refresh orders" onClick={() => setVersion(v => v + 1)}><RefreshCw size={16} /></button>
+          <button className="sp-secondary" aria-label="Refresh orders" title="Refresh orders" onClick={() => setVersion(v => v + 1)}><RefreshCw size={16} /></button>
         </div>
+
+        {(filter || query) && (
+          <div className="sp-active-filter-bar" role="status">
+            <div className="sp-active-filter-tags">
+              <strong>{busy ? 'Filtering…' : `Showing ${list?.count ?? 0} matching ${list?.count === 1 ? 'order' : 'orders'}`}</strong>
+              {filter && (
+                <button type="button" className="sp-filter-tag" onClick={() => { setFilter(''); setOffset(0); }}>
+                  <span>{FILTER_LABELS[filter] || filter}</span>
+                  <X size={12} />
+                </button>
+              )}
+              {query && (
+                <button type="button" className="sp-filter-tag" onClick={() => { setQuery(''); setOffset(0); }}>
+                  <span>“{query}”</span>
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+            <button type="button" className="sp-filter-reset" onClick={resetFilters}>Show all orders</button>
+          </div>
+        )}
+
         <section className="sp-orders" aria-label="Studio orders" aria-busy={busy}>
           <div className="sp-list-heading"><span>ORDER / CUSTOMER</span><span>STUDIO STATUS</span><span>PAYMENT / TOTAL</span><span /></div>
           {list?.orders?.length ? list.orders.map(item => (
-            <button className="sp-order-row" key={item.reference} onClick={() => open(item.reference)}>
+            <button type="button" className="sp-order-row" key={item.reference} onClick={() => navigate(`/studio/orders/${item.reference}`)}>
               <span>
                 <strong>{item.orderId}</strong>
                 <small>{item.customer.name} · {item.customer.phone}{item.itemSummary ? ` · ${item.itemSummary}${item.itemCount > 1 ? ` +${item.itemCount - 1} more` : ''}` : ''}</small>
@@ -1111,6 +1539,12 @@ function StudioDesk({ onLogout }) {
                   <span className="sp-row-pill">{date(item.placedAt)}</span>
                   <span className="sp-row-pill">{item.deliveryMethod === 'pickup' ? 'Pickup' : 'Porter / Courier'}</span>
                   {!item.pricingConfirmed && <span className="sp-row-pill sp-row-pill--pending">Quote pending</span>}
+                  {item.artworkRequired && item.artworkStatus !== 'approved' && (
+                    <span className="sp-row-pill sp-row-pill--pending">
+                      {item.artworkStatus === 'awaiting_approval' ? 'Awaiting proof OK' : 'Proof needed'}
+                    </span>
+                  )}
+                  {item.hasOpenRequest && <span className="sp-row-pill sp-row-pill--alert">Support request</span>}
                 </div>
               </span>
               <span className="sp-row-status"><i data-status={item.status} />{item.statusLabel}</span>
@@ -1121,7 +1555,12 @@ function StudioDesk({ onLogout }) {
             <div className="sp-empty">
               <Package size={31} strokeWidth={1.2} />
               <h2>{busy ? 'Loading your orders…' : query || filter ? 'No matching orders.' : 'Your order desk is ready.'}</h2>
-              <p>{query || filter ? 'Try another reference or status.' : 'New checkout requests will appear here. You can also add a WhatsApp or walk-in order.'}</p>
+              <p>{query || filter ? 'No orders match the current filter or search.' : 'New checkout requests will appear here. You can also add a WhatsApp or walk-in order.'}</p>
+              {!busy && (query || filter) && (
+                <button type="button" className="sp-secondary sp-empty-reset" onClick={resetFilters}>
+                  Show all orders
+                </button>
+              )}
             </div>
           )}
         </section>

@@ -394,6 +394,44 @@
 
 .cart-customisation-trigger {
   margin-top: 0.45rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.38rem;
+}
+
+.cart-edit-btn {
+  color: #234734;
+  background: #edf4ee;
+  border-color: #c5d8c8;
+  text-decoration: none;
+}
+
+.cart-btn-checkout--full {
+  width: 100%;
+  min-height: 46px;
+  font-size: 0.85rem;
+}
+
+.cart-studio-assist-link {
+  margin-top: 0.5rem;
+  width: 100%;
+  background: transparent;
+  border: 0;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: #365944;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.cart-studio-assist-link:hover {
+  color: #1c3828;
 }
 
 .cart-customisation-btn {
